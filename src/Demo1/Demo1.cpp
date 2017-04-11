@@ -4,6 +4,8 @@
 */
 
 #include "OpenGLWindow.h"
+#include "Transform.h"
+#include "Degree.h"
 #include <SDL.h>
 #include <GL/glew.h>
 #include <vector>
@@ -140,7 +142,8 @@ int main()
 
         void main()
         {
-            gl_Position = position;
+            gl_Position = worldViewProjMatrix * position;
+            //gl_Position = position;
             uv0 = texCoord0;
         }
     )";
@@ -166,13 +169,27 @@ int main()
     glDetachShader(program, fs);
     glDeleteShader(fs);
 
+    glUseProgram(program);
+
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
     glClearColor(0, 0.8, 0.8, 1);
-    glEnable(GL_CULL_FACE);
-    glFrontFace(GL_CW);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_BLEND);
+
+    Transform cameraTransform;
+    cameraTransform.setLocalPosition({5, 5, 5});
+    cameraTransform.lookAt({0, 0, 0}, {0, 1, 0});
+
+    Transform transform;
+
+    auto projMatrix = TransformMatrix::createPerspective(Degree(60), 800.0 / 600, 0.1f, 100.0f);
+    auto viewMatrix = cameraTransform.getWorldMatrix();
+    viewMatrix.invert();
+    auto wvpMatrix = (projMatrix * viewMatrix) * transform.getWorldMatrix();
+    
+    auto uniform = glGetUniformLocation(program, "worldViewProjMatrix");
+    glUniformMatrix4fv(uniform, 1, GL_FALSE, wvpMatrix.m);
 
     auto run = true;
     while (run)
