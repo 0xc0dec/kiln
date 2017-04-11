@@ -379,10 +379,22 @@
     <ClCompile Include="..\..\vendor\SDL\2.0.4\src\render\SDL_yuv_sw.c">
       <Filter>SDL</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\vendor\glew\1.13\src\visualinfo.c">
+      <Filter>glew</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vendor\glew\1.13\src\glew.c">
+      <Filter>glew</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vendor\glew\1.13\src\glewinfo.c">
+      <Filter>glew</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="SDL">
       <UniqueIdentifier>{f307d83b-6c5a-4905-9a83-e1855740518a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="glew">
+      <UniqueIdentifier>{92c5ef27-1b1f-4ad5-ba00-1c39dd16c69e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

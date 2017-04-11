@@ -19,6 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\vendor\glew\1.13\src\glew.c" />
+    <ClCompile Include="..\..\vendor\glew\1.13\src\glewinfo.c" />
+    <ClCompile Include="..\..\vendor\glew\1.13\src\visualinfo.c" />
     <ClCompile Include="..\..\vendor\SDL\2.0.4\src\haptic\dummy\SDL_syshaptic.c" />
     <ClCompile Include="..\..\vendor\SDL\2.0.4\src\joystick\dummy\SDL_sysjoystick.c" />
     <ClCompile Include="..\..\vendor\SDL\2.0.4\src\joystick\SDL_gamecontroller.c" />
@@ -201,12 +204,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(ProjectDir)..\..\build\Vendor\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)..\..\build\Vendor\$(Configuration)\temp\</IntDir>
-    <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\..\vendor\glew\1.13\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(ProjectDir)..\..\build\Vendor\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)..\..\build\Vendor\$(Configuration)\temp\</IntDir>
-    <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\..\vendor\glew\1.13\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -214,7 +217,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_LIB;SDL_HAPTIC_DISABLED;SDL_JOYSTICK_DISABLED;HAVE_LIBC;SDL_MAIN_HANDLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;SDL_HAPTIC_DISABLED;SDL_JOYSTICK_DISABLED;HAVE_LIBC;SDL_MAIN_HANDLED;GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -259,7 +262,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_LIB;SDL_HAPTIC_DISABLED;SDL_JOYSTICK_DISABLED;HAVE_LIBC;SDL_MAIN_HANDLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;SDL_HAPTIC_DISABLED;SDL_JOYSTICK_DISABLED;HAVE_LIBC;SDL_MAIN_HANDLED;GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
