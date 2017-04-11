@@ -12,6 +12,7 @@
 
 class Camera;
 class TransformCallback;
+class Transform;
 struct Radian;
 
 enum class TransformSpace
@@ -19,6 +20,16 @@ enum class TransformSpace
     Self,
     Parent,
     World
+};
+
+class TransformCallback
+{
+public:
+    virtual ~TransformCallback()
+    {
+    }
+
+    virtual void onTransformChanged(const Transform* transform, uint32_t dirtyFlags) = 0;
 };
 
 // NB Using struct with consts instead of class enums
@@ -218,13 +229,3 @@ inline auto Transform::getChild(uint32_t index) const -> Transform*
 {
     return children[index];
 }
-
-class TransformCallback
-{
-public:
-    virtual ~TransformCallback()
-    {
-    }
-
-    virtual void onTransformChanged(const Transform* transform, uint32_t dirtyFlags) = 0;
-};
