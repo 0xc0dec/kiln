@@ -1,3 +1,8 @@
+/*
+    Copyright (c) Aleksey Fedotov
+    MIT license
+*/
+
 #include "OpenGLWindow.h"
 #include <SDL.h>
 
