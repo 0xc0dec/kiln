@@ -4,6 +4,7 @@
 */
 
 #include "Transform.h"
+#include "Camera.h"
 #include <algorithm>
 
 
@@ -106,6 +107,27 @@ auto Transform::getInvTransposedWorldMatrix() const -> TransformMatrix
         dirtyFlags &= ~TransformDirtyFlags::InvTransposedWorld;
     }
     return invTransposedWorldMatrix;
+}
+
+
+auto Transform::getWorldViewMatrix(const Camera &camera) const -> TransformMatrix
+{
+    return camera.getViewMatrix() * getWorldMatrix();
+}
+
+
+auto Transform::getWorldViewProjMatrix(const Camera &camera) const -> TransformMatrix
+{
+    return camera.getViewProjectionMatrix() * getWorldMatrix();
+}
+
+
+auto Transform::getInvTransposedWorldViewMatrix(const Camera &camera) const -> TransformMatrix
+{
+    auto result = camera.getViewMatrix() * getWorldMatrix();
+    result.invert();
+    result.transpose();
+    return result;
 }
 
 

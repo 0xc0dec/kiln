@@ -5,10 +5,9 @@
 
 #include "OpenGLWindow.h"
 #include "Transform.h"
-#include "Degree.h"
+#include "Camera.h"
 #include "OpenGL.h"
 #include <SDL.h>
-#include <GL/glew.h>
 #include <vector>
 #include <cassert>
 
@@ -77,7 +76,6 @@ int main()
         void main()
         {
             gl_Position = worldViewProjMatrix * position;
-            //gl_Position = position;
             uv0 = texCoord0;
         }
     )";
@@ -103,16 +101,14 @@ int main()
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_BLEND);
 
-    Transform cameraTransform;
-    cameraTransform.setLocalPosition({5, 5, 5});
-    cameraTransform.lookAt({0, 0, 0}, {0, 1, 0});
+    Camera camera;
+    camera.setNear(0.1f);
+    camera.setFar(100);
+    camera.setAspectRatio(800.0f / 600);
+    camera.getTransform().setLocalPosition({5, 5, 5});
+    camera.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
-    Transform transform;
-
-    auto projMatrix = TransformMatrix::createPerspective(Degree(60), 800.0 / 600, 0.1f, 100.0f);
-    auto viewMatrix = cameraTransform.getWorldMatrix();
-    viewMatrix.invert();
-    auto wvpMatrix = (projMatrix * viewMatrix) * transform.getWorldMatrix();
+    auto wvpMatrix = Transform().getWorldViewProjMatrix(camera);
     
     auto uniform = glGetUniformLocation(program, "worldViewProjMatrix");
     glUniformMatrix4fv(uniform, 1, GL_FALSE, wvpMatrix.m);

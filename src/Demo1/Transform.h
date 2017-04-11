@@ -100,6 +100,9 @@ public:
     auto getMatrix() const -> TransformMatrix;
     auto getWorldMatrix() const -> TransformMatrix;
     auto getInvTransposedWorldMatrix() const -> TransformMatrix;
+    auto getWorldViewMatrix(const Camera &camera) const -> TransformMatrix;
+    auto getWorldViewProjMatrix(const Camera &camera) const -> TransformMatrix;
+    auto getInvTransposedWorldViewMatrix(const Camera &camera) const -> TransformMatrix;
 
     auto transformPoint(const Vector3& point) const -> Vector3;
     auto transformDirection(const Vector3& direction) const -> Vector3;
