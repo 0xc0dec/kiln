@@ -4,7 +4,7 @@
 #include <cassert>
 
 
-auto gl::compileShader(GLuint type, const void *src, uint32_t length) -> GLint
+static auto compileShader(GLuint type, const void *src, uint32_t length) -> GLint
 {
     static std::unordered_map<GLuint, std::string> typeNames =
     {
@@ -34,7 +34,7 @@ auto gl::compileShader(GLuint type, const void *src, uint32_t length) -> GLint
 }
 
 
-auto gl::linkShaderProgram(GLuint vs, GLuint fs) -> GLint
+static auto linkShaderProgram(GLuint vs, GLuint fs) -> GLint
 {
     auto program = glCreateProgram();
     glAttachShader(program, vs);
@@ -52,6 +52,21 @@ auto gl::linkShaderProgram(GLuint vs, GLuint fs) -> GLint
         glDeleteProgram(program);
         assert(false /* Failed to link program */); // TODO
     }
+
+    return program;
+}
+
+
+auto gl::createShaderProgram(const void* vsSrc, uint32_t vsSrcLen, const void* fsSrc, uint32_t fsSrcLen) -> GLuint
+{
+    auto vs = compileShader(GL_VERTEX_SHADER, vsSrc, vsSrcLen);
+    auto fs = compileShader(GL_FRAGMENT_SHADER, fsSrc, fsSrcLen);
+    auto program = linkShaderProgram(vs, fs);
+
+    glDetachShader(program, vs);
+    glDeleteShader(vs);
+    glDetachShader(program, fs);
+    glDeleteShader(fs);
 
     return program;
 }

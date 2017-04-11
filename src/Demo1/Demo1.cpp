@@ -94,15 +94,7 @@ int main()
         }
     )";
 
-    auto vs = gl::compileShader(GL_VERTEX_SHADER, vsSrc.c_str(), vsSrc.size());
-    auto fs = gl::compileShader(GL_FRAGMENT_SHADER, fsSrc.c_str(), fsSrc.size());
-    auto program = gl::linkShaderProgram(vs, fs);
-
-    glDetachShader(program, vs);
-    glDeleteShader(vs);
-    glDetachShader(program, fs);
-    glDeleteShader(fs);
-
+    auto program = gl::createShaderProgram(vsSrc.c_str(), vsSrc.size(), fsSrc.c_str(), fsSrc.size());
     glUseProgram(program);
 
     glDepthMask(GL_TRUE);
