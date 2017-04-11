@@ -1,3 +1,8 @@
+/*
+    Copyright (c) Aleksey Fedotov
+    MIT license
+*/
+
 #include "OpenGL.h"
 #include <unordered_map>
 #include <string>

@@ -1,3 +1,8 @@
+/*
+    Copyright (c) Aleksey Fedotov
+    MIT license
+*/
+
 #pragma once
 
 #include <GL/glew.h>

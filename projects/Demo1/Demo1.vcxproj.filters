@@ -12,6 +12,8 @@
     <ClCompile Include="..\..\src\Demo1\Ray.cpp" />
     <ClCompile Include="..\..\src\Demo1\Transform.cpp" />
     <ClCompile Include="..\..\src\Demo1\OpenGL.cpp" />
+    <ClCompile Include="..\..\src\Demo1\Vector4.cpp" />
+    <ClCompile Include="..\..\src\Demo1\Camera.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Demo1\OpenGLWindow.h" />
@@ -25,5 +27,7 @@
     <ClInclude Include="..\..\src\Demo1\Ray.h" />
     <ClInclude Include="..\..\src\Demo1\Transform.h" />
     <ClInclude Include="..\..\src\Demo1\OpenGL.h" />
+    <ClInclude Include="..\..\src\Demo1\Camera.h" />
+    <ClInclude Include="..\..\src\Demo1\Vector4.h" />
   </ItemGroup>
 </Project>
