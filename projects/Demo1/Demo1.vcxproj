@@ -156,6 +156,7 @@
     <ClCompile Include="..\..\src\Demo1\Quaternion.cpp" />
     <ClCompile Include="..\..\src\Demo1\Radian.cpp" />
     <ClCompile Include="..\..\src\Demo1\Ray.cpp" />
+    <ClCompile Include="..\..\src\Demo1\Transform.cpp" />
     <ClCompile Include="..\..\src\Demo1\TransformMatrix.cpp" />
     <ClCompile Include="..\..\src\Demo1\Vector3.cpp" />
   </ItemGroup>
@@ -167,6 +168,7 @@
     <ClInclude Include="..\..\src\Demo1\Quaternion.h" />
     <ClInclude Include="..\..\src\Demo1\Radian.h" />
     <ClInclude Include="..\..\src\Demo1\Ray.h" />
+    <ClInclude Include="..\..\src\Demo1\Transform.h" />
     <ClInclude Include="..\..\src\Demo1\TransformMatrix.h" />
     <ClInclude Include="..\..\src\Demo1\Vector3.h" />
   </ItemGroup>
