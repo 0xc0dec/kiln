@@ -7,6 +7,8 @@
 #include "Transform.h"
 #include "Camera.h"
 #include "OpenGL.h"
+#include "FileSystem.h"
+#include "Image.h"
 #include <SDL.h>
 #include <vector>
 #include <cassert>
@@ -94,6 +96,9 @@ int main()
 
     auto program = gl::createShaderProgram(vsSrc.c_str(), vsSrc.size(), fsSrc.c_str(), fsSrc.size());
     glUseProgram(program);
+
+    auto imageBytes = fs::readBytes("../../../assets/Freeman.png");
+    auto image = img::loadPNG(imageBytes);
 
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);

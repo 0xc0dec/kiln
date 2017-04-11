@@ -78,7 +78,7 @@
     <OutDir>$(ProjectDir)..\..\build\Demo1\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)..\..\build\Demo1\$(Configuration)\temp\</IntDir>
     <LibraryPath>$(ProjectDir)..\..\build\Vendor\$(Configuration)\;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\..\vendor\glew\1.13\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\..\vendor\glew\1.13\include\;$(ProjectDir)..\..\vendor\png\1.6.16\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -88,7 +88,7 @@
     <OutDir>$(ProjectDir)..\..\build\Demo1\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)..\..\build\Demo1\$(Configuration)\temp\</IntDir>
     <LibraryPath>$(ProjectDir)..\..\build\Vendor\$(Configuration)\;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\..\vendor\glew\1.13\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\..\vendor\glew\1.13\include\;$(ProjectDir)..\..\vendor\png\1.6.16\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -152,6 +152,8 @@
     <ClCompile Include="..\..\src\Demo1\Camera.cpp" />
     <ClCompile Include="..\..\src\Demo1\Degree.cpp" />
     <ClCompile Include="..\..\src\Demo1\Demo1.cpp" />
+    <ClCompile Include="..\..\src\Demo1\FileSystem.cpp" />
+    <ClCompile Include="..\..\src\Demo1\Image.cpp" />
     <ClCompile Include="..\..\src\Demo1\Matrix.cpp" />
     <ClCompile Include="..\..\src\Demo1\OpenGL.cpp" />
     <ClCompile Include="..\..\src\Demo1\OpenGLWindow.cpp" />
@@ -166,6 +168,8 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\Demo1\Camera.h" />
     <ClInclude Include="..\..\src\Demo1\Degree.h" />
+    <ClInclude Include="..\..\src\Demo1\FileSystem.h" />
+    <ClInclude Include="..\..\src\Demo1\Image.h" />
     <ClInclude Include="..\..\src\Demo1\Math.h" />
     <ClInclude Include="..\..\src\Demo1\Matrix.h" />
     <ClInclude Include="..\..\src\Demo1\OpenGL.h" />
