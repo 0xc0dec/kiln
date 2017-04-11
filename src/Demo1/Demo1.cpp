@@ -1,5 +1,6 @@
 #include <SDL.h>
 #include <SDL_surface.h>
+#include <GL/glew.h>
 
 int main()
 {
@@ -16,7 +17,41 @@ int main()
     auto window = SDL_CreateWindow("Test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, flags);
     auto context = SDL_GL_CreateContext(window);
 
+    glewExperimental = true;
+    if (glewInit() != GLEW_OK)
+    {
+        SDL_GL_DeleteContext(context);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+    }
+
     SDL_GL_SetSwapInterval(1);
+
+    auto run = true;
+    while (run)
+    {
+        SDL_Event evt;
+        while (SDL_PollEvent(&evt))
+        {
+            switch (evt.type)
+            {
+                case SDL_QUIT:
+                    run = false;
+                    break;
+                case SDL_WINDOWEVENT:
+                    if (evt.window.event == SDL_WINDOWEVENT_CLOSE)
+                        run = false;
+                    break;
+                case SDL_KEYUP:
+                    if (evt.key.keysym.sym == SDLK_ESCAPE)
+                        run = false;
+                default:
+                    break;
+            }
+        }
+
+        SDL_GL_SwapWindow(window);
+    }
 
     // Shutdown
     if (context)
