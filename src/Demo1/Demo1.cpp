@@ -2,6 +2,22 @@
 #include <SDL.h>
 
 
+bool shouldClose(SDL_Event evt)
+{
+    switch (evt.type)
+    {
+        case SDL_QUIT:
+            return true;
+        case SDL_WINDOWEVENT:
+            return evt.window.event == SDL_WINDOWEVENT_CLOSE;
+        case SDL_KEYUP:
+            return evt.key.keysym.sym == SDLK_ESCAPE;
+        default:
+            return false;
+    }
+}
+
+
 int main()
 {
     OpenGLWindow window(800, 600);
@@ -12,21 +28,8 @@ int main()
         SDL_Event evt;
         while (SDL_PollEvent(&evt))
         {
-            switch (evt.type)
-            {
-                case SDL_QUIT:
-                    run = false;
-                    break;
-                case SDL_WINDOWEVENT:
-                    if (evt.window.event == SDL_WINDOWEVENT_CLOSE)
-                        run = false;
-                    break;
-                case SDL_KEYUP:
-                    if (evt.key.keysym.sym == SDLK_ESCAPE)
-                        run = false;
-                default:
-                    break;
-            }
+            if (run)
+                run = !shouldClose(evt);
         }
 
         SDL_GL_SwapWindow(window.getWindow());
