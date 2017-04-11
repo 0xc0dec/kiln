@@ -26,18 +26,21 @@ OpenGLWindow::OpenGLWindow(uint32_t canvasWidth, uint32_t canvasHeight)
 
 OpenGLWindow::~OpenGLWindow()
 {
-    if (context)
-        SDL_GL_DeleteContext(context);
-    if (window)
-        SDL_DestroyWindow(window);
+    cleanup();
 }
 
 
 void OpenGLWindow::cleanup()
 {
     if (context)
+    {
         SDL_GL_DeleteContext(context);
+        context = nullptr;
+    }
     if (window)
+    {
         SDL_DestroyWindow(window);
+        window = nullptr;
+    }
     SDL_Quit();
 }
