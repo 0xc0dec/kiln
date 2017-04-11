@@ -13,6 +13,8 @@ public:
 private:
     SDL_Window* window = nullptr;
     SDL_GLContext context = nullptr;
+
+    void cleanup();
 };
 
 inline auto OpenGLWindow::getWindow() const -> SDL_Window*

@@ -18,11 +18,7 @@ OpenGLWindow::OpenGLWindow(uint32_t canvasWidth, uint32_t canvasHeight)
 
     glewExperimental = true;
     if (glewInit() != GLEW_OK)
-    {
-        SDL_GL_DeleteContext(context);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-    }
+        cleanup(); // TODO logging
 
     SDL_GL_SetSwapInterval(1);
 }
@@ -34,4 +30,14 @@ OpenGLWindow::~OpenGLWindow()
         SDL_GL_DeleteContext(context);
     if (window)
         SDL_DestroyWindow(window);
+}
+
+
+void OpenGLWindow::cleanup()
+{
+    if (context)
+        SDL_GL_DeleteContext(context);
+    if (window)
+        SDL_DestroyWindow(window);
+    SDL_Quit();
 }
