@@ -152,6 +152,7 @@
     <ClCompile Include="..\..\src\Demo1\Degree.cpp" />
     <ClCompile Include="..\..\src\Demo1\Demo1.cpp" />
     <ClCompile Include="..\..\src\Demo1\Matrix.cpp" />
+    <ClCompile Include="..\..\src\Demo1\OpenGL.cpp" />
     <ClCompile Include="..\..\src\Demo1\OpenGLWindow.cpp" />
     <ClCompile Include="..\..\src\Demo1\Quaternion.cpp" />
     <ClCompile Include="..\..\src\Demo1\Radian.cpp" />
@@ -164,6 +165,7 @@
     <ClInclude Include="..\..\src\Demo1\Degree.h" />
     <ClInclude Include="..\..\src\Demo1\Math.h" />
     <ClInclude Include="..\..\src\Demo1\Matrix.h" />
+    <ClInclude Include="..\..\src\Demo1\OpenGL.h" />
     <ClInclude Include="..\..\src\Demo1\OpenGLWindow.h" />
     <ClInclude Include="..\..\src\Demo1\Quaternion.h" />
     <ClInclude Include="..\..\src\Demo1\Radian.h" />
