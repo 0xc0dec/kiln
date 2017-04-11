@@ -149,11 +149,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\Demo1\Degree.cpp" />
     <ClCompile Include="..\..\src\Demo1\Demo1.cpp" />
+    <ClCompile Include="..\..\src\Demo1\Matrix.cpp" />
     <ClCompile Include="..\..\src\Demo1\OpenGLWindow.cpp" />
+    <ClCompile Include="..\..\src\Demo1\Quaternion.cpp" />
+    <ClCompile Include="..\..\src\Demo1\Radian.cpp" />
+    <ClCompile Include="..\..\src\Demo1\Ray.cpp" />
+    <ClCompile Include="..\..\src\Demo1\TransformMatrix.cpp" />
+    <ClCompile Include="..\..\src\Demo1\Vector3.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\Demo1\Degree.h" />
+    <ClInclude Include="..\..\src\Demo1\Math.h" />
+    <ClInclude Include="..\..\src\Demo1\Matrix.h" />
     <ClInclude Include="..\..\src\Demo1\OpenGLWindow.h" />
+    <ClInclude Include="..\..\src\Demo1\Quaternion.h" />
+    <ClInclude Include="..\..\src\Demo1\Radian.h" />
+    <ClInclude Include="..\..\src\Demo1\Ray.h" />
+    <ClInclude Include="..\..\src\Demo1\TransformMatrix.h" />
+    <ClInclude Include="..\..\src\Demo1\Vector3.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
