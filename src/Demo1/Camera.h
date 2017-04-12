@@ -7,7 +7,7 @@
 
 #include "Transform.h"
 #include "TransformMatrix.h"
-#include <glm/trigonometric.hpp>
+#include <glm/glm.hpp>
 #include <cstdint>
 
 class Camera final
