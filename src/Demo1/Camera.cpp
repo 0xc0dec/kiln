@@ -4,7 +4,7 @@
 */
 
 #include "Camera.h"
-#include "Radian.h"
+#include <glm/gtc/matrix_transform.inl>
 
 
 const uint32_t ViewDirtyBit = 1;
@@ -57,45 +57,43 @@ void Camera::setNearZ(float near)
 }
 
 
-auto Camera::getViewMatrix() const -> const TransformMatrix
+auto Camera::getViewMatrix() const -> const glm::mat4
 {
     if (dirtyFlags & ViewDirtyBit)
     {
         viewMatrix = transform.getWorldMatrix();
-        viewMatrix.invert();
         dirtyFlags &= ~ViewDirtyBit;
     }
     return viewMatrix;
 }
 
 
-auto Camera::getInvViewMatrix() const -> const TransformMatrix
+auto Camera::getInvViewMatrix() const -> const glm::mat4
 {
     if (dirtyFlags & InvViewDirtyBit)
     {
-        invViewMatrix = getViewMatrix();
-        invViewMatrix.invert();
+        invViewMatrix = glm::inverse(getViewMatrix());
         dirtyFlags &= ~InvViewDirtyBit;
     }
     return invViewMatrix;
 }
 
 
-auto Camera::getProjectionMatrix() const -> const TransformMatrix
+auto Camera::getProjectionMatrix() const -> const glm::mat4
 {
     if (dirtyFlags & ProjectionDirtyBit)
     {
         if (ortho)
-            projectionMatrix = TransformMatrix::createOrthographic(orthoSize.x, orthoSize.y, nearClip, farClip);
+            projectionMatrix = glm::ortho(orthoSize.x, orthoSize.y, nearClip, farClip);
         else
-            projectionMatrix = TransformMatrix::createPerspective(Radian(fov), aspectRatio, nearClip, farClip);
+            projectionMatrix = glm::perspective(fov, aspectRatio, nearClip, farClip);
         dirtyFlags &= ~ProjectionDirtyBit;
     }
     return projectionMatrix;
 }
 
 
-auto Camera::getViewProjectionMatrix() const -> const TransformMatrix
+auto Camera::getViewProjectionMatrix() const -> const glm::mat4
 {
     if (dirtyFlags & ViewProjectionDirtyBit)
     {
@@ -106,12 +104,11 @@ auto Camera::getViewProjectionMatrix() const -> const TransformMatrix
 }
 
 
-auto Camera::getInvViewProjectionMatrix() const -> const TransformMatrix
+auto Camera::getInvViewProjectionMatrix() const -> const glm::mat4
 {
     if (dirtyFlags & InvViewProjectionDirtyBit)
     {
-        invViewProjectionMatrix = getViewProjectionMatrix();
-        invViewProjectionMatrix.invert();
+        invViewProjectionMatrix = glm::inverse(getViewProjectionMatrix());
         dirtyFlags &= ~InvViewProjectionDirtyBit;
     }
     return invViewProjectionMatrix;

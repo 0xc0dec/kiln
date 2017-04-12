@@ -6,7 +6,6 @@
 #pragma once
 
 #include "Transform.h"
-#include "TransformMatrix.h"
 #include <glm/glm.hpp>
 #include <cstdint>
 
@@ -14,9 +13,6 @@ class Camera final
 {
 public:
     auto getTransform() -> Transform&;
-
-    auto getViewport() const -> glm::vec4;
-    void setViewport(const glm::vec4 &rect);
 
     bool isPerspective() const;
     void setPerspective(bool perspective);
@@ -36,16 +32,15 @@ public:
     auto getAspectRatio() const -> float;
     void setAspectRatio(float ratio);
 
-    auto getViewMatrix() const -> const TransformMatrix;
-    auto getInvViewMatrix() const -> const TransformMatrix;
-    auto getProjectionMatrix() const -> const TransformMatrix;
-    auto getViewProjectionMatrix() const -> const TransformMatrix;
-    auto getInvViewProjectionMatrix() const -> const TransformMatrix;
+    auto getViewMatrix() const -> const glm::mat4;
+    auto getInvViewMatrix() const -> const glm::mat4;
+    auto getProjectionMatrix() const -> const glm::mat4;
+    auto getViewProjectionMatrix() const -> const glm::mat4;
+    auto getInvViewProjectionMatrix() const -> const glm::mat4;
 
 protected:
-    glm::vec4 viewport;
     bool ortho = false;
-    float fov = glm::degrees(60);
+    float fov = glm::degrees(60.0f);
     glm::vec2 orthoSize{1, 1};
     float nearClip = 1;
     float farClip = 100;
@@ -55,11 +50,11 @@ protected:
 
     mutable uint32_t dirtyFlags = ~0;
 
-    mutable TransformMatrix viewMatrix;
-    mutable TransformMatrix projectionMatrix;
-    mutable TransformMatrix viewProjectionMatrix;
-    mutable TransformMatrix invViewMatrix;
-    mutable TransformMatrix invViewProjectionMatrix;
+    mutable glm::mat4 viewMatrix;
+    mutable glm::mat4 projectionMatrix;
+    mutable glm::mat4 viewProjectionMatrix;
+    mutable glm::mat4 invViewMatrix;
+    mutable glm::mat4 invViewProjectionMatrix;
 };
 
 inline bool Camera::isPerspective() const
@@ -85,16 +80,6 @@ inline auto Camera::getFOV() const -> float
 inline auto Camera::getAspectRatio() const -> float
 {
     return aspectRatio;
-}
-
-inline auto Camera::getViewport() const -> glm::vec4
-{
-    return viewport;
-}
-
-inline void Camera::setViewport(const glm::vec4 &rect)
-{
-    viewport = rect;
 }
 
 inline auto Camera::getTransform() -> Transform&

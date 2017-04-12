@@ -36,17 +36,17 @@ inline bool math::isZero(float value, float epsilon)
     return fabs(value) <= epsilon;
 }
 
-inline bool math::isZero(const glm::vec3 &v, float epsilon = epsilon1)
+inline bool math::isZero(const glm::vec3 &v, float epsilon)
 {
     return glm::all(glm::epsilonEqual(v, glm::vec3(0), epsilon));
 }
 
-inline bool math::isIdentity(const glm::quat &q, float epsilon = epsilon1)
+inline bool math::isIdentity(const glm::quat &q, float epsilon)
 {
     return glm::all(glm::epsilonEqual(q, glm::quat(1, 0, 0, 0), epsilon));
 }
 
-inline bool math::isUnit(const glm::vec3 &v, float epsilon = epsilon1)
+inline bool math::isUnit(const glm::vec3 &v, float epsilon)
 {
     return glm::all(glm::epsilonEqual(v, glm::vec3(1, 1, 1), epsilon));
 }

@@ -110,10 +110,7 @@ auto Transform::getWorldViewProjMatrix(const Camera &camera) const -> glm::mat4
 
 auto Transform::getInvTransposedWorldViewMatrix(const Camera &camera) const -> glm::mat4
 {
-    auto result = camera.getViewMatrix() * getWorldMatrix();
-    result.invert();
-    result.transpose();
-    return result;
+    return glm::transpose(glm::inverse(camera.getViewMatrix() * getWorldMatrix()));
 }
 
 
@@ -157,7 +154,7 @@ void Transform::rotateByAxisAngle(const glm::vec3 &axis, float angle, TransformS
 }
 
 
-void Transform::scaleLocal(const Vector3 &scale)
+void Transform::scaleLocal(const glm::vec3 &scale)
 {
     localScale.x *= scale.x;
     localScale.y *= scale.y;
@@ -166,58 +163,59 @@ void Transform::scaleLocal(const Vector3 &scale)
 }
 
 
-void Transform::setLocalScale(const Vector3 &scale)
+void Transform::setLocalScale(const glm::vec3 &scale)
 {
     localScale = scale;
     setDirtyWithChildren(TransformDirtyFlags::Scale | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
 }
 
 
-void Transform::lookAt(const Vector3 &target, const Vector3 &up)
+void Transform::lookAt(const glm::vec3 &target, const glm::vec3 &up)
 {
-    auto localTarget = target;
-    auto localUp = up;
+    auto localTarget = glm::vec4(target, 0);
+    auto localUp = glm::vec4(up, 0);
 
     if (parent)
     {
-        auto m(parent->getWorldMatrix());
-        m.invert();
-        localTarget = m.transformPoint(target);
-        localUp = m.transformDirection(up);
+        auto m = glm::inverse(parent->getWorldMatrix());
+        localTarget = m * localTarget;
+        localUp = m * localUp;
     }
 
-    auto lookAtMatrix = TransformMatrix::createLookAt(localPosition, localTarget, localUp);
-    setLocalRotation(lookAtMatrix.getRotation());
+    auto lookAtMatrix = glm::lookAt(localPosition, glm::vec3(localTarget), glm::vec3(localUp));
+    auto x = glm::lookAt(glm::vec3(5, 5, 5), {0, 0, 0}, {0, 1, 0});
+    auto q = glm::quat_cast(lookAtMatrix);
+    setLocalRotation(glm::quat_cast(lookAtMatrix));
 }
 
 
-auto Transform::transformPoint(const Vector3 &point) const -> Vector3
+auto Transform::transformPoint(const glm::vec3 &point) const -> glm::vec3
 {
-    return getMatrix().transformPoint(point);
+    return getMatrix() * glm::vec4(point, 1.0f);
 }
 
 
-auto Transform::transformDirection(const Vector3 &direction) const -> Vector3
+auto Transform::transformDirection(const glm::vec3 &direction) const -> glm::vec3
 {
-    return getMatrix().transformDirection(direction);
+    return getMatrix() * glm::vec4(direction, 0);
 }
 
 
-void Transform::setLocalRotation(const Quaternion &rotation)
+void Transform::setLocalRotation(const glm::quat &rotation)
 {
     localRotation = rotation;
     setDirtyWithChildren(TransformDirtyFlags::Rotation | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
 }
 
 
-void Transform::setLocalAxisAngleRotation(const Vector3 &axis, const Radian &angle)
+void Transform::setLocalAxisAngleRotation(const glm::vec3 &axis, float angle)
 {
-    localRotation = Quaternion::createFromAxisAngle(axis, angle);
+    localRotation = glm::angleAxis(angle, axis);
     setDirtyWithChildren(TransformDirtyFlags::Rotation | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
 }
 
 
-void Transform::setLocalPosition(const Vector3 &position)
+void Transform::setLocalPosition(const glm::vec3 &position)
 {
     localPosition = position;
     setDirtyWithChildren(TransformDirtyFlags::Position | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
