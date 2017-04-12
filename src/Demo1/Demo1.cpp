@@ -4,8 +4,6 @@
 */
 
 #include "OpenGLWindow.h"
-#include "Transform.h"
-#include "Camera.h"
 #include "OpenGL.h"
 #include "FileSystem.h"
 #include "Image.h"
@@ -13,8 +11,12 @@
 #include <vector>
 #include <cassert>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-bool shouldClose(SDL_Event evt)
+
+static bool shouldClose(SDL_Event evt)
 {
     switch (evt.type)
     {
@@ -27,6 +29,14 @@ bool shouldClose(SDL_Event evt)
         default:
             return false;
     }
+}
+
+
+static auto getWvpMatrix(float time) -> glm::mat4
+{
+    auto projMat = glm::perspective(glm::degrees(60.0f), 800.0f / 600, 0.1f, 100.0f);
+    auto viewMat = glm::lookAt(glm::vec3(glm::sin(time) * 5.0f, 5.0f, 5.0f), glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
+    return projMat * viewMat;
 }
 
 
@@ -120,27 +130,18 @@ int main()
     glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
     glGenerateMipmap(GL_TEXTURE_2D);
 
+    auto wvpUniform = glGetUniformLocation(program, "worldViewProjMatrix");
+
+    auto texUniform = glGetUniformLocation(program, "mainTex");
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(texUniform, 0);
+
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
     glClearColor(0, 0.8, 0.8, 1);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_BLEND);
-
-    Camera camera;
-    camera.setNearZ(0.1f);
-    camera.setFarZ(100);
-    camera.setAspectRatio(800.0f / 600);
-    camera.getTransform().setLocalPosition({5, 5, 5});
-    camera.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
-
-    auto wvpMatrix = Transform().getWorldViewProjMatrix(camera);
-    
-    auto wvpUniform = glGetUniformLocation(program, "worldViewProjMatrix");
-    glUniformMatrix4fv(wvpUniform, 1, GL_FALSE, wvpMatrix.m);
-
-    auto texUniform = glGetUniformLocation(program, "mainTex");
-    glActiveTexture(GL_TEXTURE0);
-    glUniform1i(texUniform, 0);
+    glViewport(0, 0, 800, 600);
 
     auto run = true;
     while (run)
@@ -152,16 +153,16 @@ int main()
                 run = !shouldClose(evt);
         }
 
-        glViewport(0, 0, 800, 600);
+        auto time = SDL_GetTicks() / 1000.0f;
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glUseProgram(program);
+        auto wvpMat = getWvpMatrix(time);
+        glUniformMatrix4fv(wvpUniform, 1, GL_FALSE, glm::value_ptr(wvpMat));
 
         glBindVertexArray(vertexArray);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-            
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
-
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 

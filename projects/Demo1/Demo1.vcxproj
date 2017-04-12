@@ -78,7 +78,7 @@
     <OutDir>$(ProjectDir)..\..\build\Demo1\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)..\..\build\Demo1\$(Configuration)\temp\</IntDir>
     <LibraryPath>$(ProjectDir)..\..\build\Vendor\$(Configuration)\;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\..\vendor\glew\1.13\include\;$(ProjectDir)..\..\vendor\png\1.6.16\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\..\vendor\glew\1.13\include\;$(ProjectDir)..\..\vendor\png\1.6.16\include\;$(ProjectDir)..\..\vendor\glm\0.9.8.4\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -88,7 +88,7 @@
     <OutDir>$(ProjectDir)..\..\build\Demo1\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)..\..\build\Demo1\$(Configuration)\temp\</IntDir>
     <LibraryPath>$(ProjectDir)..\..\build\Vendor\$(Configuration)\;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\..\vendor\glew\1.13\include\;$(ProjectDir)..\..\vendor\png\1.6.16\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\..\vendor\glew\1.13\include\;$(ProjectDir)..\..\vendor\png\1.6.16\include\;$(ProjectDir)..\..\vendor\glm\0.9.8.4\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
