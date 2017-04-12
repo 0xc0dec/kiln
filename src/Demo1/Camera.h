@@ -11,6 +11,7 @@
 #include "TransformMatrix.h"
 #include "Radian.h"
 #include "Degree.h"
+#include <glm/trigonometric.hpp>
 #include <cstdint>
 
 class Camera final
@@ -18,8 +19,8 @@ class Camera final
 public:
     auto getTransform() -> Transform&;
 
-    auto getViewport() const -> Vector4;
-    void setViewport(const Vector4& rect);
+    auto getViewport() const -> glm::vec4;
+    void setViewport(const glm::vec4 &rect);
 
     bool isPerspective() const;
     void setPerspective(bool perspective);
@@ -30,11 +31,11 @@ public:
     auto getFarZ() const -> float;
     void setFarZ(float far);
 
-    auto getFOV() const -> Radian;
-    void setFOV(const Radian& fov);
+    auto getFOV() const -> float;
+    void setFOV(float fov);
 
-    auto getOrthoSize() const -> Vector2;
-    void setOrthoSize(const Vector2 &size);
+    auto getOrthoSize() const -> glm::vec2;
+    void setOrthoSize(const glm::vec2 &size);
 
     auto getAspectRatio() const -> float;
     void setAspectRatio(float ratio);
@@ -46,10 +47,10 @@ public:
     auto getInvViewProjectionMatrix() const -> const TransformMatrix;
 
 protected:
-    Vector4 viewport;
+    glm::vec4 viewport;
     bool ortho = false;
-    Radian fov = Degree(60);
-    Vector2 orthoSize{1, 1};
+    float fov = glm::degrees(60);
+    glm::vec2 orthoSize{1, 1};
     float nearClip = 1;
     float farClip = 100;
     float aspectRatio = 1;
@@ -80,7 +81,7 @@ inline auto Camera::getFarZ() const -> float
     return farClip;
 }
 
-inline auto Camera::getFOV() const -> Radian
+inline auto Camera::getFOV() const -> float
 {
     return fov;
 }
@@ -90,12 +91,12 @@ inline auto Camera::getAspectRatio() const -> float
     return aspectRatio;
 }
 
-inline auto Camera::getViewport() const -> Vector4
+inline auto Camera::getViewport() const -> glm::vec4
 {
     return viewport;
 }
 
-inline void Camera::setViewport(const Vector4& rect)
+inline void Camera::setViewport(const glm::vec4 &rect)
 {
     viewport = rect;
 }
@@ -105,7 +106,7 @@ inline auto Camera::getTransform() -> Transform&
     return transform;
 }
 
-inline auto Camera::getOrthoSize() const -> Vector2
+inline auto Camera::getOrthoSize() const -> glm::vec2
 {
     return orthoSize;
 }

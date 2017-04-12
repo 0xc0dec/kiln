@@ -22,14 +22,14 @@ void Camera::setPerspective(bool perspective)
 }
 
 
-void Camera::setFOV(const Radian &fov)
+void Camera::setFOV(float fov)
 {
     this->fov = fov;
     dirtyFlags |= AllProjectionDirtyBits;
 }
 
 
-void Camera::setOrthoSize(const Vector2 &size)
+void Camera::setOrthoSize(const glm::vec2 &size)
 {
     orthoSize = size;
     dirtyFlags |= AllProjectionDirtyBits;
@@ -88,7 +88,7 @@ auto Camera::getProjectionMatrix() const -> const TransformMatrix
         if (ortho)
             projectionMatrix = TransformMatrix::createOrthographic(orthoSize.x, orthoSize.y, nearClip, farClip);
         else
-            projectionMatrix = TransformMatrix::createPerspective(fov, aspectRatio, nearClip, farClip);
+            projectionMatrix = TransformMatrix::createPerspective(Radian(fov), aspectRatio, nearClip, farClip);
         dirtyFlags &= ~ProjectionDirtyBit;
     }
     return projectionMatrix;
