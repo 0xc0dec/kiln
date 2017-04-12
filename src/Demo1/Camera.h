@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "Vector2.h"
 #include "Vector4.h"
 #include "Transform.h"
 #include "TransformMatrix.h"
@@ -23,20 +24,17 @@ public:
     bool isPerspective() const;
     void setPerspective(bool perspective);
 
-    auto getNear() const -> float;
-    void setNear(float near);
+    auto getNearZ() const -> float;
+    void setNearZ(float near);
 
-    auto getFar() const -> float;
-    void setFar(float far);
+    auto getFarZ() const -> float;
+    void setFarZ(float far);
 
     auto getFOV() const -> Radian;
     void setFOV(const Radian& fov);
 
-    auto getWidth() const -> float;
-    void setWidth(float width);
-
-    auto getHeight() const -> float;
-    void setHeight(float height);
+    auto getOrthoSize() const -> Vector2;
+    void setOrthoSize(const Vector2 &size);
 
     auto getAspectRatio() const -> float;
     void setAspectRatio(float ratio);
@@ -51,15 +49,14 @@ protected:
     Vector4 viewport;
     bool ortho = false;
     Radian fov = Degree(60);
+    Vector2 orthoSize{1, 1};
     float nearClip = 1;
     float farClip = 100;
-    float width = 1;
-    float height = 1;
     float aspectRatio = 1;
 
     Transform transform;
 
-    mutable uint32_t transformDirtyFlags = ~0;
+    mutable uint32_t dirtyFlags = ~0;
 
     mutable TransformMatrix viewMatrix;
     mutable TransformMatrix projectionMatrix;
@@ -73,12 +70,12 @@ inline bool Camera::isPerspective() const
     return !ortho;
 }
 
-inline auto Camera::getNear() const -> float
+inline auto Camera::getNearZ() const -> float
 {
     return nearClip;
 }
 
-inline auto Camera::getFar() const -> float
+inline auto Camera::getFarZ() const -> float
 {
     return farClip;
 }
@@ -86,16 +83,6 @@ inline auto Camera::getFar() const -> float
 inline auto Camera::getFOV() const -> Radian
 {
     return fov;
-}
-
-inline auto Camera::getWidth() const -> float
-{
-    return width;
-}
-
-inline auto Camera::getHeight() const -> float
-{
-    return height;
 }
 
 inline auto Camera::getAspectRatio() const -> float
@@ -116,4 +103,9 @@ inline void Camera::setViewport(const Vector4& rect)
 inline auto Camera::getTransform() -> Transform&
 {
     return transform;
+}
+
+inline auto Camera::getOrthoSize() const -> Vector2
+{
+    return orthoSize;
 }

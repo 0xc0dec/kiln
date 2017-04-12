@@ -7,69 +7,63 @@
 #include "Radian.h"
 
 
-const uint32_t DirtyBitView = 1;
-const uint32_t DirtyBitProjection = 1 << 1;
-const uint32_t DirtyBitViewProjection = 1 << 2;
-const uint32_t DirtyBitInvView = 1 << 3;
-const uint32_t DirtyBitInvViewProjection = 1 << 4;
+const uint32_t ViewDirtyBit = 1;
+const uint32_t ProjectionDirtyBit = 1 << 1;
+const uint32_t ViewProjectionDirtyBit = 1 << 2;
+const uint32_t InvViewDirtyBit = 1 << 3;
+const uint32_t ViewProjectionDirtyBitInv = 1 << 4;
+const uint32_t AllProjectionDirtyBits = ProjectionDirtyBit | ViewProjectionDirtyBit | ViewProjectionDirtyBitInv;
 
 
 void Camera::setPerspective(bool perspective)
 {
     ortho = !perspective;
-    transformDirtyFlags |= DirtyBitProjection | DirtyBitViewProjection | DirtyBitInvViewProjection;
+    dirtyFlags |= AllProjectionDirtyBits;
 }
 
 
 void Camera::setFOV(const Radian &fov)
 {
     this->fov = fov;
-    transformDirtyFlags |= DirtyBitProjection | DirtyBitViewProjection | DirtyBitInvViewProjection;
+    dirtyFlags |= AllProjectionDirtyBits;
 }
 
 
-void Camera::setWidth(float width)
+void Camera::setOrthoSize(const Vector2 &size)
 {
-    this->width = width;
-    transformDirtyFlags |= DirtyBitProjection | DirtyBitViewProjection | DirtyBitInvViewProjection;
-}
-
-
-void Camera::setHeight(float height)
-{
-    this->height = height;
-    transformDirtyFlags |= DirtyBitProjection | DirtyBitViewProjection | DirtyBitInvViewProjection;
+    orthoSize = size;
+    dirtyFlags |= AllProjectionDirtyBits;
 }
 
 
 void Camera::setAspectRatio(float ratio)
 {
     aspectRatio = ratio;
-    transformDirtyFlags |= DirtyBitProjection | DirtyBitViewProjection | DirtyBitInvViewProjection;
+    dirtyFlags |= AllProjectionDirtyBits;
 }
 
 
-void Camera::setFar(float far)
+void Camera::setFarZ(float far)
 {
     this->farClip = far;
-    transformDirtyFlags |= DirtyBitProjection | DirtyBitViewProjection | DirtyBitInvViewProjection;
+    dirtyFlags |= AllProjectionDirtyBits;
 }
 
 
-void Camera::setNear(float near)
+void Camera::setNearZ(float near)
 {
     this->nearClip = near;
-    transformDirtyFlags |= DirtyBitProjection | DirtyBitViewProjection | DirtyBitInvViewProjection;
+    dirtyFlags |= AllProjectionDirtyBits;
 }
 
 
 auto Camera::getViewMatrix() const -> const TransformMatrix
 {
-    if (transformDirtyFlags & DirtyBitView)
+    if (dirtyFlags & ViewDirtyBit)
     {
         viewMatrix = transform.getWorldMatrix();
         viewMatrix.invert();
-        transformDirtyFlags &= ~DirtyBitView;
+        dirtyFlags &= ~ViewDirtyBit;
     }
     return viewMatrix;
 }
@@ -77,11 +71,11 @@ auto Camera::getViewMatrix() const -> const TransformMatrix
 
 auto Camera::getInvViewMatrix() const -> const TransformMatrix
 {
-    if (transformDirtyFlags & DirtyBitInvView)
+    if (dirtyFlags & InvViewDirtyBit)
     {
         invViewMatrix = getViewMatrix();
         invViewMatrix.invert();
-        transformDirtyFlags &= ~DirtyBitInvView;
+        dirtyFlags &= ~InvViewDirtyBit;
     }
     return invViewMatrix;
 }
@@ -89,13 +83,13 @@ auto Camera::getInvViewMatrix() const -> const TransformMatrix
 
 auto Camera::getProjectionMatrix() const -> const TransformMatrix
 {
-    if (transformDirtyFlags & DirtyBitProjection)
+    if (dirtyFlags & ProjectionDirtyBit)
     {
         if (ortho)
-            projectionMatrix = TransformMatrix::createOrthographic(width, height, nearClip, farClip);
+            projectionMatrix = TransformMatrix::createOrthographic(orthoSize.x, orthoSize.y, nearClip, farClip);
         else
             projectionMatrix = TransformMatrix::createPerspective(fov, aspectRatio, nearClip, farClip);
-        transformDirtyFlags &= ~DirtyBitProjection;
+        dirtyFlags &= ~ProjectionDirtyBit;
     }
     return projectionMatrix;
 }
@@ -103,10 +97,10 @@ auto Camera::getProjectionMatrix() const -> const TransformMatrix
 
 auto Camera::getViewProjectionMatrix() const -> const TransformMatrix
 {
-    if (transformDirtyFlags & DirtyBitViewProjection)
+    if (dirtyFlags & ViewProjectionDirtyBit)
     {
         viewProjectionMatrix = getProjectionMatrix() * getViewMatrix();
-        transformDirtyFlags &= ~DirtyBitViewProjection;
+        dirtyFlags &= ~ViewProjectionDirtyBit;
     }
     return viewProjectionMatrix;
 }
@@ -114,11 +108,11 @@ auto Camera::getViewProjectionMatrix() const -> const TransformMatrix
 
 auto Camera::getInvViewProjectionMatrix() const -> const TransformMatrix
 {
-    if (transformDirtyFlags & DirtyBitInvViewProjection)
+    if (dirtyFlags & ViewProjectionDirtyBitInv)
     {
         invViewProjectionMatrix = getViewProjectionMatrix();
         invViewProjectionMatrix.invert();
-        transformDirtyFlags &= ~DirtyBitInvViewProjection;
+        dirtyFlags &= ~ViewProjectionDirtyBitInv;
     }
     return invViewProjectionMatrix;
 }

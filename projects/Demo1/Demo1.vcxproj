@@ -162,6 +162,7 @@
     <ClCompile Include="..\..\src\Demo1\Ray.cpp" />
     <ClCompile Include="..\..\src\Demo1\Transform.cpp" />
     <ClCompile Include="..\..\src\Demo1\TransformMatrix.cpp" />
+    <ClCompile Include="..\..\src\Demo1\Vector2.cpp" />
     <ClCompile Include="..\..\src\Demo1\Vector3.cpp" />
     <ClCompile Include="..\..\src\Demo1\Vector4.cpp" />
   </ItemGroup>
@@ -179,6 +180,7 @@
     <ClInclude Include="..\..\src\Demo1\Ray.h" />
     <ClInclude Include="..\..\src\Demo1\Transform.h" />
     <ClInclude Include="..\..\src\Demo1\TransformMatrix.h" />
+    <ClInclude Include="..\..\src\Demo1\Vector2.h" />
     <ClInclude Include="..\..\src\Demo1\Vector3.h" />
     <ClInclude Include="..\..\src\Demo1\Vector4.h" />
   </ItemGroup>

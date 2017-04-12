@@ -127,8 +127,8 @@ int main()
     glDisable(GL_BLEND);
 
     Camera camera;
-    camera.setNear(0.1f);
-    camera.setFar(100);
+    camera.setNearZ(0.1f);
+    camera.setFarZ(100);
     camera.setAspectRatio(800.0f / 600);
     camera.getTransform().setLocalPosition({5, 5, 5});
     camera.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
