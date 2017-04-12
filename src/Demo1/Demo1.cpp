@@ -8,12 +8,11 @@
 #include "FileSystem.h"
 #include "Image.h"
 #include <SDL.h>
-#include <vector>
-#include <cassert>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <vector>
+#include <cassert>
 
 
 static const std::string vsSrc = R"(
