@@ -50,27 +50,12 @@ static const std::string fsSrc = R"(
 
 static auto getWvpMatrix(float time) -> glm::mat4
 {
-    auto projMat = glm::perspective(glm::degrees(60.0f), 800.0f / 600, 0.1f, 100.0f);
-    //auto viewMat = glm::lookAt(glm::vec3(glm::sin(time) * 5.0f, glm::sin(time + 1) * 5.0f, 5.0f), glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
-    //auto viewMat = glm::lookAt(glm::vec3(5, 5, 5), glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
-    auto cameraRot = glm::lookAt(glm::vec3(1, 1, 1), glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
-    auto q = glm::quat_cast(cameraRot);
-    auto modelPos = glm::mat4(1);
-    auto cameraPos = glm::translate(glm::mat4(1), {0, 0, 5});
-    auto viewMat = glm::inverse(glm::rotate(glm::mat4(1), glm::angle(q), glm::axis(q)) * cameraPos);
-    /*auto q = glm::quat_cast(viewMat);
-    auto matrix = glm::translate(glm::mat4(1.0f), {5, 5, 5});
-    matrix = glm::rotate(matrix, glm::angle(q), glm::axis(q));*/
-    return projMat * viewMat;
+    auto s = glm::sin(2 * time);
 
-    /*Camera cam;
-    cam.setFOV(glm::radians(60.0f));
-    cam.setAspectRatio(800.0f / 600);
-    cam.setNearZ(0.1f);
-    cam.setFarZ(100.0f);
-    cam.getTransform().setLocalPosition({5, 5, 5});
-    cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
-    return cam.getViewProjectionMatrix();*/
+    auto proj = glm::perspective(glm::degrees(60.0f), 800.0f / 600, 0.1f, 100.0f);
+    auto view = glm::rotate(glm::lookAt(glm::vec3(5, 5, 5), {0, 0, 0}, {0, 1, 0}), s, glm::vec3(0, 0, 1));
+    auto model = glm::rotate(glm::mat4(1), 0.0f, {0, 1, 0});
+    return proj * view * model;
 }
 
 
