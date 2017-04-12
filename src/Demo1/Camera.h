@@ -5,12 +5,8 @@
 
 #pragma once
 
-#include "Vector2.h"
-#include "Vector4.h"
 #include "Transform.h"
 #include "TransformMatrix.h"
-#include "Radian.h"
-#include "Degree.h"
 #include <glm/trigonometric.hpp>
 #include <cstdint>
 
