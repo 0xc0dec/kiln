@@ -6,6 +6,7 @@
 #pragma once
 
 #include <SDL.h>
+#include <functional>
 
 class OpenGLWindow final
 {
@@ -13,7 +14,7 @@ public:
     OpenGLWindow(uint32_t canvasWidth, uint32_t canvasHeight);
     ~OpenGLWindow();
 
-    auto getWindow() const -> SDL_Window*;
+    void loop(std::function<void(float, float)> update);
 
 private:
     SDL_Window* window = nullptr;
@@ -21,8 +22,3 @@ private:
 
     void cleanup();
 };
-
-inline auto OpenGLWindow::getWindow() const -> SDL_Window*
-{
-    return window;
-}

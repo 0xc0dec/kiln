@@ -7,6 +7,22 @@
 #include <GL/glew.h>
 
 
+static bool shouldClose(SDL_Event evt)
+{
+    switch (evt.type)
+    {
+        case SDL_QUIT:
+            return true;
+        case SDL_WINDOWEVENT:
+            return evt.window.event == SDL_WINDOWEVENT_CLOSE;
+        case SDL_KEYUP:
+            return evt.key.keysym.sym == SDLK_ESCAPE;
+        default:
+            return false;
+    }
+}
+
+
 OpenGLWindow::OpenGLWindow(uint32_t canvasWidth, uint32_t canvasHeight)
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS);
@@ -34,6 +50,31 @@ OpenGLWindow::OpenGLWindow(uint32_t canvasWidth, uint32_t canvasHeight)
 OpenGLWindow::~OpenGLWindow()
 {
     cleanup();
+}
+
+
+void OpenGLWindow::loop(std::function<void(float, float)> update)
+{
+    auto run = true;
+    auto lastTime = 0.0f;
+
+    while (run)
+    {
+        SDL_Event evt;
+        while (SDL_PollEvent(&evt))
+        {
+            if (run)
+                run = !shouldClose(evt);
+        }
+
+        auto time = SDL_GetTicks() / 1000.0f;
+        auto dt = time - lastTime;
+        lastTime = time;
+
+        update(dt, time);
+
+        SDL_GL_SwapWindow(window);
+    }
 }
 
 

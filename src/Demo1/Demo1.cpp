@@ -16,26 +16,41 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
-static bool shouldClose(SDL_Event evt)
-{
-    switch (evt.type)
+static const std::string vsSrc = R"(
+    #version 330 core
+
+    layout (location = 0) in vec4 position;
+    layout (location = 1) in vec2 texCoord0;
+
+    uniform mat4 worldViewProjMatrix;
+    out vec2 uv0;
+
+    void main()
     {
-        case SDL_QUIT:
-            return true;
-        case SDL_WINDOWEVENT:
-            return evt.window.event == SDL_WINDOWEVENT_CLOSE;
-        case SDL_KEYUP:
-            return evt.key.keysym.sym == SDLK_ESCAPE;
-        default:
-            return false;
+        gl_Position = worldViewProjMatrix * position;
+        uv0 = texCoord0;
     }
-}
+)";
+
+static const std::string fsSrc = R"(
+    #version 330 core
+
+    uniform sampler2D mainTex;
+
+    in vec2 uv0;
+    out vec4 fragColor;
+
+    void main()
+    {
+        fragColor = texture(mainTex, uv0);
+    }
+)";
 
 
 static auto getWvpMatrix(float time) -> glm::mat4
 {
     auto projMat = glm::perspective(glm::degrees(60.0f), 800.0f / 600, 0.1f, 100.0f);
-    auto viewMat = glm::lookAt(glm::vec3(glm::sin(time) * 5.0f, 5.0f, 5.0f), glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
+    auto viewMat = glm::lookAt(glm::vec3(glm::sin(time) * 5.0f, glm::sin(time + 1) * 5.0f, 5.0f), glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
     return projMat * viewMat;
 }
 
@@ -76,36 +91,6 @@ int main()
 
     glBindVertexArray(0);
 
-    std::string vsSrc = R"(
-        #version 330 core
-
-        layout (location = 0) in vec4 position;
-        layout (location = 1) in vec2 texCoord0;
-
-        uniform mat4 worldViewProjMatrix;
-        out vec2 uv0;
-
-        void main()
-        {
-            gl_Position = worldViewProjMatrix * position;
-            uv0 = texCoord0;
-        }
-    )";
-
-    std::string fsSrc = R"(
-        #version 330 core
-
-        uniform sampler2D mainTex;
-
-        in vec2 uv0;
-        out vec4 fragColor;
-
-        void main()
-        {
-            fragColor = texture(mainTex, uv0);
-        }
-    )";
-
     auto program = gl::createShaderProgram(vsSrc.c_str(), vsSrc.size(), fsSrc.c_str(), fsSrc.size());
     glUseProgram(program);
 
@@ -143,18 +128,8 @@ int main()
     glDisable(GL_BLEND);
     glViewport(0, 0, 800, 600);
 
-    auto run = true;
-    while (run)
+    window.loop([=](auto dt, auto time)
     {
-        SDL_Event evt;
-        while (SDL_PollEvent(&evt))
-        {
-            if (run)
-                run = !shouldClose(evt);
-        }
-
-        auto time = SDL_GetTicks() / 1000.0f;
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         auto wvpMat = getWvpMatrix(time);
@@ -165,9 +140,7 @@ int main()
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
-
-        SDL_GL_SwapWindow(window.getWindow());
-    }
+    });
 
     glDeleteVertexArrays(1, &vertexArray);
     glDeleteBuffers(1, &vertexBuffer);
