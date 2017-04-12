@@ -61,7 +61,7 @@ auto Camera::getViewMatrix() const -> const glm::mat4
 {
     if (dirtyFlags & ViewDirtyBit)
     {
-        viewMatrix = transform.getWorldMatrix();
+        viewMatrix = glm::inverse(transform.getWorldMatrix());
         dirtyFlags &= ~ViewDirtyBit;
     }
     return viewMatrix;

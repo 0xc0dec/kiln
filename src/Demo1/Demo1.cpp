@@ -52,10 +52,24 @@ static auto getWvpMatrix(float time) -> glm::mat4
 {
     auto s = glm::sin(2 * time);
 
-    auto proj = glm::perspective(glm::degrees(60.0f), 800.0f / 600, 0.1f, 100.0f);
-    auto view = glm::rotate(glm::lookAt(glm::vec3(5, 5, 5), {0, 0, 0}, {0, 1, 0}), s, glm::vec3(0, 0, 1));
-    auto model = glm::rotate(glm::mat4(1), 0.0f, {0, 1, 0});
-    return proj * view * model;
+    Transform camParent;
+
+    Camera cam;
+    cam.setFOV(glm::degrees(60.0f));
+    cam.setAspectRatio(800.0f / 600);
+    cam.setNearZ(.1f);
+    cam.setFarZ(100.0f);
+
+    cam.getTransform().setParent(&camParent);
+    cam.getTransform().setLocalPosition({0, 4, 10});
+    cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
+
+    Transform transform;
+    transform.setLocalRotation(glm::angleAxis(time, glm::vec3(1, 0, 0)));
+
+    camParent.setLocalRotation(glm::angleAxis(time, glm::vec3(0, 1, 0)));
+
+    return transform.getWorldViewProjMatrix(cam);
 }
 
 

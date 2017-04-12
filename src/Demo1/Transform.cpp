@@ -172,7 +172,7 @@ void Transform::setLocalScale(const glm::vec3 &scale)
 
 void Transform::lookAt(const glm::vec3 &target, const glm::vec3 &up)
 {
-    auto localTarget = glm::vec4(target, 0);
+    auto localTarget = glm::vec4(target, 1);
     auto localUp = glm::vec4(up, 0);
 
     if (parent)
@@ -182,9 +182,7 @@ void Transform::lookAt(const glm::vec3 &target, const glm::vec3 &up)
         localUp = m * localUp;
     }
 
-    auto lookAtMatrix = glm::lookAt(localPosition, glm::vec3(localTarget), glm::vec3(localUp));
-    auto x = glm::lookAt(glm::vec3(5, 5, 5), {0, 0, 0}, {0, 1, 0});
-    auto q = glm::quat_cast(lookAtMatrix);
+    auto lookAtMatrix = glm::inverse(glm::lookAt(localPosition, glm::vec3(localTarget), glm::vec3(localUp)));
     setLocalRotation(glm::quat_cast(lookAtMatrix));
 }
 
