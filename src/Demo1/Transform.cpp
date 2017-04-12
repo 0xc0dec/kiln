@@ -8,25 +8,6 @@
 #include <algorithm>
 
 
-void Transform::notifyChanged(uint32_t dirtyFlags) const
-{
-    for (auto callback : callbacks)
-        callback->onTransformChanged(this, dirtyFlags);
-}
-
-
-void Transform::addCallback(TransformCallback *callback)
-{
-    callbacks.push_back(callback);
-}
-
-
-void Transform::removeCallback(TransformCallback *callback)
-{
-    callbacks.erase(std::remove(callbacks.begin(), callbacks.end(), callback), callbacks.end());
-}
-
-
 void Transform::setParent(Transform *parent)
 {
     if (parent == this || parent == this->parent)
@@ -243,7 +224,6 @@ void Transform::setLocalPosition(const Vector3 &position)
 void Transform::setDirtyWithChildren(uint32_t flags) const
 {
     dirtyFlags |= flags;
-    notifyChanged(flags);
     for (auto child : children)
         child->setDirtyWithChildren(flags);
 }

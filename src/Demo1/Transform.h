@@ -11,7 +11,6 @@
 #include <vector>
 
 class Camera;
-class TransformCallback;
 class Transform;
 struct Radian;
 
@@ -20,16 +19,6 @@ enum class TransformSpace
     Self,
     Parent,
     World
-};
-
-class TransformCallback
-{
-public:
-    virtual ~TransformCallback()
-    {
-    }
-
-    virtual void onTransformChanged(const Transform* transform, uint32_t dirtyFlags) = 0;
 };
 
 // NB Using struct with consts instead of class enums
@@ -46,9 +35,6 @@ struct TransformDirtyFlags final
 class Transform final
 {
 public:
-    void addCallback(TransformCallback* callback);
-    void removeCallback(TransformCallback* callback);
-
     void setParent(Transform* parent);
     auto getParent() const -> Transform*;
 
@@ -112,7 +98,6 @@ private:
 
     Transform* parent = nullptr;
     std::vector<Transform *> children;
-    std::vector<TransformCallback *> callbacks;
 
     Vector3 localPosition;
     Vector3 localScale = Vector3::unit();
@@ -123,7 +108,6 @@ private:
 
     void setDirtyWithChildren(uint32_t flags) const;
     void setChildrenDirty(uint32_t flags) const;
-    void notifyChanged(uint32_t dirtyFlags) const;
 };
 
 inline auto Transform::getLocalPosition() const -> Vector3
