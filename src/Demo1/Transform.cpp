@@ -5,7 +5,10 @@
 
 #include "Transform.h"
 #include "Camera.h"
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/matrix_transform.inl>
 #include <algorithm>
+#include "Math.h"
 
 
 void Transform::setParent(Transform *parent)
@@ -34,37 +37,38 @@ void Transform::clearChildren()
 }
 
 
-auto Transform::getMatrix() const -> TransformMatrix
+auto Transform::getMatrix() const -> glm::mat4
 {
     auto dirty = dirtyFlags & TransformDirtyFlags::Position ||
                  dirtyFlags & TransformDirtyFlags::Rotation ||
                  dirtyFlags & TransformDirtyFlags::Scale;
     if (dirty)
     {
-        if (dirtyFlags & TransformDirtyFlags::Position || !localPosition.isZero())
+        if (dirtyFlags & TransformDirtyFlags::Position || !math::isZero(localPosition))
         {
-            matrix = TransformMatrix::createTranslation(localPosition);
-            if (dirtyFlags & TransformDirtyFlags::Rotation || !localRotation.isIdentity())
-                matrix.rotateByQuaternion(localRotation);
-            if (dirtyFlags & TransformDirtyFlags::Scale || !localScale.isUnit())
-                matrix.scaleByVector(localScale);
+            matrix = glm::translate(glm::mat4(1.0f), localPosition);
+            if (dirtyFlags & TransformDirtyFlags::Rotation || !math::isIdentity(localRotation))
+                matrix = glm::rotate(matrix, glm::angle(localRotation), glm::axis(localRotation));
+            if (dirtyFlags & TransformDirtyFlags::Scale || !math::isUnit(localScale))
+                matrix = glm::scale(matrix, localScale);
         }
-        else if (dirtyFlags & TransformDirtyFlags::Rotation || !localRotation.isIdentity())
+        else if (dirtyFlags & TransformDirtyFlags::Rotation || !math::isIdentity(localRotation))
         {
-            matrix = TransformMatrix::createRotationFromQuaternion(localRotation);
-            if (dirtyFlags & TransformDirtyFlags::Scale || !localScale.isUnit())
-                matrix.scaleByVector(localScale);
+            matrix = glm::rotate(glm::mat4(1.0f), glm::angle(localRotation), glm::axis(localRotation));
+            if (dirtyFlags & TransformDirtyFlags::Scale || !math::isUnit(localScale))
+                matrix = glm::scale(matrix, localScale);
         }
-        else if (dirtyFlags & TransformDirtyFlags::Scale || !localScale.isUnit())
-            matrix = TransformMatrix::createScale(localScale);
+        else if (dirtyFlags & TransformDirtyFlags::Scale || !math::isUnit(localScale))
+            matrix = glm::scale(glm::mat4(1.0f), localScale);
 
         dirtyFlags &= ~(TransformDirtyFlags::Position | TransformDirtyFlags::Rotation | TransformDirtyFlags::Scale);
     }
+
     return matrix;
 }
 
 
-auto Transform::getWorldMatrix() const -> TransformMatrix
+auto Transform::getWorldMatrix() const -> glm::mat4
 {
     if (dirtyFlags & TransformDirtyFlags::World)
     {
@@ -74,36 +78,37 @@ auto Transform::getWorldMatrix() const -> TransformMatrix
             worldMatrix = getMatrix();
         dirtyFlags &= ~TransformDirtyFlags::World;
     }
+
     return worldMatrix;
 }
 
 
-auto Transform::getInvTransposedWorldMatrix() const -> TransformMatrix
+auto Transform::getInvTransposedWorldMatrix() const -> glm::mat4
 {
     if (dirtyFlags & TransformDirtyFlags::InvTransposedWorld)
     {
         invTransposedWorldMatrix = getWorldMatrix();
-        invTransposedWorldMatrix.invert();
-        invTransposedWorldMatrix.transpose();
+        invTransposedWorldMatrix = glm::transpose(glm::inverse(invTransposedWorldMatrix));
         dirtyFlags &= ~TransformDirtyFlags::InvTransposedWorld;
     }
+
     return invTransposedWorldMatrix;
 }
 
 
-auto Transform::getWorldViewMatrix(const Camera &camera) const -> TransformMatrix
+auto Transform::getWorldViewMatrix(const Camera &camera) const -> glm::mat4
 {
     return camera.getViewMatrix() * getWorldMatrix();
 }
 
 
-auto Transform::getWorldViewProjMatrix(const Camera &camera) const -> TransformMatrix
+auto Transform::getWorldViewProjMatrix(const Camera &camera) const -> glm::mat4
 {
     return camera.getViewProjectionMatrix() * getWorldMatrix();
 }
 
 
-auto Transform::getInvTransposedWorldViewMatrix(const Camera &camera) const -> TransformMatrix
+auto Transform::getInvTransposedWorldViewMatrix(const Camera &camera) const -> glm::mat4
 {
     auto result = camera.getViewMatrix() * getWorldMatrix();
     result.invert();
@@ -112,17 +117,16 @@ auto Transform::getInvTransposedWorldViewMatrix(const Camera &camera) const -> T
 }
 
 
-void Transform::translateLocal(const Vector3 &translation)
+void Transform::translateLocal(const glm::vec3 &translation)
 {
     localPosition += translation;
     setDirtyWithChildren(TransformDirtyFlags::Position | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
 }
 
 
-void Transform::rotate(const Quaternion &rotation, TransformSpace space)
+void Transform::rotate(const glm::quat &rotation, TransformSpace space)
 {
-    auto normalizedRotation(const_cast<Quaternion &>(rotation));
-    normalizedRotation.normalize();
+    auto normalizedRotation = glm::normalize(rotation);
 
     switch (space)
     {
@@ -134,8 +138,7 @@ void Transform::rotate(const Quaternion &rotation, TransformSpace space)
             break;
         case TransformSpace::World:
         {
-            auto invWorldRotation = getWorldRotation();
-            invWorldRotation.inverse();
+            auto invWorldRotation = glm::inverse(getWorldRotation());
             localRotation = localRotation * invWorldRotation * normalizedRotation * getWorldRotation();
             break;
         }
@@ -147,9 +150,9 @@ void Transform::rotate(const Quaternion &rotation, TransformSpace space)
 }
 
 
-void Transform::rotateByAxisAngle(const Vector3 &axis, const Radian &angle, TransformSpace space)
+void Transform::rotateByAxisAngle(const glm::vec3 &axis, float angle, TransformSpace space)
 {
-    auto rotation = Quaternion::createFromAxisAngle(axis, angle);
+    auto rotation = glm::angleAxis(angle, axis);
     rotate(rotation, space);
 }
 

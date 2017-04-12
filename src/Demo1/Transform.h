@@ -6,13 +6,12 @@
 #pragma once
 
 #include "TransformMatrix.h"
-#include "Vector3.h"
-#include "Quaternion.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <vector>
 
 class Camera;
 class Transform;
-struct Radian;
 
 enum class TransformSpace
 {
@@ -35,147 +34,147 @@ struct TransformDirtyFlags final
 class Transform final
 {
 public:
-    void setParent(Transform* parent);
+    void setParent(Transform *parent);
     auto getParent() const -> Transform*;
 
     auto getChild(uint32_t index) const -> Transform*;
     auto getChildrenCount() const -> uint32_t;
     void clearChildren();
 
-    auto getWorldScale() const -> Vector3;
-    auto getLocalScale() const -> Vector3;
+    auto getWorldScale() const -> glm::vec3;
+    auto getLocalScale() const -> glm::vec3;
 
-    auto getWorldRotation() const -> Quaternion;
-    auto getLocalRotation() const -> Quaternion;
+    auto getWorldRotation() const -> glm::quat;
+    auto getLocalRotation() const -> glm::quat;
 
-    auto getWorldPosition() const -> Vector3;
-    auto getLocalPosition() const -> Vector3;
+    auto getWorldPosition() const -> glm::vec3;
+    auto getLocalPosition() const -> glm::vec3;
 
-    auto getWorldUp() const -> Vector3;
-    auto getLocalUp() const -> Vector3;
+    auto getWorldUp() const -> glm::vec3;
+    auto getLocalUp() const -> glm::vec3;
 
-    auto getWorldDown() const -> Vector3;
-    auto getLocalDown() const -> Vector3;
+    auto getWorldDown() const -> glm::vec3;
+    auto getLocalDown() const -> glm::vec3;
 
-    auto getWorldLeft() const -> Vector3;
-    auto getLocalLeft() const -> Vector3;
+    auto getWorldLeft() const -> glm::vec3;
+    auto getLocalLeft() const -> glm::vec3;
 
-    auto getWorldRight() const -> Vector3;
-    auto getLocalRight() const -> Vector3;
+    auto getWorldRight() const -> glm::vec3;
+    auto getLocalRight() const -> glm::vec3;
 
-    auto getWorldForward() const -> Vector3;
-    auto getLocalForward() const -> Vector3;
+    auto getWorldForward() const -> glm::vec3;
+    auto getLocalForward() const -> glm::vec3;
 
-    auto getWorldBack() const -> Vector3;
-    auto getLocalBack() const -> Vector3;
+    auto getWorldBack() const -> glm::vec3;
+    auto getLocalBack() const -> glm::vec3;
 
-    void translateLocal(const Vector3& translation);
-    void scaleLocal(const Vector3& scale);
+    void translateLocal(const glm::vec3 &translation);
+    void scaleLocal(const glm::vec3 &scale);
 
-    void setLocalPosition(const Vector3& position);
-    void setLocalScale(const Vector3& scale);
+    void setLocalPosition(const glm::vec3 &position);
+    void setLocalScale(const glm::vec3 &scale);
 
-    void rotate(const Quaternion& rotation, TransformSpace space = TransformSpace::Self);
-    void rotateByAxisAngle(const Vector3& axis, const Radian& angle, TransformSpace space = TransformSpace::Self);
+    void rotate(const glm::quat &rotation, TransformSpace space = TransformSpace::Self);
+    void rotateByAxisAngle(const glm::vec3 &axis, float angle, TransformSpace space = TransformSpace::Self);
 
-    void setLocalRotation(const Quaternion& rotation);
-    void setLocalAxisAngleRotation(const Vector3& axis, const Radian& angle);
+    void setLocalRotation(const glm::quat &rotation);
+    void setLocalAxisAngleRotation(const glm::vec3 &axis, float angle);
 
-    void lookAt(const Vector3& target, const Vector3& up);
+    void lookAt(const glm::vec3 &target, const glm::vec3 &up);
 
-    auto getMatrix() const -> TransformMatrix;
-    auto getWorldMatrix() const -> TransformMatrix;
-    auto getInvTransposedWorldMatrix() const -> TransformMatrix;
-    auto getWorldViewMatrix(const Camera &camera) const -> TransformMatrix;
-    auto getWorldViewProjMatrix(const Camera &camera) const -> TransformMatrix;
-    auto getInvTransposedWorldViewMatrix(const Camera &camera) const -> TransformMatrix;
+    auto getMatrix() const -> glm::mat4;
+    auto getWorldMatrix() const -> glm::mat4;
+    auto getInvTransposedWorldMatrix() const -> glm::mat4;
+    auto getWorldViewMatrix(const Camera &camera) const -> glm::mat4;
+    auto getWorldViewProjMatrix(const Camera &camera) const -> glm::mat4;
+    auto getInvTransposedWorldViewMatrix(const Camera &camera) const -> glm::mat4;
 
-    auto transformPoint(const Vector3& point) const -> Vector3;
-    auto transformDirection(const Vector3& direction) const -> Vector3;
+    auto transformPoint(const glm::vec3 &point) const -> glm::vec3;
+    auto transformDirection(const glm::vec3 &direction) const -> glm::vec3;
 
 private:
     mutable uint32_t dirtyFlags = ~0;
 
-    Transform* parent = nullptr;
+    Transform *parent = nullptr;
     std::vector<Transform *> children;
 
-    Vector3 localPosition;
-    Vector3 localScale = Vector3::unit();
-    Quaternion localRotation;
-    mutable TransformMatrix matrix;
-    mutable TransformMatrix worldMatrix;
-    mutable TransformMatrix invTransposedWorldMatrix;
+    glm::vec3 localPosition;
+    glm::vec3 localScale{1, 1, 1};
+    glm::quat localRotation;
+    mutable glm::mat4 matrix;
+    mutable glm::mat4 worldMatrix;
+    mutable glm::mat4 invTransposedWorldMatrix;
 
     void setDirtyWithChildren(uint32_t flags) const;
     void setChildrenDirty(uint32_t flags) const;
 };
 
-inline auto Transform::getLocalPosition() const -> Vector3
+inline auto Transform::getLocalPosition() const -> glm::vec3
 {
     return localPosition;
 }
 
-inline auto Transform::getWorldPosition() const -> Vector3
+inline auto Transform::getWorldPosition() const -> glm::vec3
 {
     return getWorldMatrix().getTranslation();
 }
 
-inline auto Transform::getWorldUp() const -> Vector3
+inline auto Transform::getWorldUp() const -> glm::vec3
 {
     return getWorldMatrix().getUpVector();
 }
 
-inline auto Transform::getLocalUp() const -> Vector3
+inline auto Transform::getLocalUp() const -> glm::vec3
 {
     return getMatrix().getUpVector();
 }
 
-inline auto Transform::getWorldDown() const -> Vector3
+inline auto Transform::getWorldDown() const -> glm::vec3
 {
     return getWorldMatrix().getDownVector();
 }
 
-inline auto Transform::getLocalDown() const -> Vector3
+inline auto Transform::getLocalDown() const -> glm::vec3
 {
     return getMatrix().getDownVector();
 }
 
-inline auto Transform::getWorldLeft() const -> Vector3
+inline auto Transform::getWorldLeft() const -> glm::vec3
 {
     return getWorldMatrix().getLeftVector();
 }
 
-inline auto Transform::getLocalLeft() const -> Vector3
+inline auto Transform::getLocalLeft() const -> glm::vec3
 {
     return getMatrix().getLeftVector();
 }
 
-inline auto Transform::getWorldRight() const -> Vector3
+inline auto Transform::getWorldRight() const -> glm::vec3
 {
     return getWorldMatrix().getRightVector();
 }
 
-inline auto Transform::getLocalRight() const -> Vector3
+inline auto Transform::getLocalRight() const -> glm::vec3
 {
     return getMatrix().getRightVector();
 }
 
-inline auto Transform::getWorldForward() const -> Vector3
+inline auto Transform::getWorldForward() const -> glm::vec3
 {
     return getWorldMatrix().getForwardVector();
 }
 
-inline auto Transform::getLocalForward() const -> Vector3
+inline auto Transform::getLocalForward() const -> glm::vec3
 {
     return getMatrix().getForwardVector();
 }
 
-inline auto Transform::getWorldBack() const -> Vector3
+inline auto Transform::getWorldBack() const -> glm::vec3
 {
     return getWorldMatrix().getBackVector();
 }
 
-inline auto Transform::getLocalBack() const -> Vector3
+inline auto Transform::getLocalBack() const -> glm::vec3
 {
     return getMatrix().getBackVector();
 }
@@ -185,34 +184,32 @@ inline auto Transform::getChildrenCount() const -> uint32_t
     return static_cast<uint32_t>(children.size());
 }
 
-inline auto Transform::getLocalScale() const -> Vector3
+inline auto Transform::getLocalScale() const -> glm::vec3
 {
     return localScale;
 }
 
-inline auto Transform::getWorldRotation() const -> Quaternion
+inline auto Transform::getWorldRotation() const -> glm::quat
 {
     return getWorldMatrix().getRotation();
 }
 
-inline auto Transform::getWorldScale() const -> Vector3
+inline auto Transform::getWorldScale() const -> glm::vec3
 {
     return getWorldMatrix().getScale();
 }
 
-inline auto Transform::getLocalRotation() const -> Quaternion
+inline auto Transform::getLocalRotation() const -> glm::quat
 {
     return localRotation;
 }
 
 inline auto Transform::getParent() const -> Transform*
-    
 {
     return parent;
 }
 
 inline auto Transform::getChild(uint32_t index) const -> Transform*
-    
 {
     return children[index];
 }
