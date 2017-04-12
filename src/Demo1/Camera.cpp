@@ -11,8 +11,8 @@ const uint32_t ViewDirtyBit = 1;
 const uint32_t ProjectionDirtyBit = 1 << 1;
 const uint32_t ViewProjectionDirtyBit = 1 << 2;
 const uint32_t InvViewDirtyBit = 1 << 3;
-const uint32_t ViewProjectionDirtyBitInv = 1 << 4;
-const uint32_t AllProjectionDirtyBits = ProjectionDirtyBit | ViewProjectionDirtyBit | ViewProjectionDirtyBitInv;
+const uint32_t InvViewProjectionDirtyBit = 1 << 4;
+const uint32_t AllProjectionDirtyBits = ProjectionDirtyBit | ViewProjectionDirtyBit | InvViewProjectionDirtyBit;
 
 
 void Camera::setPerspective(bool perspective)
@@ -108,11 +108,11 @@ auto Camera::getViewProjectionMatrix() const -> const TransformMatrix
 
 auto Camera::getInvViewProjectionMatrix() const -> const TransformMatrix
 {
-    if (dirtyFlags & ViewProjectionDirtyBitInv)
+    if (dirtyFlags & InvViewProjectionDirtyBit)
     {
         invViewProjectionMatrix = getViewProjectionMatrix();
         invViewProjectionMatrix.invert();
-        dirtyFlags &= ~ViewProjectionDirtyBitInv;
+        dirtyFlags &= ~InvViewProjectionDirtyBit;
     }
     return invViewProjectionMatrix;
 }
