@@ -11,6 +11,8 @@ public:
     void beginUpdate(SDL_Window *window);
     void processEvent(const SDL_Event &evt);
 
+    void setCursorCaptured(bool captured);
+
     bool isKeyPressed(SDL_Keycode code, bool firstTime = false) const;
     bool isKeyReleased(SDL_Keycode code) const;
 

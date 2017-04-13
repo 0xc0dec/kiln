@@ -8,6 +8,12 @@ void Input::processEvent(const SDL_Event &evt)
 }
 
 
+void Input::setCursorCaptured(bool captured)
+{
+    SDL_SetRelativeMouseMode(captured ? SDL_TRUE : SDL_FALSE);
+}
+
+
 void Input::prepareMouseState()
 {
     mouseDeltaX = mouseDeltaY = 0;
