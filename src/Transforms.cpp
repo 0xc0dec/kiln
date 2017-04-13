@@ -108,6 +108,7 @@ static auto initTexture(const img::Image &image) -> GLuint
 }
 
 
+// TODO more complex transform hierarchies
 int main()
 {
     OpenGLWindow window(800, 600);
