@@ -15,6 +15,31 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
+static const char *meshVs = R"(
+    #version 330 core
+
+    layout (location = 0) in vec4 position;
+
+    uniform mat4 projMatrix;
+    uniform mat4 worldViewMatrix;
+
+    void main()
+    {
+        gl_Position = projMatrix * worldViewMatrix * position;
+    }
+)";
+
+static const char *meshFs = R"(
+    #version 330 core
+
+    out vec4 fragColor;
+
+    void main()
+    {
+        fragColor = vec4(0.0, 1.0, 0.0, 1.0);
+    }
+)";
+
 static const char *skyboxVs = R"(
     #version 330 core
 
@@ -49,7 +74,7 @@ static const char *skyboxFs = R"(
 )";
 
 
-static const std::vector<float> vertices =
+static const std::vector<float> quadVertices =
 {
     -1, -1, 0, 0, 0,
     -1, 1, 0, 0, 1,
@@ -57,7 +82,7 @@ static const std::vector<float> vertices =
     1, -1, 0, 1, 0
 };
 
-static const std::vector<uint16_t> indices =
+static const std::vector<uint16_t> quadIndices =
 {
     0, 1, 2,
     0, 2, 3
@@ -85,11 +110,26 @@ static auto initVertexArray(GLuint vertexBuffer) -> GLuint
 }
 
 
-static auto initTexture(
-    const img::Image &frontImg, const img::Image &backImg,
-    const img::Image &leftImg, const img::Image &rightImg,
-    const img::Image &topImg, const img::Image &bottomImg) -> GLuint
+static auto initTexture() -> GLuint
 {
+    auto frontImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Front.png");
+    auto frontImg = img::loadPNG(frontImgBytes);
+
+    auto backImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Back.png");
+    auto backImg = img::loadPNG(backImgBytes);
+
+    auto leftImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Left.png");
+    auto leftImg = img::loadPNG(leftImgBytes);
+
+    auto rightImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Right.png");
+    auto rightImg = img::loadPNG(rightImgBytes);
+
+    auto topImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Top.png");
+    auto topImg = img::loadPNG(topImgBytes);
+
+    auto bottomImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Bottom.png");
+    auto bottomImg = img::loadPNG(bottomImgBytes);
+
     GLuint handle = 0;
     glGenTextures(1, &handle);
     assert(handle);
@@ -124,65 +164,64 @@ int main()
 {
     OpenGLWindow window(800, 600);
 
-    // Shader
-    auto shaderProgram = gl::createShaderProgram(skyboxVs, strlen(skyboxVs), skyboxFs, strlen(skyboxFs));
-    glUseProgram(shaderProgram);
+    // Shaders
+    auto skyboxShaderProgram = gl::createShaderProgram(skyboxVs, strlen(skyboxVs), skyboxFs, strlen(skyboxFs));
+    glUseProgram(skyboxShaderProgram);
 
-    // Textures
-    auto frontImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Front.png");
-    auto frontImg = img::loadPNG(frontImgBytes);
+    auto quadShaderProgram = gl::createShaderProgram(meshVs, strlen(meshVs), meshFs, strlen(meshFs));
 
-    auto backImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Back.png");
-    auto backImg = img::loadPNG(backImgBytes);
-
-    auto leftImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Left.png");
-    auto leftImg = img::loadPNG(leftImgBytes);
-
-    auto rightImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Right.png");
-    auto rightImg = img::loadPNG(rightImgBytes);
-
-    auto topImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Top.png");
-    auto topImg = img::loadPNG(topImgBytes);
-
-    auto bottomImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Bottom.png");
-    auto bottomImg = img::loadPNG(bottomImgBytes);
-
-    auto texture = initTexture(frontImg, backImg, leftImg, rightImg, topImg, bottomImg);
+    // Texture
+    auto texture = initTexture();
     glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
     glActiveTexture(GL_TEXTURE0);
-    glUniform1i(glGetUniformLocation(shaderProgram, "mainTex"), 0);
+    glUniform1i(glGetUniformLocation(skyboxShaderProgram, "mainTex"), 0);
 
     // Mesh
-    auto vertexBuffer = gl::createVertexBuffer(vertices.data(), 4, 5);
-    auto indexBuffer = gl::createIndexBuffer(indices.data(), 6);
+    auto vertexBuffer = gl::createVertexBuffer(quadVertices.data(), 4, 5);
+    auto indexBuffer = gl::createIndexBuffer(quadIndices.data(), 6);
     auto vertexArray = initVertexArray(vertexBuffer);
     glBindVertexArray(vertexArray);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 
     // Some pipeline configuration
-    glDepthMask(GL_TRUE);
-    glEnable(GL_DEPTH_TEST);
     glClearColor(0, 0.8, 0.8, 1);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_BLEND);
     glViewport(0, 0, 800, 600);
 
     Camera cam;
-    cam.setPerspective(glm::degrees(60.0f), 800.0f / 600, 0.1f, 100.0f);
+    cam.setPerspective(glm::degrees(60.0f), 800.0f / 600, 0.1f, 100.0f)
+       .getTransform().setLocalPosition({4, 4, 10}).lookAt({0, 0, 0}, {0, 1, 0});
 
-    auto projMatrixUniform = glGetUniformLocation(shaderProgram, "projMatrix");
-    auto worldViewMatrixUniform = glGetUniformLocation(shaderProgram, "worldViewMatrix");
+    glUseProgram(skyboxShaderProgram);
+    auto skyboxProjMatrixUniform = glGetUniformLocation(skyboxShaderProgram, "projMatrix");
+    auto skyboxWorldViewMatrixUniform = glGetUniformLocation(skyboxShaderProgram, "worldViewMatrix");
+
+    glUseProgram(quadShaderProgram);
+    auto quadProjMatrixUniform = glGetUniformLocation(quadShaderProgram, "projMatrix");
+    auto quadWorldViewMatrixUniform = glGetUniformLocation(quadShaderProgram, "worldViewMatrix");
 
     window.loop([&](auto dt, auto time)
     {
         updateSpectator(cam.getTransform(), window.getInput(), dt);
 
         auto projMatrix = cam.getProjectionMatrix();
-        auto worldViewMatrix = Transform().getWorldViewMatrix(cam); // TODO replace with cam.getViewMatrix()
-        glUniformMatrix4fv(projMatrixUniform, 1, GL_FALSE, glm::value_ptr(projMatrix));
-        glUniformMatrix4fv(worldViewMatrixUniform, 1, GL_FALSE, glm::value_ptr(worldViewMatrix));
-
+        auto worldViewMatrix = cam.getViewMatrix(); // world matrix is identity anyway
+        
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glDepthMask(GL_FALSE);
+        glDisable(GL_DEPTH_TEST);
+        glUseProgram(skyboxShaderProgram);
+        glUniformMatrix4fv(skyboxProjMatrixUniform, 1, GL_FALSE, glm::value_ptr(projMatrix));
+        glUniformMatrix4fv(skyboxWorldViewMatrixUniform, 1, GL_FALSE, glm::value_ptr(worldViewMatrix));
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glUseProgram(quadShaderProgram);
+        glUniformMatrix4fv(quadProjMatrixUniform, 1, GL_FALSE, glm::value_ptr(projMatrix));
+        glUniformMatrix4fv(quadWorldViewMatrixUniform, 1, GL_FALSE, glm::value_ptr(worldViewMatrix));
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
     });
 
@@ -190,7 +229,8 @@ int main()
     glDeleteBuffers(1, &vertexBuffer);
     glDeleteBuffers(1, &indexBuffer);
     glDeleteTextures(1, &texture);
-    glDeleteProgram(shaderProgram);
+    glDeleteProgram(skyboxShaderProgram);
+    glDeleteProgram(quadShaderProgram);
 
     return 0;
 }

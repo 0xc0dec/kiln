@@ -46,7 +46,7 @@ static const std::string fsSrc = R"(
 )";
 
 
-static const std::vector<float> vertices =
+static const std::vector<float> quadVertices =
 {
     -1, -1, 0, 0, 0,
     -1, 1, 0, 0, 1,
@@ -82,8 +82,11 @@ static auto initVertexArray(GLuint vertexBuffer) -> GLuint
 }
 
 
-static auto initTexture(const img::Image &image) -> GLuint
+static auto initTexture() -> GLuint
 {
+    auto imageBytes = fs::readBytes("../../assets/Freeman.png");
+    auto image = img::loadPNG(imageBytes);
+
     GLuint handle = 0;
     glGenTextures(1, &handle);
     assert(handle);
@@ -118,15 +121,13 @@ int main()
     glUseProgram(shaderProgram);
 
     // Texture
-    auto imageBytes = fs::readBytes("../../assets/Freeman.png");
-    auto image = img::loadPNG(imageBytes);
-    auto texture = initTexture(image);
+    auto texture = initTexture();
     glBindTexture(GL_TEXTURE_2D, texture);
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(glGetUniformLocation(shaderProgram, "mainTex"), 0);
 
     // Mesh
-    auto vertexBuffer = gl::createVertexBuffer(vertices.data(), 4, 5);
+    auto vertexBuffer = gl::createVertexBuffer(quadVertices.data(), 4, 5);
     auto indexBuffer = gl::createIndexBuffer(indices.data(), 6);
     auto vertexArray = initVertexArray(vertexBuffer);
     glBindVertexArray(vertexArray);
