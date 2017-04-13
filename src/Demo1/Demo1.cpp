@@ -9,13 +9,13 @@
 #include "Image.h"
 #include "Transform.h"
 #include "Camera.h"
+#include "Spectator.h"
 #include <SDL.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 #include <cassert>
-#include <iostream>
 
 
 static const std::string vsSrc = R"(
@@ -47,31 +47,6 @@ static const std::string fsSrc = R"(
         fragColor = texture(mainTex, uv0);
     }
 )";
-
-
-static auto getWvpMatrix(float time) -> glm::mat4
-{
-    auto s = glm::sin(2 * time);
-
-    Transform camParent;
-
-    Camera cam;
-    cam.setFOV(glm::degrees(60.0f));
-    cam.setAspectRatio(800.0f / 600);
-    cam.setNearZ(.1f);
-    cam.setFarZ(100.0f);
-
-    cam.getTransform().setParent(&camParent);
-    cam.getTransform().setLocalPosition({0, 4, 10});
-    cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
-
-    Transform transform;
-    transform.setLocalRotation(glm::angleAxis(time, glm::vec3(1, 0, 0)));
-
-    camParent.setLocalRotation(glm::angleAxis(time, glm::vec3(0, 1, 0)));
-
-    return transform.getWorldViewProjMatrix(cam);
-}
 
 
 int main()
@@ -147,13 +122,24 @@ int main()
     glDisable(GL_BLEND);
     glViewport(0, 0, 800, 600);
 
+    Camera cam;
+    cam.setFOV(glm::degrees(60.0f));
+    cam.setAspectRatio(800.0f / 600);
+    cam.setNearZ(.1f);
+    cam.setFarZ(100.0f);
+
+    cam.getTransform().setLocalPosition({4, 4, 10});
+    cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
+
     window.loop([&](auto dt, auto time)
     {
-        std::cout << window.getInput().isKeyPressed(SDLK_1, false) << std::endl;
+        updateAsSpectator(cam.getTransform(), window.getInput(), dt);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        auto wvpMat = getWvpMatrix(time);
+        
+        Transform transform;
+        transform.setLocalRotation(glm::angleAxis(time, glm::vec3(1, 0, 0)));
+        auto wvpMat = transform.getWorldViewProjMatrix(cam);
         glUniformMatrix4fv(wvpUniform, 1, GL_FALSE, glm::value_ptr(wvpMat));
 
         glBindVertexArray(vertexArray);
