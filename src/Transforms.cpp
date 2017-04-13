@@ -144,7 +144,6 @@ int main()
     cam.setAspectRatio(800.0f / 600);
     cam.setNearZ(.1f);
     cam.setFarZ(100.0f);
-
     cam.getTransform().setLocalPosition({4, 4, 10});
     cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
@@ -157,7 +156,7 @@ int main()
     {
         updateSpectator(cam.getTransform(), window.getInput(), dt);
 
-        meshTransform.setLocalRotation(glm::angleAxis(time, glm::vec3(1, 0, 0)));
+        meshTransform.rotate({1, 0, 0}, dt);
         auto matrix = meshTransform.getWorldViewProjMatrix(cam);
         glUniformMatrix4fv(matrixUniform, 1, GL_FALSE, glm::value_ptr(matrix));
 

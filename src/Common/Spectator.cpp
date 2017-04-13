@@ -16,7 +16,7 @@ void updateSpectator(Transform &transform, Input &input, float dt, float mouseSe
     if (input.isMouseButtonDown(SDL_BUTTON_RIGHT, false))
     {
         if (mouseMotion.x != 0)
-            transform.rotateByAxisAngle({0, 1, 0}, mouseSensitivity * dt * -mouseMotion.x, TransformSpace::World);
+            transform.rotate({0, 1, 0}, mouseSensitivity * dt * -mouseMotion.x, TransformSpace::World);
 
         if (mouseMotion.y != 0)
         {
@@ -33,7 +33,7 @@ void updateSpectator(Transform &transform, Input &input, float dt, float mouseSe
                     delta = angleToUp - 3.04f;
             }
 
-            transform.rotateByAxisAngle({1, 0, 0}, delta, TransformSpace::Self);
+            transform.rotate({1, 0, 0}, delta, TransformSpace::Self);
         }
     }
 

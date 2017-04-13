@@ -136,7 +136,7 @@ void Transform::rotate(const glm::quat &rotation, TransformSpace space)
 }
 
 
-void Transform::rotateByAxisAngle(const glm::vec3 &axis, float angle, TransformSpace space)
+void Transform::rotate(const glm::vec3 &axis, float angle, TransformSpace space)
 {
     auto rotation = glm::angleAxis(angle, axis);
     rotate(rotation, space);
@@ -195,7 +195,7 @@ void Transform::setLocalRotation(const glm::quat &rotation)
 }
 
 
-void Transform::setLocalAxisAngleRotation(const glm::vec3 &axis, float angle)
+void Transform::setLocalRotation(const glm::vec3 &axis, float angle)
 {
     localRotation = glm::angleAxis(angle, axis);
     setDirtyWithChildren(DirtyBitAll);

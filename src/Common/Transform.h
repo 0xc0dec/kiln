@@ -64,10 +64,10 @@ public:
     void setLocalScale(const glm::vec3 &scale);
 
     void rotate(const glm::quat &rotation, TransformSpace space = TransformSpace::Self);
-    void rotateByAxisAngle(const glm::vec3 &axis, float angle, TransformSpace space = TransformSpace::Self);
+    void rotate(const glm::vec3 &axis, float angle, TransformSpace space = TransformSpace::Self);
 
     void setLocalRotation(const glm::quat &rotation);
-    void setLocalAxisAngleRotation(const glm::vec3 &axis, float angle);
+    void setLocalRotation(const glm::vec3 &axis, float angle);
 
     void lookAt(const glm::vec3 &target, const glm::vec3 &up);
 
