@@ -153,6 +153,7 @@
     <ClCompile Include="..\..\src\Demo1\Demo1.cpp" />
     <ClCompile Include="..\..\src\Demo1\FileSystem.cpp" />
     <ClCompile Include="..\..\src\Demo1\Image.cpp" />
+    <ClCompile Include="..\..\src\Demo1\Input.cpp" />
     <ClCompile Include="..\..\src\Demo1\OpenGL.cpp" />
     <ClCompile Include="..\..\src\Demo1\OpenGLWindow.cpp" />
     <ClCompile Include="..\..\src\Demo1\Transform.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="..\..\src\Demo1\Camera.h" />
     <ClInclude Include="..\..\src\Demo1\FileSystem.h" />
     <ClInclude Include="..\..\src\Demo1\Image.h" />
+    <ClInclude Include="..\..\src\Demo1\Input.h" />
     <ClInclude Include="..\..\src\Demo1\Math.h" />
     <ClInclude Include="..\..\src\Demo1\OpenGL.h" />
     <ClInclude Include="..\..\src\Demo1\OpenGLWindow.h" />

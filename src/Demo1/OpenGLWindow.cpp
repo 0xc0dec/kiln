@@ -7,7 +7,7 @@
 #include <GL/glew.h>
 
 
-static bool shouldClose(SDL_Event evt)
+static bool shouldClose(const SDL_Event &evt)
 {
     switch (evt.type)
     {
@@ -60,9 +60,12 @@ void OpenGLWindow::loop(std::function<void(float, float)> update)
 
     while (run)
     {
+        input.beginUpdate(window);
+
         SDL_Event evt;
         while (SDL_PollEvent(&evt))
         {
+            input.processEvent(evt);
             if (run)
                 run = !shouldClose(evt);
         }

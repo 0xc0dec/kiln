@@ -15,6 +15,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 #include <cassert>
+#include <iostream>
 
 
 static const std::string vsSrc = R"(
@@ -146,8 +147,10 @@ int main()
     glDisable(GL_BLEND);
     glViewport(0, 0, 800, 600);
 
-    window.loop([=](auto dt, auto time)
+    window.loop([&](auto dt, auto time)
     {
+        std::cout << window.getInput().isKeyPressed(SDLK_1, false) << std::endl;
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         auto wvpMat = getWvpMatrix(time);

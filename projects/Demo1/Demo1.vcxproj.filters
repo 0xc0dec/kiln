@@ -8,6 +8,7 @@
     <ClCompile Include="..\..\src\Demo1\Camera.cpp" />
     <ClCompile Include="..\..\src\Demo1\Image.cpp" />
     <ClCompile Include="..\..\src\Demo1\FileSystem.cpp" />
+    <ClCompile Include="..\..\src\Demo1\Input.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Demo1\OpenGLWindow.h" />
@@ -17,5 +18,6 @@
     <ClInclude Include="..\..\src\Demo1\Image.h" />
     <ClInclude Include="..\..\src\Demo1\FileSystem.h" />
     <ClInclude Include="..\..\src\Demo1\Math.h" />
+    <ClInclude Include="..\..\src\Demo1\Input.h" />
   </ItemGroup>
 </Project>
