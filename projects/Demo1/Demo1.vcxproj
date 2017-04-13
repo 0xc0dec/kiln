@@ -156,6 +156,7 @@
     <ClCompile Include="..\..\src\Demo1\Input.cpp" />
     <ClCompile Include="..\..\src\Demo1\OpenGL.cpp" />
     <ClCompile Include="..\..\src\Demo1\OpenGLWindow.cpp" />
+    <ClCompile Include="..\..\src\Demo1\Spectator.cpp" />
     <ClCompile Include="..\..\src\Demo1\Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +167,7 @@
     <ClInclude Include="..\..\src\Demo1\Math.h" />
     <ClInclude Include="..\..\src\Demo1\OpenGL.h" />
     <ClInclude Include="..\..\src\Demo1\OpenGLWindow.h" />
+    <ClInclude Include="..\..\src\Demo1\Spectator.h" />
     <ClInclude Include="..\..\src\Demo1\Transform.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
