@@ -46,7 +46,7 @@ static const std::string fsSrc = R"(
 )";
 
 
-static const std::vector<float> quadMeshData =
+static const std::vector<float> vertices =
 {
     -1, -1, 0, 0, 0,
     -1, 1, 0, 0, 1,
@@ -54,7 +54,7 @@ static const std::vector<float> quadMeshData =
     1, -1, 0, 1, 0
 };
 
-static const std::vector<uint16_t> quadMeshIndices =
+static const std::vector<uint16_t> indices =
 {
     0, 1, 2,
     0, 2, 3
@@ -125,8 +125,8 @@ int main()
     glUniform1i(glGetUniformLocation(shaderProgram, "mainTex"), 0);
 
     // Mesh
-    auto vertexBuffer = gl::createVertexBuffer(quadMeshData.data(), 4, 5);
-    auto indexBuffer = gl::createIndexBuffer(quadMeshIndices.data(), 6);
+    auto vertexBuffer = gl::createVertexBuffer(vertices.data(), 4, 5);
+    auto indexBuffer = gl::createIndexBuffer(indices.data(), 6);
     auto vertexArray = initVertexArray(vertexBuffer);
     glBindVertexArray(vertexArray);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -145,7 +145,6 @@ int main()
 
     Transform meshTransform;
 
-    // Will be used in update loop
     auto matrixUniform = glGetUniformLocation(shaderProgram, "worldViewProjMatrix");
 
     window.loop([&](auto dt, auto time)
