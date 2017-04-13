@@ -3,13 +3,13 @@
     MIT license
 */
 
-#include "OpenGLWindow.h"
-#include "OpenGL.h"
-#include "FileSystem.h"
-#include "Image.h"
-#include "Transform.h"
-#include "Camera.h"
-#include "Spectator.h"
+#include "../Common/OpenGLWindow.h"
+#include "../Common/OpenGL.h"
+#include "../Common/FileSystem.h"
+#include "../Common/Image.h"
+#include "../Common/Transform.h"
+#include "../Common/Camera.h"
+#include "../Common/Spectator.h"
 #include <SDL.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -133,7 +133,7 @@ int main()
 
     window.loop([&](auto dt, auto time)
     {
-        updateAsSpectator(cam.getTransform(), window.getInput(), dt);
+        updateSpectator(cam.getTransform(), window.getInput(), dt);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
