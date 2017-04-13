@@ -18,20 +18,12 @@ enum class TransformSpace
     World
 };
 
-// NB Using struct with consts instead of class enums
-// due to easier work with them as bit flags
-struct TransformDirtyFlags final
-{
-    static const uint32_t Position = 1 << 0;
-    static const uint32_t Rotation = 1 << 1;
-    static const uint32_t Scale = 1 << 2;
-    static const uint32_t World = 1 << 3;
-    static const uint32_t InvTransposedWorld = 1 << 4;
-};
-
 class Transform final
 {
 public:
+    // Can be used by anyone interested if a transform has changed. Goes from 0 to MAX_UINT, then wraps back.
+    auto getVersion() const -> uint32_t;
+
     void setParent(Transform *parent);
     auto getParent() const -> Transform*;
 
@@ -88,8 +80,9 @@ public:
 
     auto transformPoint(const glm::vec3 &point) const -> glm::vec3;
     auto transformDirection(const glm::vec3 &direction) const -> glm::vec3;
-
+    
 private:
+    uint32_t version = 0;
     mutable uint32_t dirtyFlags = ~0;
 
     Transform *parent = nullptr;
@@ -102,8 +95,8 @@ private:
     mutable glm::mat4 worldMatrix;
     mutable glm::mat4 invTransposedWorldMatrix;
 
-    void setDirtyWithChildren(uint32_t flags) const;
-    void setChildrenDirty(uint32_t flags) const;
+    void setDirtyWithChildren(uint32_t flags);
+    void setChildrenDirty(uint32_t flags);
 };
 
 inline auto Transform::getLocalPosition() const -> glm::vec3
@@ -216,4 +209,9 @@ inline auto Transform::getParent() const -> Transform*
 inline auto Transform::getChild(uint32_t index) const -> Transform*
 {
     return children[index];
+}
+
+inline auto Transform::getVersion() const -> uint32_t
+{
+    return version;
 }

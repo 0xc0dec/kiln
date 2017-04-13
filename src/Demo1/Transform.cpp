@@ -8,7 +8,14 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.inl>
 #include <algorithm>
-#include "Math.h"
+
+
+struct TransformDirtyFlags final
+{
+    static const uint32_t Local = 1;
+    static const uint32_t World = 1 << 1;
+    static const uint32_t InvTransposedWorld = 1 << 2;
+};
 
 
 void Transform::setParent(Transform *parent)
@@ -39,29 +46,13 @@ void Transform::clearChildren()
 
 auto Transform::getMatrix() const -> glm::mat4
 {
-    auto dirty = dirtyFlags & TransformDirtyFlags::Position ||
-                 dirtyFlags & TransformDirtyFlags::Rotation ||
-                 dirtyFlags & TransformDirtyFlags::Scale;
-    if (dirty)
+    if (dirtyFlags & TransformDirtyFlags::Local)
     {
-        if (dirtyFlags & TransformDirtyFlags::Position || !math::isZero(localPosition))
-        {
-            matrix = glm::translate(glm::mat4(1.0f), localPosition);
-            if (dirtyFlags & TransformDirtyFlags::Rotation || !math::isIdentity(localRotation))
-                matrix = glm::rotate(matrix, glm::angle(localRotation), glm::axis(localRotation));
-            if (dirtyFlags & TransformDirtyFlags::Scale || !math::isUnit(localScale))
-                matrix = glm::scale(matrix, localScale);
-        }
-        else if (dirtyFlags & TransformDirtyFlags::Rotation || !math::isIdentity(localRotation))
-        {
-            matrix = glm::rotate(glm::mat4(1.0f), glm::angle(localRotation), glm::axis(localRotation));
-            if (dirtyFlags & TransformDirtyFlags::Scale || !math::isUnit(localScale))
-                matrix = glm::scale(matrix, localScale);
-        }
-        else if (dirtyFlags & TransformDirtyFlags::Scale || !math::isUnit(localScale))
-            matrix = glm::scale(glm::mat4(1.0f), localScale);
+        matrix = glm::translate(glm::mat4(1.0f), localPosition);
+        matrix = glm::rotate(matrix, glm::angle(localRotation), glm::axis(localRotation));
+        matrix = glm::scale(matrix, localScale);
 
-        dirtyFlags &= ~(TransformDirtyFlags::Position | TransformDirtyFlags::Rotation | TransformDirtyFlags::Scale);
+        dirtyFlags &= ~TransformDirtyFlags::Local;
     }
 
     return matrix;
@@ -117,7 +108,7 @@ auto Transform::getInvTransposedWorldViewMatrix(const Camera &camera) const -> g
 void Transform::translateLocal(const glm::vec3 &translation)
 {
     localPosition += translation;
-    setDirtyWithChildren(TransformDirtyFlags::Position | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
+    setDirtyWithChildren(TransformDirtyFlags::Local | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
 }
 
 
@@ -143,7 +134,7 @@ void Transform::rotate(const glm::quat &rotation, TransformSpace space)
             break;
     }
 
-    setDirtyWithChildren(TransformDirtyFlags::Rotation | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
+    setDirtyWithChildren(TransformDirtyFlags::Local | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
 }
 
 
@@ -159,14 +150,14 @@ void Transform::scaleLocal(const glm::vec3 &scale)
     localScale.x *= scale.x;
     localScale.y *= scale.y;
     localScale.z *= scale.z;
-    setDirtyWithChildren(TransformDirtyFlags::Scale | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
+    setDirtyWithChildren(TransformDirtyFlags::Local | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
 }
 
 
 void Transform::setLocalScale(const glm::vec3 &scale)
 {
     localScale = scale;
-    setDirtyWithChildren(TransformDirtyFlags::Scale | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
+    setDirtyWithChildren(TransformDirtyFlags::Local | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
 }
 
 
@@ -202,33 +193,34 @@ auto Transform::transformDirection(const glm::vec3 &direction) const -> glm::vec
 void Transform::setLocalRotation(const glm::quat &rotation)
 {
     localRotation = rotation;
-    setDirtyWithChildren(TransformDirtyFlags::Rotation | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
+    setDirtyWithChildren(TransformDirtyFlags::Local | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
 }
 
 
 void Transform::setLocalAxisAngleRotation(const glm::vec3 &axis, float angle)
 {
     localRotation = glm::angleAxis(angle, axis);
-    setDirtyWithChildren(TransformDirtyFlags::Rotation | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
+    setDirtyWithChildren(TransformDirtyFlags::Local | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
 }
 
 
 void Transform::setLocalPosition(const glm::vec3 &position)
 {
     localPosition = position;
-    setDirtyWithChildren(TransformDirtyFlags::Position | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
+    setDirtyWithChildren(TransformDirtyFlags::Local | TransformDirtyFlags::World | TransformDirtyFlags::InvTransposedWorld);
 }
 
 
-void Transform::setDirtyWithChildren(uint32_t flags) const
+void Transform::setDirtyWithChildren(uint32_t flags)
 {
+    version++;
     dirtyFlags |= flags;
     for (auto child : children)
         child->setDirtyWithChildren(flags);
 }
 
 
-void Transform::setChildrenDirty(uint32_t flags) const
+void Transform::setChildrenDirty(uint32_t flags)
 {
     for (auto child : children)
         child->setDirtyWithChildren(flags);

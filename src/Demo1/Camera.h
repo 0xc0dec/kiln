@@ -7,7 +7,6 @@
 
 #include "Transform.h"
 #include <glm/glm.hpp>
-#include <cstdint>
 
 class Camera final
 {
@@ -47,14 +46,6 @@ protected:
     float aspectRatio = 1;
 
     Transform transform;
-
-    mutable uint32_t dirtyFlags = ~0;
-
-    mutable glm::mat4 viewMatrix;
-    mutable glm::mat4 projectionMatrix;
-    mutable glm::mat4 viewProjectionMatrix;
-    mutable glm::mat4 invViewMatrix;
-    mutable glm::mat4 invViewProjectionMatrix;
 };
 
 inline bool Camera::isPerspective() const
@@ -90,4 +81,54 @@ inline auto Camera::getTransform() -> Transform&
 inline auto Camera::getOrthoSize() const -> glm::vec2
 {
     return orthoSize;
+}
+
+inline void Camera::setPerspective(bool perspective)
+{
+    ortho = !perspective;
+}
+
+inline void Camera::setFOV(float fov)
+{
+    this->fov = fov;
+}
+
+inline void Camera::setOrthoSize(const glm::vec2 &size)
+{
+    orthoSize = size;
+}
+
+inline void Camera::setAspectRatio(float ratio)
+{
+    aspectRatio = ratio;
+}
+
+inline void Camera::setFarZ(float far)
+{
+    this->farClip = far;
+}
+
+inline void Camera::setNearZ(float near)
+{
+    this->nearClip = near;
+}
+
+inline auto Camera::getViewMatrix() const -> const glm::mat4
+{
+    return glm::inverse(transform.getWorldMatrix());
+}
+
+inline auto Camera::getInvViewMatrix() const -> const glm::mat4
+{
+    return glm::inverse(getViewMatrix());
+}
+
+inline auto Camera::getViewProjectionMatrix() const -> const glm::mat4
+{
+    return getProjectionMatrix() * getViewMatrix();
+}
+
+inline auto Camera::getInvViewProjectionMatrix() const -> const glm::mat4
+{
+    return glm::inverse(getViewProjectionMatrix());
 }
