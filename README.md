@@ -7,6 +7,7 @@ Code is structured with an effort to make it easy to read and understand.
 * Free look ("spectator") camera movement.
 * Skybox rendering using fullscreen quad mesh (consisting of two triangles).
 * To be continued...
+
 Each bullet should not be viewed as corresponding to separate demo (exe) because some demos share a common set of these features.
 
 ## Dependencies
