@@ -3,19 +3,16 @@
     MIT license
 */
 
-#include "../Common/OpenGLWindow.h"
-#include "../Common/OpenGL.h"
-#include "../Common/FileSystem.h"
-#include "../Common/Image.h"
-#include "../Common/Transform.h"
-#include "../Common/Camera.h"
-#include "../Common/Spectator.h"
+#include "Common/FileSystem.h"
+#include "Common/Image.h"
+#include "Common/OpenGLWindow.h"
+#include "Common/OpenGL.h"
+#include "Common/Camera.h"
+#include "Common/Spectator.h"
 #include <SDL.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <vector>
+#include <GL/glew.h>
 #include <cassert>
+#include <glm/gtc/type_ptr.hpp>
 
 
 static const std::string vsSrc = R"(
@@ -49,32 +46,28 @@ static const std::string fsSrc = R"(
 )";
 
 
-int main()
+static const std::vector<float> quadMeshData =
 {
-    OpenGLWindow window(800, 600);
+    -1, -1, 0, 0, 0,
+    -1, 1, 0, 0, 1,
+    1, 1, 0, 1, 1,
+    1, -1, 0, 1, 0
+};
 
-    // Scene initialization
+static const std::vector<uint16_t> quadMeshIndices =
+{
+    0, 1, 2,
+    0, 2, 3
+};
 
-    std::vector<float> quadMeshData = {
-        -1, -1, 0, 0, 0,
-        -1, 1, 0, 0, 1,
-        1, 1, 0, 1, 1,
-        1, -1, 0, 1, 0
-    };
 
-    std::vector<uint16_t> quadMeshIndices = {
-        0, 1, 2,
-        0, 2, 3
-    };
+static auto initVertexArray(GLuint vertexBuffer) -> GLuint
+{
+    GLuint handle = 0;
+    glGenVertexArrays(1, &handle);
+    assert(handle);
 
-    auto vertexBuffer = gl::createVertexBuffer(quadMeshData.data(), 4, 5);
-    auto indexBuffer = gl::createIndexBuffer(quadMeshIndices.data(), 6);
-    
-    GLuint vertexArray = 0;
-    glGenVertexArrays(1, &vertexArray);
-    assert(vertexArray);
-
-    glBindVertexArray(vertexArray);
+    glBindVertexArray(handle);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, reinterpret_cast<void *>(0));
@@ -85,17 +78,17 @@ int main()
 
     glBindVertexArray(0);
 
-    auto program = gl::createShaderProgram(vsSrc.c_str(), vsSrc.size(), fsSrc.c_str(), fsSrc.size());
-    glUseProgram(program);
+    return handle;
+}
 
-    auto imageBytes = fs::readBytes("../../../assets/Freeman.png");
-    auto image = img::loadPNG(imageBytes);
 
-    GLuint texture = 0;
-    glGenTextures(1, &texture);
-    assert(texture);
+static auto initTexture(const img::Image &image) -> GLuint
+{
+    GLuint handle = 0;
+    glGenTextures(1, &handle);
+    assert(handle);
 
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(GL_TEXTURE_2D, handle);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, image.data.data());
@@ -109,12 +102,36 @@ int main()
     glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    auto wvpUniform = glGetUniformLocation(program, "worldViewProjMatrix");
+    glBindTexture(GL_TEXTURE_2D, 0);
 
-    auto texUniform = glGetUniformLocation(program, "mainTex");
+    return handle;
+}
+
+
+int main()
+{
+    OpenGLWindow window(800, 600);
+
+    // Shader
+    auto shaderProgram = gl::createShaderProgram(vsSrc.c_str(), vsSrc.size(), fsSrc.c_str(), fsSrc.size());
+    glUseProgram(shaderProgram);
+
+    // Texture
+    auto imageBytes = fs::readBytes("../../assets/Freeman.png");
+    auto image = img::loadPNG(imageBytes);
+    auto texture = initTexture(image);
+    glBindTexture(GL_TEXTURE_2D, texture);
     glActiveTexture(GL_TEXTURE0);
-    glUniform1i(texUniform, 0);
+    glUniform1i(glGetUniformLocation(shaderProgram, "mainTex"), 0);
 
+    // Mesh
+    auto vertexBuffer = gl::createVertexBuffer(quadMeshData.data(), 4, 5);
+    auto indexBuffer = gl::createIndexBuffer(quadMeshIndices.data(), 6);
+    auto vertexArray = initVertexArray(vertexBuffer);
+    glBindVertexArray(vertexArray);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+    // Some pipeline configuration
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
     glClearColor(0, 0.8, 0.8, 1);
@@ -131,29 +148,28 @@ int main()
     cam.getTransform().setLocalPosition({4, 4, 10});
     cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
+    Transform meshTransform;
+
+    // Will be used in update loop
+    auto matrixUniform = glGetUniformLocation(shaderProgram, "worldViewProjMatrix");
+
     window.loop([&](auto dt, auto time)
     {
         updateSpectator(cam.getTransform(), window.getInput(), dt);
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        Transform transform;
-        transform.setLocalRotation(glm::angleAxis(time, glm::vec3(1, 0, 0)));
-        auto wvpMat = transform.getWorldViewProjMatrix(cam);
-        glUniformMatrix4fv(wvpUniform, 1, GL_FALSE, glm::value_ptr(wvpMat));
+        meshTransform.setLocalRotation(glm::angleAxis(time, glm::vec3(1, 0, 0)));
+        auto matrix = meshTransform.getWorldViewProjMatrix(cam);
+        glUniformMatrix4fv(matrixUniform, 1, GL_FALSE, glm::value_ptr(matrix));
 
-        glBindVertexArray(vertexArray);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
     });
 
     glDeleteVertexArrays(1, &vertexArray);
     glDeleteBuffers(1, &vertexBuffer);
     glDeleteBuffers(1, &indexBuffer);
-
     glDeleteTextures(1, &texture);
+    glDeleteProgram(shaderProgram);
 
     return 0;
 }

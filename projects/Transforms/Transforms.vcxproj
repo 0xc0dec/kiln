@@ -27,7 +27,7 @@
     <ClCompile Include="..\..\src\Common\OpenGLWindow.cpp" />
     <ClCompile Include="..\..\src\Common\Spectator.cpp" />
     <ClCompile Include="..\..\src\Common\Transform.cpp" />
-    <ClCompile Include="..\..\src\Demo1\Demo1.cpp" />
+    <ClCompile Include="..\..\src\Transforms.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Common\Camera.h" />
@@ -44,7 +44,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{2B8F7FCD-3CD9-4C5C-AC1E-D4D712E59D83}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Demo1</RootNamespace>
+    <RootNamespace>Transforms</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -97,9 +97,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(ProjectDir)..\..\build\Demo1\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)..\..\build\Demo1\$(Configuration)\temp\</IntDir>
-    <LibraryPath>$(ProjectDir)..\..\build\Vendor\$(Configuration)\;$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectDir)..\..\build\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)..\..\build\$(Configuration)\temp\Transforms\</IntDir>
+    <LibraryPath>$(ProjectDir)..\..\build\$(Configuration)\;$(LibraryPath)</LibraryPath>
     <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\..\vendor\glew\1.13\include\;$(ProjectDir)..\..\vendor\png\1.6.16\include\;$(ProjectDir)..\..\vendor\glm\0.9.8.4\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -107,9 +107,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(ProjectDir)..\..\build\Demo1\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)..\..\build\Demo1\$(Configuration)\temp\</IntDir>
-    <LibraryPath>$(ProjectDir)..\..\build\Vendor\$(Configuration)\;$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectDir)..\..\build\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)..\..\build\$(Configuration)\temp\Transforms\</IntDir>
+    <LibraryPath>$(ProjectDir)..\..\build\$(Configuration)\;$(LibraryPath)</LibraryPath>
     <IncludePath>$(ProjectDir)..\..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\..\vendor\glew\1.13\include\;$(ProjectDir)..\..\vendor\png\1.6.16\include\;$(ProjectDir)..\..\vendor\glm\0.9.8.4\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
