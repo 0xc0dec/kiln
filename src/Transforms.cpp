@@ -140,12 +140,8 @@ int main()
     glViewport(0, 0, 800, 600);
 
     Camera cam;
-    cam.setFOV(glm::degrees(60.0f));
-    cam.setAspectRatio(800.0f / 600);
-    cam.setNearZ(.1f);
-    cam.setFarZ(100.0f);
-    cam.getTransform().setLocalPosition({4, 4, 10});
-    cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
+    cam.setPerspective(glm::degrees(60.0f), 800.0f / 600, 0.1f, 100.0f)
+       .getTransform().setLocalPosition({4, 4, 10}).lookAt({0, 0, 0}, {0, 1, 0});
 
     Transform meshTransform;
 
@@ -156,8 +152,7 @@ int main()
     {
         updateSpectator(cam.getTransform(), window.getInput(), dt);
 
-        meshTransform.rotate({1, 0, 0}, dt);
-        auto matrix = meshTransform.getWorldViewProjMatrix(cam);
+        auto matrix = meshTransform.rotate({1, 0, 0}, dt).getWorldViewProjMatrix(cam);
         glUniformMatrix4fv(matrixUniform, 1, GL_FALSE, glm::value_ptr(matrix));
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

@@ -16,29 +16,34 @@ static const uint32_t DirtyBitInvTransposedWorld = 1 << 2;
 static const uint32_t DirtyBitAll = DirtyBitLocal | DirtyBitWorld | DirtyBitInvTransposedWorld;
 
 
-void Transform::setParent(Transform *parent)
+auto Transform::setParent(Transform *parent) -> Transform&
 {
-    if (parent == this || parent == this->parent)
-        return;
-    if (this->parent)
+    if (parent != this && parent != this->parent)
     {
-        auto &parentChildren = this->parent->children;
-        this->parent->children.erase(std::remove(parentChildren.begin(), parentChildren.end(), this), parentChildren.end());
+        if (this->parent)
+        {
+            auto &parentChildren = this->parent->children;
+            this->parent->children.erase(std::remove(parentChildren.begin(), parentChildren.end(), this), parentChildren.end());
+        }
+        this->parent = parent;
+        if (parent)
+            parent->children.push_back(this);
+        setDirtyWithChildren(DirtyBitWorld | DirtyBitInvTransposedWorld);
     }
-    this->parent = parent;
-    if (parent)
-        parent->children.push_back(this);
-    setDirtyWithChildren(DirtyBitWorld | DirtyBitInvTransposedWorld);
+
+    return *this;
 }
 
 
-void Transform::clearChildren()
+auto Transform::clearChildren() -> Transform&
 {
     while (!children.empty())
     {
         auto child = *children.begin();
         child->setParent(nullptr);
     }
+
+    return *this;
 }
 
 
@@ -103,14 +108,15 @@ auto Transform::getInvTransposedWorldViewMatrix(const Camera &camera) const -> g
 }
 
 
-void Transform::translateLocal(const glm::vec3 &translation)
+auto Transform::translateLocal(const glm::vec3 &translation) -> Transform&
 {
     localPosition += translation;
     setDirtyWithChildren(DirtyBitAll);
+    return *this;
 }
 
 
-void Transform::rotate(const glm::quat &rotation, TransformSpace space)
+auto Transform::rotate(const glm::quat &rotation, TransformSpace space) -> Transform&
 {
     auto normalizedRotation = glm::normalize(rotation);
 
@@ -133,33 +139,38 @@ void Transform::rotate(const glm::quat &rotation, TransformSpace space)
     }
 
     setDirtyWithChildren(DirtyBitAll);
+
+    return *this;
 }
 
 
-void Transform::rotate(const glm::vec3 &axis, float angle, TransformSpace space)
+auto Transform::rotate(const glm::vec3 &axis, float angle, TransformSpace space) -> Transform&
 {
     auto rotation = glm::angleAxis(angle, axis);
     rotate(rotation, space);
+    return *this;
 }
 
 
-void Transform::scaleLocal(const glm::vec3 &scale)
+auto Transform::scaleLocal(const glm::vec3 &scale) -> Transform&
 {
     localScale.x *= scale.x;
     localScale.y *= scale.y;
     localScale.z *= scale.z;
     setDirtyWithChildren(DirtyBitAll);
+    return *this;
 }
 
 
-void Transform::setLocalScale(const glm::vec3 &scale)
+auto Transform::setLocalScale(const glm::vec3 &scale) -> Transform&
 {
     localScale = scale;
     setDirtyWithChildren(DirtyBitAll);
+    return *this;
 }
 
 
-void Transform::lookAt(const glm::vec3 &target, const glm::vec3 &up)
+auto Transform::lookAt(const glm::vec3 &target, const glm::vec3 &up) -> Transform&
 {
     auto localTarget = glm::vec4(target, 1);
     auto localUp = glm::vec4(up, 0);
@@ -173,6 +184,8 @@ void Transform::lookAt(const glm::vec3 &target, const glm::vec3 &up)
 
     auto lookAtMatrix = glm::inverse(glm::lookAt(localPosition, glm::vec3(localTarget), glm::vec3(localUp)));
     setLocalRotation(glm::quat_cast(lookAtMatrix));
+
+    return *this;
 }
 
 
@@ -188,24 +201,27 @@ auto Transform::transformDirection(const glm::vec3 &direction) const -> glm::vec
 }
 
 
-void Transform::setLocalRotation(const glm::quat &rotation)
+auto Transform::setLocalRotation(const glm::quat &rotation) -> Transform&
 {
     localRotation = rotation;
     setDirtyWithChildren(DirtyBitAll);
+    return *this;
 }
 
 
-void Transform::setLocalRotation(const glm::vec3 &axis, float angle)
+auto Transform::setLocalRotation(const glm::vec3 &axis, float angle) -> Transform&
 {
     localRotation = glm::angleAxis(angle, axis);
     setDirtyWithChildren(DirtyBitAll);
+    return *this;
 }
 
 
-void Transform::setLocalPosition(const glm::vec3 &position)
+auto Transform::setLocalPosition(const glm::vec3 &position) -> Transform&
 {
     localPosition = position;
     setDirtyWithChildren(DirtyBitAll);
+    return *this;
 }
 
 

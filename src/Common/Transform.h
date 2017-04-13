@@ -24,12 +24,12 @@ public:
     // Can be used by anyone interested if a transform has changed. Goes from 0 to MAX_UINT, then wraps back.
     auto getVersion() const -> uint32_t;
 
-    void setParent(Transform *parent);
+    auto setParent(Transform *parent) -> Transform&;
     auto getParent() const -> Transform*;
 
     auto getChild(uint32_t index) const -> Transform*;
     auto getChildrenCount() const -> uint32_t;
-    void clearChildren();
+    auto clearChildren() -> Transform&;
 
     auto getLocalScale() const -> glm::vec3;
 
@@ -57,19 +57,19 @@ public:
     auto getWorldBack() const -> glm::vec3;
     auto getLocalBack() const -> glm::vec3;
 
-    void translateLocal(const glm::vec3 &translation);
-    void scaleLocal(const glm::vec3 &scale);
+    auto translateLocal(const glm::vec3 &translation) -> Transform&;
+    auto scaleLocal(const glm::vec3 &scale) -> Transform&;
 
-    void setLocalPosition(const glm::vec3 &position);
-    void setLocalScale(const glm::vec3 &scale);
+    auto setLocalPosition(const glm::vec3 &position) -> Transform&;
+    auto setLocalScale(const glm::vec3 &scale) -> Transform&;
 
-    void rotate(const glm::quat &rotation, TransformSpace space = TransformSpace::Self);
-    void rotate(const glm::vec3 &axis, float angle, TransformSpace space = TransformSpace::Self);
+    auto rotate(const glm::quat &rotation, TransformSpace space = TransformSpace::Self) -> Transform&;
+    auto rotate(const glm::vec3 &axis, float angle, TransformSpace space = TransformSpace::Self) -> Transform&;
 
-    void setLocalRotation(const glm::quat &rotation);
-    void setLocalRotation(const glm::vec3 &axis, float angle);
+    auto setLocalRotation(const glm::quat &rotation) -> Transform&;
+    auto setLocalRotation(const glm::vec3 &axis, float angle) -> Transform&;
 
-    void lookAt(const glm::vec3 &target, const glm::vec3 &up);
+    auto lookAt(const glm::vec3 &target, const glm::vec3 &up) -> Transform&;
 
     auto getMatrix() const -> glm::mat4;
     auto getWorldMatrix() const -> glm::mat4;
