@@ -3,7 +3,7 @@ Various graphics demos and useful bits of code implemented in OpenGL. Intended f
 Code is structured with an effort to make it easy to read and understand.
 
 ## Demos
-* Complex object transform hierarchies (WIP), featuring the `Transform` helper class.
+* Complex object transform hierarchies (WIP). Features the `Transform` helper class, which simplifies manipulating object transformation, and a free look ("spectator") camera movement.
 * Skybox rendering using fullscreen quad mesh (consisting of two triangles).
 * To be continued...
 
