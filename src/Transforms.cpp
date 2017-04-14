@@ -11,8 +11,8 @@
 #include "Common/Spectator.h"
 #include <SDL.h>
 #include <GL/glew.h>
-#include <cassert>
 #include <glm/gtc/type_ptr.hpp>
+#include <cassert>
 
 
 static const std::string vsSrc = R"(
@@ -145,7 +145,9 @@ int main()
     cam.setPerspective(glm::degrees(60.0f), 800.0f / 600, 0.1f, 100.0f)
        .getTransform().setLocalPosition({4, 4, 10}).lookAt({0, 0, 0}, {0, 1, 0});
 
-    Transform meshTransform;
+    Transform t1, t2;
+    t2.setParent(&t1);
+    t2.setLocalPosition({3, 0, 0});
 
     auto matrixUniform = glGetUniformLocation(shaderProgram, "worldViewProjMatrix");
 
@@ -153,10 +155,16 @@ int main()
     {
         updateSpectator(cam.getTransform(), window.getInput(), dt);
 
-        auto matrix = meshTransform.rotate({1, 0, 0}, dt).getWorldViewProjMatrix(cam);
-        glUniformMatrix4fv(matrixUniform, 1, GL_FALSE, glm::value_ptr(matrix));
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        auto matrix = t1.rotate({1, 0, 0}, dt, TransformSpace::Self)
+                        .rotate({0, 1, 0}, dt, TransformSpace::World)
+                        .getWorldViewProjMatrix(cam);
+        glUniformMatrix4fv(matrixUniform, 1, GL_FALSE, glm::value_ptr(matrix));
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+
+        matrix = t2.rotate({0, 1, 0}, dt).getWorldViewProjMatrix(cam);
+        glUniformMatrix4fv(matrixUniform, 1, GL_FALSE, glm::value_ptr(matrix));
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
     });
 
