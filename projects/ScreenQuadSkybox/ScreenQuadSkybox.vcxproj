@@ -19,26 +19,26 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\Common\Camera.cpp" />
-    <ClCompile Include="..\..\src\Common\FileSystem.cpp" />
-    <ClCompile Include="..\..\src\Common\Image.cpp" />
-    <ClCompile Include="..\..\src\Common\Input.cpp" />
-    <ClCompile Include="..\..\src\Common\OpenGL.cpp" />
-    <ClCompile Include="..\..\src\Common\OpenGLWindow.cpp" />
-    <ClCompile Include="..\..\src\Common\Spectator.cpp" />
-    <ClCompile Include="..\..\src\Common\Transform.cpp" />
+    <ClCompile Include="..\..\src\common\Camera.cpp" />
+    <ClCompile Include="..\..\src\common\FileSystem.cpp" />
+    <ClCompile Include="..\..\src\common\Image.cpp" />
+    <ClCompile Include="..\..\src\common\Input.cpp" />
+    <ClCompile Include="..\..\src\common\OpenGL.cpp" />
+    <ClCompile Include="..\..\src\common\OpenGLWindow.cpp" />
+    <ClCompile Include="..\..\src\common\Spectator.cpp" />
+    <ClCompile Include="..\..\src\common\Transform.cpp" />
     <ClCompile Include="..\..\src\ScreenQuadSkybox.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\Common\Camera.h" />
-    <ClInclude Include="..\..\src\Common\FileSystem.h" />
-    <ClInclude Include="..\..\src\Common\Image.h" />
-    <ClInclude Include="..\..\src\Common\Input.h" />
-    <ClInclude Include="..\..\src\Common\Math.h" />
-    <ClInclude Include="..\..\src\Common\OpenGL.h" />
-    <ClInclude Include="..\..\src\Common\OpenGLWindow.h" />
-    <ClInclude Include="..\..\src\Common\Spectator.h" />
-    <ClInclude Include="..\..\src\Common\Transform.h" />
+    <ClInclude Include="..\..\src\common\Camera.h" />
+    <ClInclude Include="..\..\src\common\FileSystem.h" />
+    <ClInclude Include="..\..\src\common\Image.h" />
+    <ClInclude Include="..\..\src\common\Input.h" />
+    <ClInclude Include="..\..\src\common\Math.h" />
+    <ClInclude Include="..\..\src\common\OpenGL.h" />
+    <ClInclude Include="..\..\src\common\OpenGLWindow.h" />
+    <ClInclude Include="..\..\src\common\Spectator.h" />
+    <ClInclude Include="..\..\src\common\Transform.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
