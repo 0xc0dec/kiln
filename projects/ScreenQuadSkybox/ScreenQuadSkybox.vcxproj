@@ -45,7 +45,7 @@
     <ProjectGuid>{64F27F08-5C9B-45FC-85C8-39429E1F9CFA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>ScreenQuadSkybox</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
