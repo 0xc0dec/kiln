@@ -51,10 +51,9 @@ auto Transform::getMatrix() const -> glm::mat4
 {
     if (dirtyFlags & DirtyBitLocal)
     {
-        matrix = glm::translate(glm::mat4(1.0f), localPosition);
-        matrix = glm::rotate(matrix, glm::angle(localRotation), glm::axis(localRotation));
-        matrix = glm::scale(matrix, localScale);
-
+        matrix = glm::translate(glm::mat4(1.0f), localPosition) *
+                 glm::mat4_cast(localRotation) *
+                 glm::scale(glm::mat4(1.0f), localScale);
         dirtyFlags &= ~DirtyBitLocal;
     }
 
