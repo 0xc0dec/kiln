@@ -112,23 +112,12 @@ static auto initVertexArray(GLuint vertexBuffer) -> GLuint
 
 static auto initTexture() -> GLuint
 {
-    auto frontImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Front.png");
-    auto frontImg = img::loadPNG(frontImgBytes);
-
-    auto backImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Back.png");
-    auto backImg = img::loadPNG(backImgBytes);
-
-    auto leftImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Left.png");
-    auto leftImg = img::loadPNG(leftImgBytes);
-
-    auto rightImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Right.png");
-    auto rightImg = img::loadPNG(rightImgBytes);
-
-    auto topImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Top.png");
-    auto topImg = img::loadPNG(topImgBytes);
-
-    auto bottomImgBytes = fs::readBytes("../../assets/skyboxes/deep-space/Bottom.png");
-    auto bottomImg = img::loadPNG(bottomImgBytes);
+    auto frontImg = img::loadPNG(fs::readBytes("../../assets/skyboxes/deep-space/Front.png"));
+    auto backImg = img::loadPNG(fs::readBytes("../../assets/skyboxes/deep-space/Back.png"));
+    auto leftImg = img::loadPNG(fs::readBytes("../../assets/skyboxes/deep-space/Left.png"));
+    auto rightImg = img::loadPNG(fs::readBytes("../../assets/skyboxes/deep-space/Right.png"));
+    auto topImg = img::loadPNG(fs::readBytes("../../assets/skyboxes/deep-space/Top.png"));
+    auto bottomImg = img::loadPNG(fs::readBytes("../../assets/skyboxes/deep-space/Bottom.png"));
 
     GLuint handle = 0;
     glGenTextures(1, &handle);
