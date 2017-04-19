@@ -45,9 +45,6 @@
     <ClInclude Include="..\..\src\common\Input.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common\Math.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\common\OpenGL.h">
       <Filter>Common</Filter>
     </ClInclude>

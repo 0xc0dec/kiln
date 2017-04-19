@@ -34,7 +34,6 @@
     <ClInclude Include="..\..\src\common\FileSystem.h" />
     <ClInclude Include="..\..\src\common\Image.h" />
     <ClInclude Include="..\..\src\common\Input.h" />
-    <ClInclude Include="..\..\src\common\Math.h" />
     <ClInclude Include="..\..\src\common\OpenGL.h" />
     <ClInclude Include="..\..\src\common\OpenGLWindow.h" />
     <ClInclude Include="..\..\src\common\Spectator.h" />
