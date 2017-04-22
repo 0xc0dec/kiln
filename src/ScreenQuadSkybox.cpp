@@ -192,7 +192,7 @@ int main()
 
     window.loop([&](auto dt, auto time)
     {
-        updateSpectator(cam.getTransform(), window.getInput(), dt);
+        updateSpectatorTransform(cam.getTransform(), window.getInput(), dt);
 
         auto projMatrix = cam.getProjectionMatrix();
         auto worldViewMatrix = cam.getViewMatrix(); // world matrix is identity anyway

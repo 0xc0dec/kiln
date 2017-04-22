@@ -153,7 +153,7 @@ int main()
 
     window.loop([&](auto dt, auto time)
     {
-        updateSpectator(cam.getTransform(), window.getInput(), dt);
+        updateSpectatorTransform(cam.getTransform(), window.getInput(), dt);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
