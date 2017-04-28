@@ -25,12 +25,18 @@ int main()
 
     std::vector<const char *> enabledExtensions {
         VK_KHR_SURFACE_EXTENSION_NAME,
+#ifdef KL_WINDOWS
         VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+#endif
+#ifdef KL_DEBUG
         VK_EXT_DEBUG_REPORT_EXTENSION_NAME
+#endif
     };
 
     std::vector<const char *> enabledLayers {
+#ifdef KL_DEBUG
         "VK_LAYER_LUNARG_standard_validation",
+#endif
     };
 
     VkInstanceCreateInfo instanceInfo {};
@@ -50,8 +56,8 @@ int main()
         instanceInfo.ppEnabledExtensionNames = enabledExtensions.data();
     }
 
-    VkInstance instance;
-    vkCreateInstance(&instanceInfo, nullptr, &instance);
+    auto instance = vk::Resource<VkInstance>{vkDestroyInstance};
+    KL_VK_CHECK_RESULT(vkCreateInstance(&instanceInfo, nullptr, instance.cleanAndExpose()));
 
     Input input;
 

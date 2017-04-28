@@ -47,5 +47,6 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\src\mega\Vulkan.h" />
+    <ClInclude Include="..\src\mega\Common.h" />
   </ItemGroup>
 </Project>

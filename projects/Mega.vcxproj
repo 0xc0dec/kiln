@@ -35,6 +35,7 @@
     <ClInclude Include="..\src\common\Input.h" />
     <ClInclude Include="..\src\common\Spectator.h" />
     <ClInclude Include="..\src\common\Transform.h" />
+    <ClInclude Include="..\src\mega\Common.h" />
     <ClInclude Include="..\src\mega\Vulkan.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -127,7 +128,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;SDL_MAIN_HANDLED;GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;SDL_MAIN_HANDLED;GLEW_STATIC;KL_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
