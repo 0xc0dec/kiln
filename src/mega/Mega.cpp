@@ -4,15 +4,12 @@
 */
 
 #include "../Common/Input.h"
-
-#define VK_USE_PLATFORM_WIN32_KHR
-#include <vulkan.h>
+#include "Vulkan.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
 #include <windows.h>
 #include <vector>
-
 
 int main()
 {

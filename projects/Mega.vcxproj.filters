@@ -20,6 +20,7 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\src\mega\Mega.cpp" />
+    <ClCompile Include="..\src\mega\Vulkan.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Common">
@@ -45,5 +46,6 @@
     <ClInclude Include="..\src\common\Transform.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\mega\Vulkan.h" />
   </ItemGroup>
 </Project>

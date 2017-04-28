@@ -26,6 +26,7 @@
     <ClCompile Include="..\src\common\Spectator.cpp" />
     <ClCompile Include="..\src\common\Transform.cpp" />
     <ClCompile Include="..\src\mega\Mega.cpp" />
+    <ClCompile Include="..\src\mega\Vulkan.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\common\Camera.h" />
@@ -34,6 +35,7 @@
     <ClInclude Include="..\src\common\Input.h" />
     <ClInclude Include="..\src\common\Spectator.h" />
     <ClInclude Include="..\src\common\Transform.h" />
+    <ClInclude Include="..\src\mega\Vulkan.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
