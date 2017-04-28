@@ -48,5 +48,6 @@
     </ClInclude>
     <ClInclude Include="..\src\mega\Vulkan.h" />
     <ClInclude Include="..\src\mega\Common.h" />
+    <ClInclude Include="..\src\mega\VulkanResource.h" />
   </ItemGroup>
 </Project>

@@ -37,6 +37,7 @@
     <ClInclude Include="..\src\common\Transform.h" />
     <ClInclude Include="..\src\mega\Common.h" />
     <ClInclude Include="..\src\mega\Vulkan.h" />
+    <ClInclude Include="..\src\mega\VulkanResource.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
