@@ -13,19 +13,13 @@
     <ClCompile Include="..\src\common\Input.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\common\OpenGL.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\OpenGLWindow.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\common\Spectator.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\src\common\Transform.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Mega.cpp" />
+    <ClCompile Include="..\src\mega\Mega.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Common">
@@ -43,12 +37,6 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\src\common\Input.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\OpenGL.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\OpenGLWindow.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\src\common\Spectator.h">

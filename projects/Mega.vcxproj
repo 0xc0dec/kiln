@@ -23,19 +23,15 @@
     <ClCompile Include="..\src\common\FileSystem.cpp" />
     <ClCompile Include="..\src\common\Image.cpp" />
     <ClCompile Include="..\src\common\Input.cpp" />
-    <ClCompile Include="..\src\common\OpenGL.cpp" />
-    <ClCompile Include="..\src\common\OpenGLWindow.cpp" />
     <ClCompile Include="..\src\common\Spectator.cpp" />
     <ClCompile Include="..\src\common\Transform.cpp" />
-    <ClCompile Include="..\src\Mega.cpp" />
+    <ClCompile Include="..\src\mega\Mega.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\common\Camera.h" />
     <ClInclude Include="..\src\common\FileSystem.h" />
     <ClInclude Include="..\src\common\Image.h" />
     <ClInclude Include="..\src\common\Input.h" />
-    <ClInclude Include="..\src\common\OpenGL.h" />
-    <ClInclude Include="..\src\common\OpenGLWindow.h" />
     <ClInclude Include="..\src\common\Spectator.h" />
     <ClInclude Include="..\src\common\Transform.h" />
   </ItemGroup>

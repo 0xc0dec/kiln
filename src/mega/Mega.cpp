@@ -3,7 +3,7 @@
     MIT license
 */
 
-#include "Common/Input.h"
+#include "../Common/Input.h"
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan.h>
