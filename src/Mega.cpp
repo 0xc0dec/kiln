@@ -3,6 +3,8 @@
     MIT license
 */
 
+#include "Common/Input.h"
+
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan.h>
 
@@ -54,6 +56,34 @@ int main()
     VkInstance instance;
     vkCreateInstance(&instanceInfo, nullptr, &instance);
 
+    Input input;
+
+    auto run = true;
+    auto lastTime = 0.0f;
+
+    while (run)
+    {
+        input.beginUpdate(window);
+
+        SDL_Event evt;
+        while (SDL_PollEvent(&evt))
+        {
+            input.processEvent(evt);
+
+            if (evt.type == SDL_QUIT ||
+                evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_CLOSE ||
+                evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_ESCAPE)
+            {
+                run = false;
+            }
+        }
+
+        auto time = SDL_GetTicks() / 1000.0f;
+        auto dt = time - lastTime;
+        lastTime = time;
+    }
+
+    SDL_DestroyWindow(window);
     SDL_Quit();
 
     return 0;
