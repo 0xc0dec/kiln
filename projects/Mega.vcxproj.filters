@@ -1,53 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\src\common\Camera.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\FileSystem.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\Image.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\Input.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\Spectator.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\Transform.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\mega\Mega.cpp" />
-    <ClCompile Include="..\src\mega\Vulkan.cpp" />
+    <ClCompile Include="..\src\Camera.cpp" />
+    <ClCompile Include="..\src\FileSystem.cpp" />
+    <ClCompile Include="..\src\Image.cpp" />
+    <ClCompile Include="..\src\Input.cpp" />
+    <ClCompile Include="..\src\Mega.cpp" />
+    <ClCompile Include="..\src\Spectator.cpp" />
+    <ClCompile Include="..\src\Transform.cpp" />
+    <ClCompile Include="..\src\Vulkan.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Common">
-      <UniqueIdentifier>{2cf19022-82a1-4395-bac4-a728bfb671c1}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\src\common\Camera.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\FileSystem.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\Image.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\Input.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\Spectator.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\Transform.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\mega\Vulkan.h" />
-    <ClInclude Include="..\src\mega\Common.h" />
-    <ClInclude Include="..\src\mega\VulkanResource.h" />
+    <ClInclude Include="..\src\Camera.h" />
+    <ClInclude Include="..\src\Common.h" />
+    <ClInclude Include="..\src\FileSystem.h" />
+    <ClInclude Include="..\src\Image.h" />
+    <ClInclude Include="..\src\Input.h" />
+    <ClInclude Include="..\src\Spectator.h" />
+    <ClInclude Include="..\src\Transform.h" />
+    <ClInclude Include="..\src\Vulkan.h" />
+    <ClInclude Include="..\src\VulkanResource.h" />
   </ItemGroup>
 </Project>

@@ -19,25 +19,25 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\common\Camera.cpp" />
-    <ClCompile Include="..\src\common\FileSystem.cpp" />
-    <ClCompile Include="..\src\common\Image.cpp" />
-    <ClCompile Include="..\src\common\Input.cpp" />
-    <ClCompile Include="..\src\common\Spectator.cpp" />
-    <ClCompile Include="..\src\common\Transform.cpp" />
-    <ClCompile Include="..\src\mega\Mega.cpp" />
-    <ClCompile Include="..\src\mega\Vulkan.cpp" />
+    <ClCompile Include="..\src\Camera.cpp" />
+    <ClCompile Include="..\src\FileSystem.cpp" />
+    <ClCompile Include="..\src\Image.cpp" />
+    <ClCompile Include="..\src\Input.cpp" />
+    <ClCompile Include="..\src\Mega.cpp" />
+    <ClCompile Include="..\src\Spectator.cpp" />
+    <ClCompile Include="..\src\Transform.cpp" />
+    <ClCompile Include="..\src\Vulkan.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\common\Camera.h" />
-    <ClInclude Include="..\src\common\FileSystem.h" />
-    <ClInclude Include="..\src\common\Image.h" />
-    <ClInclude Include="..\src\common\Input.h" />
-    <ClInclude Include="..\src\common\Spectator.h" />
-    <ClInclude Include="..\src\common\Transform.h" />
-    <ClInclude Include="..\src\mega\Common.h" />
-    <ClInclude Include="..\src\mega\Vulkan.h" />
-    <ClInclude Include="..\src\mega\VulkanResource.h" />
+    <ClInclude Include="..\src\Camera.h" />
+    <ClInclude Include="..\src\Common.h" />
+    <ClInclude Include="..\src\FileSystem.h" />
+    <ClInclude Include="..\src\Image.h" />
+    <ClInclude Include="..\src\Input.h" />
+    <ClInclude Include="..\src\Spectator.h" />
+    <ClInclude Include="..\src\Transform.h" />
+    <ClInclude Include="..\src\Vulkan.h" />
+    <ClInclude Include="..\src\VulkanResource.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

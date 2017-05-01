@@ -3,12 +3,14 @@
     MIT license
 */
 
-#include "../Common/Input.h"
+#include "Input.h"
 #include "Vulkan.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
-#include <windows.h>
+#ifdef KL_WINDOWS
+#   include <windows.h>
+#endif
 #include <vector>
 
 int main()
