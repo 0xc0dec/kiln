@@ -5,6 +5,7 @@
 
 #include "Input.h"
 #include "Vulkan.h"
+#include "VulkanRenderPass.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -60,6 +61,56 @@ int main()
 
     auto instance = vk::Resource<VkInstance>{vkDestroyInstance};
     KL_VK_CHECK_RESULT(vkCreateInstance(&instanceInfo, nullptr, instance.cleanAndExpose()));
+
+#ifdef KL_WINDOWS
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    SDL_GetWindowWMInfo(window, &wmInfo);
+
+    auto hwnd = wmInfo.info.win.window;
+    auto hinstance = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+
+    VkWin32SurfaceCreateInfoKHR surfaceInfo;
+    surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    surfaceInfo.flags = 0;
+    surfaceInfo.pNext = nullptr;
+    surfaceInfo.hinstance = hinstance;
+    surfaceInfo.hwnd = hwnd;
+
+    auto surface = vk::Resource<VkSurfaceKHR>{instance, vkDestroySurfaceKHR};
+    KL_VK_CHECK_RESULT(vkCreateWin32SurfaceKHR(instance, &surfaceInfo, nullptr, surface.cleanAndExpose()));
+#endif
+
+    struct
+    {
+        VkPhysicalDevice device;
+        VkPhysicalDeviceFeatures features;
+        VkPhysicalDeviceProperties properties;
+        VkPhysicalDeviceMemoryProperties memProperties;
+    } physicalDevice;
+
+    physicalDevice.device = getPhysicalDevice(instance);
+    vkGetPhysicalDeviceProperties(physicalDevice.device, &physicalDevice.properties);
+    vkGetPhysicalDeviceFeatures(physicalDevice.device, &physicalDevice.features);
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice.device, &physicalDevice.memProperties);
+
+    auto surfaceFormats = getSurfaceFormats(physicalDevice.device, surface);
+    auto colorFormat = std::get<0>(surfaceFormats);
+    auto colorSpace = std::get<1>(surfaceFormats);
+
+    auto queueIndex = vk::getQueueIndex(physicalDevice.device, surface);
+    auto device = vk::createDevice(physicalDevice.device, queueIndex);
+
+    VkQueue queue;
+    vkGetDeviceQueue(device, queueIndex, 0, &queue);
+
+    auto depthFormat = vk::getDepthFormat(physicalDevice.device);
+    auto commandPool = vk::createCommandPool(device, queueIndex);
+
+    auto renderPass = vk::RenderPassBuilder(device)
+        .withColorAttachment(colorFormat)
+        .withDepthAttachment(depthFormat)
+        .build();
 
     Input input;
 

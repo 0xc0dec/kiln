@@ -9,6 +9,7 @@
     <ClCompile Include="..\src\Spectator.cpp" />
     <ClCompile Include="..\src\Transform.cpp" />
     <ClCompile Include="..\src\Vulkan.cpp" />
+    <ClCompile Include="..\src\VulkanRenderPass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Camera.h" />
@@ -20,5 +21,6 @@
     <ClInclude Include="..\src\Transform.h" />
     <ClInclude Include="..\src\Vulkan.h" />
     <ClInclude Include="..\src\VulkanResource.h" />
+    <ClInclude Include="..\src\VulkanRenderPass.h" />
   </ItemGroup>
 </Project>

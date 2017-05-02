@@ -22,5 +22,21 @@
 
 namespace vk
 {
-    
+    struct DepthStencil
+    {
+        Resource<VkImage> image;
+        Resource<VkDeviceMemory> mem;
+        Resource<VkImageView> view;
+    };
+
+    auto getPhysicalDevice(VkInstance instance) -> VkPhysicalDevice;
+    auto createDevice(VkPhysicalDevice physicalDevice, uint32_t queueIndex) -> Resource<VkDevice>;
+    auto getSurfaceFormats(VkPhysicalDevice device, VkSurfaceKHR surface) -> std::tuple<VkFormat, VkColorSpaceKHR>;
+    auto getQueueIndex(VkPhysicalDevice device, VkSurfaceKHR surface) -> uint32_t;
+    auto getDepthFormat(VkPhysicalDevice device) -> VkFormat;
+    auto createCommandPool(VkDevice device, uint32_t queueIndex) -> Resource<VkCommandPool>;
+    auto createDepthStencil(VkDevice device, VkPhysicalDeviceMemoryProperties physicalDeviceMemProps,
+        VkFormat depthFormat, uint32_t canvasWidth, uint32_t canvasHeight) -> DepthStencil;
+    auto findMemoryType(VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties, uint32_t typeBits,
+        VkMemoryPropertyFlags properties) -> int32_t;
 }
