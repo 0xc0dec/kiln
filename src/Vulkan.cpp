@@ -5,6 +5,7 @@
 
 #include "Vulkan.h"
 #include <vector>
+#include <array>
 
 using namespace vk;
 
@@ -192,4 +193,50 @@ auto vk::findMemoryType(VkPhysicalDeviceMemoryProperties physicalDeviceMemoryPro
         typeBits >>= 1;
     }
     return -1;
+}
+
+auto vk::createFrameBuffer(VkDevice device, VkImageView colorAttachment, VkImageView depthAttachment, VkRenderPass renderPass,
+    uint32_t width, uint32_t height) -> Resource<VkFramebuffer>
+{
+    std::array<VkImageView, 2> attachments = {colorAttachment, depthAttachment};
+
+    VkFramebufferCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    createInfo.pNext = nullptr;
+    createInfo.renderPass = renderPass;
+    createInfo.attachmentCount = attachments.size();
+    createInfo.pAttachments = attachments.data();
+    createInfo.width = width;
+    createInfo.height = height;
+    createInfo.layers = 1;
+
+    Resource<VkFramebuffer> frameBuffer{device, vkDestroyFramebuffer};
+    KL_VK_CHECK_RESULT(vkCreateFramebuffer(device, &createInfo, nullptr, frameBuffer.cleanAndExpose()));
+
+    return frameBuffer;
+}
+
+auto vk::createSemaphore(VkDevice device) -> Resource<VkSemaphore>
+{
+    VkSemaphoreCreateInfo semaphoreCreateInfo{};
+    semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    semaphoreCreateInfo.pNext = nullptr;
+    semaphoreCreateInfo.flags = 0;
+
+    Resource<VkSemaphore> semaphore{device, vkDestroySemaphore};
+    KL_VK_CHECK_RESULT(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, semaphore.cleanAndExpose()));
+
+    return semaphore;
+}
+
+void vk::createCommandBuffers(VkDevice device, VkCommandPool commandPool, bool primary, uint32_t count, VkCommandBuffer *result)
+{
+    VkCommandBufferAllocateInfo allocateInfo{};
+    allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocateInfo.pNext = nullptr;
+    allocateInfo.commandPool = commandPool;
+    allocateInfo.level = primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+    allocateInfo.commandBufferCount = count;
+    
+    KL_VK_CHECK_RESULT(vkAllocateCommandBuffers(device, &allocateInfo, result));
 }

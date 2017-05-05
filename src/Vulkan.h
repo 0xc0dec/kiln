@@ -39,4 +39,8 @@ namespace vk
         VkFormat depthFormat, uint32_t canvasWidth, uint32_t canvasHeight) -> DepthStencil;
     auto findMemoryType(VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties, uint32_t typeBits,
         VkMemoryPropertyFlags properties) -> int32_t;
+    auto createFrameBuffer(VkDevice device, VkImageView colorAttachment, VkImageView depthAttachment,
+        VkRenderPass renderPass, uint32_t width, uint32_t height) -> Resource<VkFramebuffer>;
+    auto createSemaphore(VkDevice device) -> Resource<VkSemaphore>;
+    void createCommandBuffers(VkDevice device, VkCommandPool commandPool, bool primary, uint32_t count, VkCommandBuffer *result);
 }

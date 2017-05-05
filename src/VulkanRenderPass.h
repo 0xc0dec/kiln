@@ -13,7 +13,7 @@ namespace vk
     class RenderPass
     {
     public:
-        RenderPass();
+        RenderPass() {}
         RenderPass(VkDevice device, Resource<VkRenderPass> pass);
         RenderPass(const RenderPass &other) = delete;
         RenderPass(RenderPass &&other) noexcept;

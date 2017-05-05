@@ -6,6 +6,7 @@
 #include "Input.h"
 #include "Vulkan.h"
 #include "VulkanRenderPass.h"
+#include "VulkanSwapchain.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -18,7 +19,10 @@ int main()
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS);
 
-    auto window = SDL_CreateWindow("Demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_ALLOW_HIGHDPI);
+    const uint32_t CanvasWidth = 800;
+    const uint32_t CanvasHeight = 600;
+
+    auto window = SDL_CreateWindow("Demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, CanvasWidth, CanvasHeight, SDL_WINDOW_ALLOW_HIGHDPI);
 
     VkApplicationInfo appInfo {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -106,11 +110,53 @@ int main()
 
     auto depthFormat = vk::getDepthFormat(physicalDevice.device);
     auto commandPool = vk::createCommandPool(device, queueIndex);
-
+    auto depthStencil = vk::createDepthStencil(device, physicalDevice.memProperties, depthFormat, CanvasWidth, CanvasHeight);
     auto renderPass = vk::RenderPassBuilder(device)
         .withColorAttachment(colorFormat)
         .withDepthAttachment(depthFormat)
         .build();
+    renderPass.setClear(true, true, {{0, 0, 0, 1}}, {1, 0});
+
+    auto swapchain = vk::Swapchain(device, physicalDevice.device, surface, renderPass, depthStencil.view,
+        CanvasWidth, CanvasHeight, false, colorFormat, colorSpace);
+
+    struct
+    {
+        vk::Resource<VkSemaphore> presentComplete;
+        vk::Resource<VkSemaphore> renderComplete;
+    } semaphores;
+    semaphores.presentComplete = vk::createSemaphore(device);
+    semaphores.renderComplete = vk::createSemaphore(device);
+
+    std::vector<VkCommandBuffer> renderCmdBuffers;
+    renderCmdBuffers.resize(swapchain.getStepCount());
+    createCommandBuffers(device, commandPool, true, swapchain.getStepCount(), renderCmdBuffers.data());
+
+    for (size_t i = 0; i < renderCmdBuffers.size(); i++)
+    {
+        auto buf = renderCmdBuffers[i];
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        KL_VK_CHECK_RESULT(vkBeginCommandBuffer(buf, &beginInfo));
+        
+        renderPass.begin(buf, swapchain.getFramebuffer(i), CanvasWidth, CanvasHeight);
+
+        auto vp = VkViewport{0, 0, CanvasWidth, CanvasHeight, 1, 100};
+                
+        vkCmdSetViewport(buf, 0, 1, &vp);
+
+        VkRect2D scissor{};
+        scissor.offset.x = 0;
+        scissor.offset.y = 0;
+        scissor.extent.width = vp.width;
+        scissor.extent.height = vp.height;
+        vkCmdSetScissor(buf, 0, 1, &scissor);
+
+        renderPass.end(buf);
+
+        KL_VK_CHECK_RESULT(vkEndCommandBuffer(buf));
+    }
 
     Input input;
 
@@ -137,7 +183,37 @@ int main()
         auto time = SDL_GetTicks() / 1000.0f;
         auto dt = time - lastTime;
         lastTime = time;
+
+        auto currentSwapchainStep = swapchain.getNextStep(semaphores.presentComplete);
+
+        VkPipelineStageFlags submitPipelineStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+        VkSubmitInfo submitInfo{};
+	    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.pWaitDstStageMask = &submitPipelineStages;
+	    submitInfo.waitSemaphoreCount = 1;
+	    submitInfo.pWaitSemaphores = &semaphores.presentComplete;
+	    submitInfo.signalSemaphoreCount = 1;
+	    submitInfo.pSignalSemaphores = &semaphores.renderComplete;
+        submitInfo.commandBufferCount = 1;
+	    submitInfo.pCommandBuffers = &renderCmdBuffers[currentSwapchainStep];
+        KL_VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+
+        auto swapchainHandle = swapchain.getHandle();
+        VkPresentInfoKHR presentInfo{};
+	    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	    presentInfo.pNext = nullptr;
+	    presentInfo.swapchainCount = 1;
+	    presentInfo.pSwapchains = &swapchainHandle;
+	    presentInfo.pImageIndices = &currentSwapchainStep;
+	    presentInfo.pWaitSemaphores = &semaphores.renderComplete;
+	    presentInfo.waitSemaphoreCount = 1;
+        KL_VK_CHECK_RESULT(vkQueuePresentKHR(queue, &presentInfo));
+
+        KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
     }
+
+    vkFreeCommandBuffers(device, commandPool, renderCmdBuffers.size(), renderCmdBuffers.data());
 
     SDL_DestroyWindow(window);
     SDL_Quit();

@@ -6,30 +6,22 @@
 #include "VulkanRenderPass.h"
 #include <array>
 
-vk::RenderPass::RenderPass()
-{
-}
-
-
 vk::RenderPass::RenderPass(VkDevice device, Resource<VkRenderPass> pass):
     device(device),
     pass(std::move(pass))
 {
 }
 
-
 vk::RenderPass::RenderPass(RenderPass &&other) noexcept
 {
     swap(other);
 }
-
 
 auto vk::RenderPass::operator=(RenderPass other) noexcept -> RenderPass&
 {
     swap(other);
     return *this;
 }
-
 
 void vk::RenderPass::begin(VkCommandBuffer cmdBuf, VkFramebuffer framebuffer, uint32_t canvasWidth, uint32_t canvasHeight)
 {
@@ -48,12 +40,10 @@ void vk::RenderPass::begin(VkCommandBuffer cmdBuf, VkFramebuffer framebuffer, ui
     vkCmdBeginRenderPass(cmdBuf, &info, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
 }
 
-
 void vk::RenderPass::end(VkCommandBuffer cmdBuf)
 {
     vkCmdEndRenderPass(cmdBuf);
 }
-
 
 void vk::RenderPass::swap(RenderPass &other) noexcept
 {
@@ -61,12 +51,10 @@ void vk::RenderPass::swap(RenderPass &other) noexcept
     std::swap(pass, other.pass);
 }
 
-
 vk::RenderPassBuilder::RenderPassBuilder(VkDevice device):
     device(device)
 {
 }
-
 
 auto vk::RenderPassBuilder::withColorAttachment(VkFormat colorFormat) -> RenderPassBuilder&
 {
@@ -90,7 +78,6 @@ auto vk::RenderPassBuilder::withColorAttachment(VkFormat colorFormat) -> RenderP
     return *this;
 }
 
-
 auto vk::RenderPassBuilder::withDepthAttachment(VkFormat depthFormat) -> RenderPassBuilder&
 {
     VkAttachmentDescription desc{};
@@ -110,7 +97,6 @@ auto vk::RenderPassBuilder::withDepthAttachment(VkFormat depthFormat) -> RenderP
 
     return *this;
 }
-
 
 auto vk::RenderPassBuilder::build() -> RenderPass
 {
@@ -160,7 +146,6 @@ auto vk::RenderPassBuilder::build() -> RenderPass
 
     return vk::RenderPass(device, std::move(pass));
 }
-
 
 void vk::RenderPass::setClear(bool clearColor, bool clearDepthStencil, VkClearColorValue color, VkClearDepthStencilValue depthStencil)
 {
