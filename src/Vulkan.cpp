@@ -240,3 +240,31 @@ void vk::createCommandBuffers(VkDevice device, VkCommandPool commandPool, bool p
     
     KL_VK_CHECK_RESULT(vkAllocateCommandBuffers(device, &allocateInfo, result));
 }
+
+auto vk::createShader(VkDevice device, const void *data, uint32_t size) -> Resource<VkShaderModule>
+{
+    VkShaderModuleCreateInfo shaderModuleInfo {};
+    shaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shaderModuleInfo.pNext = nullptr;
+    shaderModuleInfo.flags = 0;
+    shaderModuleInfo.codeSize = size;
+    shaderModuleInfo.pCode = reinterpret_cast<const uint32_t*>(data);
+
+    Resource<VkShaderModule> module{device, vkDestroyShaderModule};
+    KL_VK_CHECK_RESULT(vkCreateShaderModule(device, &shaderModuleInfo, nullptr, module.cleanAndExpose()));
+
+    return module;
+}
+
+auto vk::createShaderStageInfo(bool vertex, VkShaderModule shader, const char* entryPoint) -> VkPipelineShaderStageCreateInfo
+{
+    VkPipelineShaderStageCreateInfo info{};
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    info.pNext = nullptr;
+    info.flags = 0;
+    info.stage = vertex ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_FRAGMENT_BIT;
+    info.module = shader;
+    info.pName = entryPoint;
+    info.pSpecializationInfo = nullptr;
+    return info;
+}
