@@ -4,9 +4,14 @@
 */
 
 #include "Input.h"
+#include "FileSystem.h"
 #include "Vulkan.h"
 #include "VulkanRenderPass.h"
 #include "VulkanSwapchain.h"
+#include "VulkanDescriptorPool.h"
+#include "VulkanBuffer.h"
+#include "VulkanPipeline.h"
+#include "VulkanDescriptorSetLayoutBuilder.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -128,9 +133,57 @@ int main()
     semaphores.presentComplete = vk::createSemaphore(device);
     semaphores.renderComplete = vk::createSemaphore(device);
 
+    struct
+    {
+        vk::Resource<VkDescriptorSetLayout> descSetLayout;
+        vk::DescriptorPool descriptorPool;
+        vk::Buffer uniformBuffer;
+        vk::Pipeline pipeline;
+        VkDescriptorSet descriptorSet;
+        uint32_t vertexCount;
+    } test;
+
+    auto vsBytes = fs::readBytes("../../assets/Test.vert.spv");
+    auto fsBytes = fs::readBytes("../../assets/Test.frag.spv");
+    auto vs = vk::createShader(device, vsBytes.data(), vsBytes.size());
+    auto fs = vk::createShader(device, fsBytes.data(), fsBytes.size());
+
+    test.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
+        .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+        .build();
+
+    VkDescriptorSetLayout descSetLayoutHandle = test.descSetLayout;
+    auto builder = vk::PipelineBuilder(device, renderPass, vs, fs)
+        .withDescriptorSetLayouts(&descSetLayoutHandle, 1)
+        .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+    // Two position coordinates
+    builder.withVertexAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT, 0);
+    builder.withVertexSize(sizeof(float) * 2);
+
+    test.pipeline = builder.build();
+    test.descriptorPool = vk::DescriptorPool(device, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, 1);
+    test.descriptorSet = test.descriptorPool.allocateSet(test.descSetLayout);
+
     std::vector<VkCommandBuffer> renderCmdBuffers;
     renderCmdBuffers.resize(swapchain.getStepCount());
     createCommandBuffers(device, commandPool, true, swapchain.getStepCount(), renderCmdBuffers.data());
+
+    std::vector<float> vertices = {
+        0.9f, 0.9f,
+        -0.9f, 0.9f,
+        -0.9f, -0.9f,
+
+        0.9f, 0.8f,
+        -0.8f, -0.9f,
+        0.9f, -0.9f
+    };
+
+    auto bufferSize = sizeof(float) * 2 * 6;
+    auto stagingVertexBuf = vk::Buffer(device, bufferSize, vk::Buffer::Host | vk::Buffer::TransferSrc, physicalDevice.memProperties);
+    stagingVertexBuf.update(vertices.data());
+
+    auto vertexBuf = vk::Buffer(device, bufferSize, vk::Buffer::Device | vk::Buffer::Vertex | vk::Buffer::TransferDst, physicalDevice.memProperties);
+    stagingVertexBuf.transferTo(vertexBuf, queue, commandPool);
 
     for (size_t i = 0; i < renderCmdBuffers.size(); i++)
     {
@@ -152,6 +205,17 @@ int main()
         scissor.extent.width = vp.width;
         scissor.extent.height = vp.height;
         vkCmdSetScissor(buf, 0, 1, &scissor);
+
+        vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, test.pipeline);
+        vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, test.pipeline.getLayout(), 0, 1, &test.descriptorSet, 0, nullptr);
+
+        std::vector<VkBuffer> vertexBuffers = {vertexBuf.getHandle()};
+        std::vector<VkDeviceSize> offsets = {0, 0};
+        vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), offsets.data());
+
+        vkCmdDraw(buf, 6, 1, 0, 0);
+        /*vkCmdBindIndexBuffer(buf, mesh->getPartBuffer(0), 0, VK_INDEX_TYPE_UINT16);
+        vkCmdDrawIndexed(buf, mesh->getPartIndexElementCount(0), 1, 0, 0, 1);*/
 
         renderPass.end(buf);
 

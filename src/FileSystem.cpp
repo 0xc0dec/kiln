@@ -7,7 +7,6 @@
 #include <fstream>
 #include <cassert>
 
-
 auto fs::readBytes(const std::string& path) -> std::vector<uint8_t>
 {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
