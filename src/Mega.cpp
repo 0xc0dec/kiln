@@ -115,7 +115,7 @@ int main()
         .withColorAttachment(colorFormat)
         .withDepthAttachment(depthFormat)
         .build();
-    renderPass.setClear(true, true, {{0, 0, 0, 1}}, {1, 0});
+    renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
 
     auto swapchain = vk::Swapchain(device, physicalDevice.device, surface, renderPass, depthStencil.view,
         CanvasWidth, CanvasHeight, false, colorFormat, colorSpace);
