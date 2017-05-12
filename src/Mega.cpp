@@ -157,6 +157,7 @@ int main()
         .withDescriptorSetLayouts(&descSetLayoutHandle, 1)
         .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
     // Two position coordinates
+    builder.withVertexBinding(0, sizeof(float) * 2, VK_VERTEX_INPUT_RATE_VERTEX);
     builder.withVertexAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT, 0);
     builder.withVertexSize(sizeof(float) * 2);
 
