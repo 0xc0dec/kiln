@@ -210,7 +210,7 @@ int main()
         vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, test.pipeline.getLayout(), 0, 1, &test.descriptorSet, 0, nullptr);
 
         std::vector<VkBuffer> vertexBuffers = {vertexBuf.getHandle()};
-        std::vector<VkDeviceSize> offsets = {0, 0};
+        std::vector<VkDeviceSize> offsets = {0};
         vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), offsets.data());
 
         vkCmdDraw(buf, 6, 1, 0, 0);
