@@ -239,8 +239,6 @@ int main()
         vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), offsets.data());
 
         vkCmdDraw(buf, 6, 1, 0, 0);
-        /*vkCmdBindIndexBuffer(buf, mesh->getPartBuffer(0), 0, VK_INDEX_TYPE_UINT16);
-        vkCmdDrawIndexed(buf, mesh->getPartIndexElementCount(0), 1, 0, 0, 1);*/
 
         renderPass.end(buf);
 
