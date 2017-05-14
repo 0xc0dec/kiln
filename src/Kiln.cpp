@@ -18,6 +18,8 @@
 #ifdef KL_WINDOWS
 #   include <windows.h>
 #endif
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <vector>
 
 int main()
@@ -164,6 +166,28 @@ int main()
     test.pipeline = builder.build();
     test.descriptorPool = vk::DescriptorPool(device, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, 1);
     test.descriptorSet = test.descriptorPool.allocateSet(test.descSetLayout);
+
+    auto uniformColor = glm::vec3(0, 0.2f, 0.8f);
+    test.uniformBuffer = vk::Buffer(device, sizeof(uniformColor), vk::Buffer::Uniform | vk::Buffer::Host, physicalDevice.memProperties);
+    test.uniformBuffer.update(glm::value_ptr(uniformColor));
+
+    VkDescriptorBufferInfo uboInfo{};
+    uboInfo.buffer = test.uniformBuffer.getHandle();
+    uboInfo.offset = 0;
+    uboInfo.range = sizeof(uniformColor);
+
+    VkWriteDescriptorSet descriptorWrite{};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = test.descriptorSet;
+    descriptorWrite.dstBinding = 0;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pBufferInfo = &uboInfo;
+    descriptorWrite.pImageInfo = nullptr; // Optional
+    descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+    vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
 
     std::vector<VkCommandBuffer> renderCmdBuffers;
     renderCmdBuffers.resize(swapchain.getStepCount());
