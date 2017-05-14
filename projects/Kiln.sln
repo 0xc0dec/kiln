@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Vendor", "Vendor.vcxproj", "{E447524B-828E-4E88-AAD2-DB80406E166F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mega", "Mega.vcxproj", "{2BE1B39E-FEC1-4EC5-A7C3-73F71A5B8A26}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Kiln", "Kiln.vcxproj", "{2BE1B39E-FEC1-4EC5-A7C3-73F71A5B8A26}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E447524B-828E-4E88-AAD2-DB80406E166F} = {E447524B-828E-4E88-AAD2-DB80406E166F}
 	EndProjectSection

@@ -5,7 +5,6 @@
     <ClCompile Include="..\src\FileSystem.cpp" />
     <ClCompile Include="..\src\Image.cpp" />
     <ClCompile Include="..\src\Input.cpp" />
-    <ClCompile Include="..\src\Mega.cpp" />
     <ClCompile Include="..\src\Spectator.cpp" />
     <ClCompile Include="..\src\Transform.cpp" />
     <ClCompile Include="..\src\Vulkan.cpp" />
@@ -16,6 +15,7 @@
     <ClCompile Include="..\src\VulkanBuffer.cpp" />
     <ClCompile Include="..\src\VulkanEffect.cpp" />
     <ClCompile Include="..\src\VulkanPipeline.cpp" />
+    <ClCompile Include="..\src\Kiln.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Camera.h" />

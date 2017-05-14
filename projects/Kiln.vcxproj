@@ -23,7 +23,7 @@
     <ClCompile Include="..\src\FileSystem.cpp" />
     <ClCompile Include="..\src\Image.cpp" />
     <ClCompile Include="..\src\Input.cpp" />
-    <ClCompile Include="..\src\Mega.cpp" />
+    <ClCompile Include="..\src\Kiln.cpp" />
     <ClCompile Include="..\src\VulkanBuffer.cpp" />
     <ClCompile Include="..\src\VulkanDescriptorPool.cpp" />
     <ClCompile Include="..\src\VulkanDescriptorSetLayoutBuilder.cpp" />
@@ -57,7 +57,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{2BE1B39E-FEC1-4EC5-A7C3-73F71A5B8A26}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Mega</RootNamespace>
+    <RootNamespace>Kiln</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -111,7 +111,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(ProjectDir)..\build\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)..\build\$(Configuration)\temp\Mega\</IntDir>
+    <IntDir>$(ProjectDir)..\build\$(Configuration)\temp\Kiln\</IntDir>
     <LibraryPath>$(ProjectDir)..\build\$(Configuration)\;$(ProjectDir)..\vendor\vulkan\lib\;$(LibraryPath)</LibraryPath>
     <IncludePath>$(ProjectDir)..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\vendor\vulkan\include\;$(ProjectDir)..\vendor\png\1.6.16\include\;$(ProjectDir)..\vendor\glm\0.9.8.4\;$(IncludePath)</IncludePath>
   </PropertyGroup>
@@ -121,7 +121,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(ProjectDir)..\build\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)..\build\$(Configuration)\temp\Mega\</IntDir>
+    <IntDir>$(ProjectDir)..\build\$(Configuration)\temp\Kiln\</IntDir>
     <LibraryPath>$(ProjectDir)..\build\$(Configuration)\;$(LibraryPath)</LibraryPath>
     <IncludePath>$(ProjectDir)..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\vendor\glew\1.13\include\;$(ProjectDir)..\vendor\png\1.6.16\include\;$(ProjectDir)..\vendor\glm\0.9.8.4\;$(IncludePath)</IncludePath>
   </PropertyGroup>
