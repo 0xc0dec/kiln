@@ -1,3 +1,5 @@
+# Copyright (c) SaschaWillems https://github.com/SaschaWillems
+
 import sys
 import os
 import glob
