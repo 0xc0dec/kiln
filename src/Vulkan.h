@@ -42,7 +42,7 @@ namespace vk
     auto createFrameBuffer(VkDevice device, VkImageView colorAttachment, VkImageView depthAttachment,
         VkRenderPass renderPass, uint32_t width, uint32_t height) -> Resource<VkFramebuffer>;
     auto createSemaphore(VkDevice device) -> Resource<VkSemaphore>;
-    void createCommandBuffers(VkDevice device, VkCommandPool commandPool, bool primary, uint32_t count, VkCommandBuffer *result);
+    void createCommandBuffers(VkDevice device, VkCommandPool commandPool, uint32_t count, VkCommandBuffer *result);
     auto createShader(VkDevice device, const void *data, uint32_t size) -> Resource<VkShaderModule>;
     auto createShaderStageInfo(bool vertex, VkShaderModule shader, const char *entryPoint) -> VkPipelineShaderStageCreateInfo;
 }

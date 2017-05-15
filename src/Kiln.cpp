@@ -191,7 +191,7 @@ int main()
 
     std::vector<VkCommandBuffer> renderCmdBuffers;
     renderCmdBuffers.resize(swapchain.getStepCount());
-    createCommandBuffers(device, commandPool, true, swapchain.getStepCount(), renderCmdBuffers.data());
+    createCommandBuffers(device, commandPool, swapchain.getStepCount(), renderCmdBuffers.data());
 
     std::vector<float> vertices = {
         0.9f, 0.9f,
@@ -203,7 +203,7 @@ int main()
         0.9f, -0.9f
     };
 
-    auto bufferSize = sizeof(float) * 2 * 6;
+    auto bufferSize = sizeof(float) * vertices.size();
     auto stagingVertexBuf = vk::Buffer(device, bufferSize, vk::Buffer::Host | vk::Buffer::TransferSrc, physicalDevice.memProperties);
     stagingVertexBuf.update(vertices.data());
 
