@@ -5,6 +5,7 @@
 
 #include "Input.h"
 #include "FileSystem.h"
+#include "Spectator.h"
 #include "Camera.h"
 #include "Vulkan.h"
 #include "VulkanRenderPass.h"
@@ -182,7 +183,6 @@ int main()
     cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
     uniformBuf.projectionMatrix = cam.getProjectionMatrix();
-    uniformBuf.viewMatrix = cam.getViewMatrix();
     uniformBuf.modelMatrix = glm::mat4();
 
     test.uniformBuffer = vk::Buffer(device, sizeof(uniformBuf), vk::Buffer::Uniform | vk::Buffer::Host, physicalDevice.memProperties);
@@ -287,6 +287,12 @@ int main()
         auto time = SDL_GetTicks() / 1000.0f;
         auto dt = time - lastTime;
         lastTime = time;
+
+        updateSpectatorTransform(cam.getTransform(), input, dt, 0.05f, 5);
+
+        uniformBuf.viewMatrix = cam.getViewMatrix();
+        test.uniformBuffer.update(&uniformBuf);
+        //vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
 
         auto currentSwapchainStep = swapchain.getNextStep(semaphores.presentComplete);
 
