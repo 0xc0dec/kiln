@@ -161,6 +161,8 @@ int main()
     VkDescriptorSetLayout descSetLayoutHandle = test.descSetLayout;
     auto builder = vk::PipelineBuilder(device, renderPass, vs, fs)
         .withDescriptorSetLayouts(&descSetLayoutHandle, 1)
+        .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
+        .withCullMode(VK_CULL_MODE_NONE)
         .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
     // Three position coordinates
     builder.withVertexBinding(0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX);

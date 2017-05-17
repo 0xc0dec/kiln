@@ -52,6 +52,9 @@ namespace vk
 
         auto withDescriptorSetLayouts(VkDescriptorSetLayout* layouts, uint32_t count) -> PipelineBuilder&;
 
+        auto withFrontFace(VkFrontFace frontFace) -> PipelineBuilder&;
+        auto withCullMode(VkCullModeFlags cullFlags) -> PipelineBuilder&;
+
         auto build() -> Pipeline;
 
     private:
@@ -62,6 +65,7 @@ namespace vk
         VkShaderModule fragmentShader;
         VkPipelineShaderStageCreateInfo vertexShaderStageInfo;
         VkPipelineShaderStageCreateInfo fragmentShaderStageInfo;
+        VkPipelineRasterizationStateCreateInfo rasterState;
 
         std::vector<VkVertexInputAttributeDescription> vertexAttrs;
         std::vector<VkVertexInputBindingDescription> vertexBindings;

@@ -40,6 +40,20 @@ vk::PipelineBuilder::PipelineBuilder(VkDevice device, VkRenderPass renderPass, V
 {
     vertexShaderStageInfo = createShaderStageInfo(true, vertexShader, "main");
     fragmentShaderStageInfo = createShaderStageInfo(false, fragmentShader, "main");
+
+    rasterState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterState.pNext = nullptr;
+    rasterState.flags = 0;
+    rasterState.depthClampEnable = false;
+    rasterState.rasterizerDiscardEnable = false;
+    rasterState.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterState.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterState.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterState.depthBiasEnable = false;
+    rasterState.depthBiasClamp = 0;
+    rasterState.depthBiasConstantFactor = 0;
+    rasterState.depthBiasSlopeFactor = 0;
+    rasterState.lineWidth = 1;
 }
 
 auto vk::PipelineBuilder::withVertexAttribute(uint32_t location, uint32_t binding, VkFormat format, uint32_t offset) -> PipelineBuilder&
@@ -71,6 +85,18 @@ auto vk::PipelineBuilder::withDescriptorSetLayouts(VkDescriptorSetLayout *layout
     return *this;
 }
 
+auto vk::PipelineBuilder::withFrontFace(VkFrontFace frontFace) -> PipelineBuilder&
+{
+    rasterState.frontFace = frontFace;
+    return *this;
+}
+
+auto vk::PipelineBuilder::withCullMode(VkCullModeFlags cullFlags) -> PipelineBuilder&
+{
+    rasterState.cullMode = cullFlags;
+    return *this;
+}
+
 auto vk::PipelineBuilder::build() -> Pipeline
 {
     VkPipelineLayoutCreateInfo layoutInfo{};
@@ -84,21 +110,6 @@ auto vk::PipelineBuilder::build() -> Pipeline
 
     Resource<VkPipelineLayout> layout{device, vkDestroyPipelineLayout};
     KL_VK_CHECK_RESULT(vkCreatePipelineLayout(device, &layoutInfo, nullptr, layout.cleanAndExpose()));
-
-    VkPipelineRasterizationStateCreateInfo rasterState{};
-    rasterState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterState.pNext = nullptr;
-    rasterState.flags = 0;
-    rasterState.depthClampEnable = false;
-    rasterState.rasterizerDiscardEnable = false;
-    rasterState.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterState.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterState.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    rasterState.depthBiasEnable = false;
-    rasterState.depthBiasClamp = 0;
-    rasterState.depthBiasConstantFactor = 0;
-    rasterState.depthBiasSlopeFactor = 0;
-    rasterState.lineWidth = 1;
 
     VkPipelineMultisampleStateCreateInfo multisampleState{};
     multisampleState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
