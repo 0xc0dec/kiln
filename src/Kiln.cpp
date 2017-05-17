@@ -5,6 +5,7 @@
 
 #include "Input.h"
 #include "FileSystem.h"
+#include "Camera.h"
 #include "Vulkan.h"
 #include "VulkanRenderPass.h"
 #include "VulkanSwapchain.h"
@@ -21,6 +22,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
+#include <glm/gtx/transform.inl>
+#include <glm/gtc/matrix_transform.inl>
 
 int main()
 {
@@ -158,23 +161,37 @@ int main()
     auto builder = vk::PipelineBuilder(device, renderPass, vs, fs)
         .withDescriptorSetLayouts(&descSetLayoutHandle, 1)
         .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-    // Two position coordinates
-    builder.withVertexBinding(0, sizeof(float) * 2, VK_VERTEX_INPUT_RATE_VERTEX);
+    // Three position coordinates
+    builder.withVertexBinding(0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX);
     builder.withVertexAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT, 0);
-    builder.withVertexSize(sizeof(float) * 2);
+    builder.withVertexSize(sizeof(float) * 3);
 
     test.pipeline = builder.build();
     test.descriptorPool = vk::DescriptorPool(device, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, 1);
     test.descriptorSet = test.descriptorPool.allocateSet(test.descSetLayout);
 
-    auto uniformColor = glm::vec3(0, 0.2f, 0.8f);
-    test.uniformBuffer = vk::Buffer(device, sizeof(uniformColor), vk::Buffer::Uniform | vk::Buffer::Host, physicalDevice.memProperties);
-    test.uniformBuffer.update(glm::value_ptr(uniformColor));
+    struct
+    {
+        glm::mat4 projectionMatrix;
+		glm::mat4 modelMatrix;
+		glm::mat4 viewMatrix;
+    } uniformBuf;
+
+    Camera cam;
+    cam.getTransform().setLocalPosition({5, -5, 5});
+    cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
+
+    uniformBuf.projectionMatrix = cam.getProjectionMatrix();
+    uniformBuf.viewMatrix = cam.getViewMatrix();
+    uniformBuf.modelMatrix = glm::mat4();
+
+    test.uniformBuffer = vk::Buffer(device, sizeof(uniformBuf), vk::Buffer::Uniform | vk::Buffer::Host, physicalDevice.memProperties);
+    test.uniformBuffer.update(&uniformBuf);
 
     VkDescriptorBufferInfo uboInfo{};
     uboInfo.buffer = test.uniformBuffer.getHandle();
     uboInfo.offset = 0;
-    uboInfo.range = sizeof(uniformColor);
+    uboInfo.range = sizeof(uniformBuf);
 
     VkWriteDescriptorSet descriptorWrite{};
     descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -194,13 +211,13 @@ int main()
     createCommandBuffers(device, commandPool, swapchain.getStepCount(), renderCmdBuffers.data());
 
     std::vector<float> vertices = {
-        0.9f, 0.9f,
-        -0.9f, 0.9f,
-        -0.9f, -0.9f,
+        0.9f, 0.9f, 0,
+        -0.9f, 0.9f, 0,
+        -0.9f, -0.9f, 0,
 
-        0.9f, 0.8f,
-        -0.8f, -0.9f,
-        0.9f, -0.9f
+        0.9f, 0.8f, 0,
+        -0.8f, -0.9f, 0,
+        0.9f, -0.9f, 0
     };
 
     auto bufferSize = sizeof(float) * vertices.size();
