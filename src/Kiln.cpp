@@ -271,7 +271,7 @@ int main()
     Input input;
 
     auto run = true;
-    auto lastTime = 0.0f;
+    auto lastTime = SDL_GetTicks();
 
     while (run)
     {
@@ -290,11 +290,11 @@ int main()
             }
         }
 
-        auto time = SDL_GetTicks() / 1000.0f;
-        auto dt = time - lastTime;
+        auto time = SDL_GetTicks();
+        auto dt = (time - lastTime) / 1000.0f;
         lastTime = time;
 
-        updateSpectatorTransform(cam.getTransform(), input, dt, 2, 5);
+        updateSpectatorTransform(cam.getTransform(), input, dt, 1, 5);
 
         uniformBuf.viewMatrix = cam.getViewMatrix();
         test.uniformBuffer.update(&uniformBuf);

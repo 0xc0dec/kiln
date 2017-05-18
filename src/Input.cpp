@@ -1,10 +1,12 @@
 #include "Input.h"
 
-
 void Input::processEvent(const SDL_Event &evt)
 {
-    processKeyboardEvent(evt);
-    processMouseEvent(evt);
+    if (!firstUpdate)
+    {
+        processKeyboardEvent(evt);
+        processMouseEvent(evt);
+    }
 }
 
 void Input::setCursorCaptured(bool captured)
@@ -118,6 +120,7 @@ void Input::beginUpdate(SDL_Window *window)
     readWindowState(window);
     prepareMouseState();
     prepareKeyboardState();
+    firstUpdate = false;
 }
 
 bool Input::isKeyPressed(SDL_Keycode code, bool firstTime) const

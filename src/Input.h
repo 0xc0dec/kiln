@@ -25,6 +25,7 @@ private:
 
     bool hasMouseFocus = false;
     bool hasKeyboardFocus = false;
+    bool firstUpdate = true;
 
     std::unordered_map<SDL_Keycode, bool> pressedKeys;
     std::unordered_set<SDL_Keycode> releasedKeys;
