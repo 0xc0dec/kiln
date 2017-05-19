@@ -26,9 +26,9 @@
 #endif
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <vector>
 #include <glm/gtx/transform.inl>
 #include <glm/gtc/matrix_transform.inl>
+#include <vector>
 
 int main()
 {
@@ -271,7 +271,7 @@ int main()
     Input input;
 
     auto run = true;
-    auto lastTime = SDL_GetTicks();
+    auto lastTicks = SDL_GetTicks();
 
     while (run)
     {
@@ -290,11 +290,15 @@ int main()
             }
         }
 
-        auto time = SDL_GetTicks();
-        auto dt = (time - lastTime) / 1000.0f;
-        lastTime = time;
+        auto ticks = SDL_GetTicks();
+        auto deltaTicks = ticks - lastTicks;
+        if (deltaTicks == 0)
+            deltaTicks = 1;
 
-        updateSpectatorTransform(cam.getTransform(), input, dt, 1, 5);
+        auto dt = deltaTicks / 1000.0f;
+        lastTicks = ticks;
+
+        updateSpectatorTransform(cam.getTransform(), input, dt, 0.5f, 1);
 
         uniformBuf.viewMatrix = cam.getViewMatrix();
         test.uniformBuffer.update(&uniformBuf);
