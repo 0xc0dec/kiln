@@ -298,26 +298,15 @@ int main()
         auto dt = deltaTicks / 1000.0f;
         lastTicks = ticks;
 
-        updateSpectatorTransform(cam.getTransform(), input, dt, 0.5f, 1);
+        updateSpectatorTransform(cam.getTransform(), input, dt, 1, 1);
 
         uniformBuf.viewMatrix = cam.getViewMatrix();
         test.uniformBuffer.update(&uniformBuf);
 
         auto currentSwapchainStep = swapchain.getNextStep(semaphores.presentComplete);
 
-        vk::submitToQueue(queue, 1, &semaphores.presentComplete, 1, &semaphores.renderComplete, 1, &renderCmdBuffers[currentSwapchainStep]);
-
-        auto swapchainHandle = swapchain.getHandle();
-        VkPresentInfoKHR presentInfo{};
-	    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	    presentInfo.pNext = nullptr;
-	    presentInfo.swapchainCount = 1;
-	    presentInfo.pSwapchains = &swapchainHandle;
-	    presentInfo.pImageIndices = &currentSwapchainStep;
-	    presentInfo.pWaitSemaphores = &semaphores.renderComplete;
-	    presentInfo.waitSemaphoreCount = 1;
-        KL_VK_CHECK_RESULT(vkQueuePresentKHR(queue, &presentInfo));
-
+        vk::queueSubmit(queue, 1, &semaphores.presentComplete, 1, &semaphores.renderComplete, 1, &renderCmdBuffers[currentSwapchainStep]);
+        vk::queuePresent(queue, swapchain, currentSwapchainStep, 1, &semaphores.renderComplete);
         KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
     }
 

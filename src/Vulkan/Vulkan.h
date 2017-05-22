@@ -22,6 +22,8 @@
 
 namespace vk
 {
+    class Swapchain;
+
     struct DepthStencil
     {
         Resource<VkImage> image;
@@ -45,7 +47,9 @@ namespace vk
     void createCommandBuffers(VkDevice device, VkCommandPool commandPool, uint32_t count, VkCommandBuffer *result);
     auto createShader(VkDevice device, const void *data, uint32_t size) -> Resource<VkShaderModule>;
     auto createShaderStageInfo(bool vertex, VkShaderModule shader, const char *entryPoint) -> VkPipelineShaderStageCreateInfo;
-    void submitToQueue(VkQueue queue, uint32_t waitSemaphoreCount, const VkSemaphore* waitSemaphores,
+    void queueSubmit(VkQueue queue, uint32_t waitSemaphoreCount, const VkSemaphore* waitSemaphores,
         uint32_t signalSemaphoreCount, const VkSemaphore* signalSemaphores,
         uint32_t commandBufferCount, const VkCommandBuffer* commandBuffers);
+    void queuePresent(VkQueue queue, const vk::Swapchain &swapchain, uint32_t swapchainStep,
+        uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores);
 }

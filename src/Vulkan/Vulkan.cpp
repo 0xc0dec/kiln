@@ -4,6 +4,7 @@
 */
 
 #include "Vulkan.h"
+#include "VulkanSwapchain.h"
 #include <vector>
 #include <array>
 
@@ -269,7 +270,7 @@ auto vk::createShaderStageInfo(bool vertex, VkShaderModule shader, const char* e
     return info;
 }
 
-void vk::submitToQueue(VkQueue queue, uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores,
+void vk::queueSubmit(VkQueue queue, uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores,
     uint32_t signalSemaphoreCount, const VkSemaphore *signalSemaphores,
     uint32_t commandBufferCount, const VkCommandBuffer *commandBuffers)
 {
@@ -285,4 +286,19 @@ void vk::submitToQueue(VkQueue queue, uint32_t waitSemaphoreCount, const VkSemap
     submitInfo.commandBufferCount = commandBufferCount;
 	submitInfo.pCommandBuffers = commandBuffers;
     KL_VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+}
+
+void vk::queuePresent(VkQueue queue, const vk::Swapchain &swapchain, uint32_t swapchainStep,
+    uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores)
+{
+    auto swapchainHandle = swapchain.getHandle();
+    VkPresentInfoKHR presentInfo{};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.pNext = nullptr;
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = &swapchainHandle;
+	presentInfo.pImageIndices = &swapchainStep;
+	presentInfo.pWaitSemaphores = waitSemaphores;
+	presentInfo.waitSemaphoreCount = waitSemaphoreCount;
+    KL_VK_CHECK_RESULT(vkQueuePresentKHR(queue, &presentInfo));
 }
