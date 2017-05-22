@@ -1,7 +1,3 @@
-// TODO Fix weird camera rotation lags
-// TODO Continue with uniform experiments
-// TODO Cleanup, refactor
-
 /*
     Copyright (c) Aleksey Fedotov
     MIT license
@@ -202,37 +198,13 @@ int main()
         KL_VK_CHECK_RESULT(vkEndCommandBuffer(buf));
     }
 
-    Input input;
-
-    auto run = true;
-    auto lastTicks = SDL_GetTicks();
-
-    while (run)
+    while (!window.closeRequested())
     {
-        input.beginUpdate(window.getSdlWindow());
+        window.beginUpdate();
 
-        SDL_Event evt;
-        while (SDL_PollEvent(&evt))
-        {
-            input.processEvent(evt);
+        auto dt = window.getTimeDelta();
 
-            if (evt.type == SDL_QUIT ||
-                evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_CLOSE ||
-                evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_ESCAPE)
-            {
-                run = false;
-            }
-        }
-
-        auto ticks = SDL_GetTicks();
-        auto deltaTicks = ticks - lastTicks;
-        if (deltaTicks == 0)
-            deltaTicks = 1;
-
-        auto dt = deltaTicks / 1000.0f;
-        lastTicks = ticks;
-
-        updateSpectatorTransform(cam.getTransform(), input, dt, 1, 1);
+        updateSpectatorTransform(cam.getTransform(), window.getInput(), dt, 1, 1);
 
         uniformBuf.viewMatrix = cam.getViewMatrix();
         test.uniformBuffer.update(&uniformBuf);
@@ -242,6 +214,8 @@ int main()
         vk::queueSubmit(queue, 1, &semaphores.presentComplete, 1, &semaphores.renderComplete, 1, &renderCmdBuffers[currentSwapchainStep]);
         vk::queuePresent(queue, swapchain, currentSwapchainStep, 1, &semaphores.renderComplete);
         KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
+
+        window.endUpdate();
     }
 
     vkFreeCommandBuffers(device, commandPool, renderCmdBuffers.size(), renderCmdBuffers.data());

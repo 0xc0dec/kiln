@@ -80,3 +80,35 @@ Window::~Window()
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
+
+void Window::beginUpdate()
+{
+    static auto lastTicks = SDL_GetTicks();
+
+    input.beginUpdate(window);
+
+    SDL_Event evt;
+    while (SDL_PollEvent(&evt))
+    {
+        input.processEvent(evt);
+
+        if (evt.type == SDL_QUIT ||
+            evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_CLOSE ||
+            evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_ESCAPE)
+        {
+            _closeRequested = true;
+        }
+    }
+
+    auto ticks = SDL_GetTicks();
+    auto deltaTicks = ticks - lastTicks;
+    if (deltaTicks == 0)
+        deltaTicks = 1;
+
+    dt = deltaTicks / 1000.0f;
+    lastTicks = ticks;
+}
+
+void Window::endUpdate()
+{
+}
