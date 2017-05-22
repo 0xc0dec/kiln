@@ -11,13 +11,13 @@
 #include "FileSystem.h"
 #include "Spectator.h"
 #include "Camera.h"
-#include "Vulkan.h"
-#include "VulkanRenderPass.h"
-#include "VulkanSwapchain.h"
-#include "VulkanDescriptorPool.h"
-#include "VulkanBuffer.h"
-#include "VulkanPipeline.h"
-#include "VulkanDescriptorSetLayoutBuilder.h"
+#include "vulkan/Vulkan.h"
+#include "vulkan/VulkanRenderPass.h"
+#include "vulkan/VulkanSwapchain.h"
+#include "vulkan/VulkanDescriptorPool.h"
+#include "vulkan/VulkanBuffer.h"
+#include "vulkan/VulkanPipeline.h"
+#include "vulkan/VulkanDescriptorSetLayoutBuilder.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>

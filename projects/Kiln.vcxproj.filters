@@ -7,15 +7,31 @@
     <ClCompile Include="..\src\Input.cpp" />
     <ClCompile Include="..\src\Spectator.cpp" />
     <ClCompile Include="..\src\Transform.cpp" />
-    <ClCompile Include="..\src\Vulkan.cpp" />
-    <ClCompile Include="..\src\VulkanRenderPass.cpp" />
-    <ClCompile Include="..\src\VulkanSwapchain.cpp" />
-    <ClCompile Include="..\src\VulkanDescriptorSetLayoutBuilder.cpp" />
-    <ClCompile Include="..\src\VulkanDescriptorPool.cpp" />
-    <ClCompile Include="..\src\VulkanBuffer.cpp" />
-    <ClCompile Include="..\src\VulkanEffect.cpp" />
-    <ClCompile Include="..\src\VulkanPipeline.cpp" />
     <ClCompile Include="..\src\Kiln.cpp" />
+    <ClCompile Include="..\src\Vulkan\Vulkan.cpp">
+      <Filter>vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Vulkan\VulkanBuffer.cpp">
+      <Filter>vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Vulkan\VulkanDescriptorPool.cpp">
+      <Filter>vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Vulkan\VulkanDescriptorSetLayoutBuilder.cpp">
+      <Filter>vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Vulkan\VulkanEffect.cpp">
+      <Filter>vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Vulkan\VulkanPipeline.cpp">
+      <Filter>vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Vulkan\VulkanRenderPass.cpp">
+      <Filter>vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Vulkan\VulkanSwapchain.cpp">
+      <Filter>vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Camera.h" />
@@ -25,14 +41,37 @@
     <ClInclude Include="..\src\Input.h" />
     <ClInclude Include="..\src\Spectator.h" />
     <ClInclude Include="..\src\Transform.h" />
-    <ClInclude Include="..\src\Vulkan.h" />
-    <ClInclude Include="..\src\VulkanResource.h" />
-    <ClInclude Include="..\src\VulkanRenderPass.h" />
-    <ClInclude Include="..\src\VulkanSwapchain.h" />
-    <ClInclude Include="..\src\VulkanDescriptorSetLayoutBuilder.h" />
-    <ClInclude Include="..\src\VulkanDescriptorPool.h" />
-    <ClInclude Include="..\src\VulkanBuffer.h" />
-    <ClInclude Include="..\src\VulkanEffect.h" />
-    <ClInclude Include="..\src\VulkanPipeline.h" />
+    <ClInclude Include="..\src\Vulkan\Vulkan.h">
+      <Filter>vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Vulkan\VulkanBuffer.h">
+      <Filter>vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Vulkan\VulkanDescriptorPool.h">
+      <Filter>vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Vulkan\VulkanDescriptorSetLayoutBuilder.h">
+      <Filter>vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Vulkan\VulkanEffect.h">
+      <Filter>vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Vulkan\VulkanPipeline.h">
+      <Filter>vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Vulkan\VulkanRenderPass.h">
+      <Filter>vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Vulkan\VulkanResource.h">
+      <Filter>vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Vulkan\VulkanSwapchain.h">
+      <Filter>vulkan</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="vulkan">
+      <UniqueIdentifier>{4d81d1ae-2266-429b-986a-79d92f647307}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
