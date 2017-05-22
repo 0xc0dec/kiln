@@ -305,18 +305,7 @@ int main()
 
         auto currentSwapchainStep = swapchain.getNextStep(semaphores.presentComplete);
 
-        VkPipelineStageFlags submitPipelineStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
-        VkSubmitInfo submitInfo{};
-	    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.pWaitDstStageMask = &submitPipelineStages;
-	    submitInfo.waitSemaphoreCount = 1;
-	    submitInfo.pWaitSemaphores = &semaphores.presentComplete;
-	    submitInfo.signalSemaphoreCount = 1;
-	    submitInfo.pSignalSemaphores = &semaphores.renderComplete;
-        submitInfo.commandBufferCount = 1;
-	    submitInfo.pCommandBuffers = &renderCmdBuffers[currentSwapchainStep];
-        KL_VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+        vk::submitToQueue(queue, 1, &semaphores.presentComplete, 1, &semaphores.renderComplete, 1, &renderCmdBuffers[currentSwapchainStep]);
 
         auto swapchainHandle = swapchain.getHandle();
         VkPresentInfoKHR presentInfo{};

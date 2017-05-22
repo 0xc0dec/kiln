@@ -268,3 +268,21 @@ auto vk::createShaderStageInfo(bool vertex, VkShaderModule shader, const char* e
     info.pSpecializationInfo = nullptr;
     return info;
 }
+
+void vk::submitToQueue(VkQueue queue, uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores,
+    uint32_t signalSemaphoreCount, const VkSemaphore *signalSemaphores,
+    uint32_t commandBufferCount, const VkCommandBuffer *commandBuffers)
+{
+    VkPipelineStageFlags submitPipelineStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+    VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.pWaitDstStageMask = &submitPipelineStages;
+	submitInfo.waitSemaphoreCount = waitSemaphoreCount;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.signalSemaphoreCount = signalSemaphoreCount;
+	submitInfo.pSignalSemaphores = signalSemaphores;
+    submitInfo.commandBufferCount = commandBufferCount;
+	submitInfo.pCommandBuffers = commandBuffers;
+    KL_VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+}
