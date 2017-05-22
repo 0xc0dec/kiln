@@ -11,6 +11,7 @@
 #include "FileSystem.h"
 #include "Spectator.h"
 #include "Camera.h"
+#include "Window.h"
 #include "vulkan/Vulkan.h"
 #include "vulkan/VulkanRenderPass.h"
 #include "vulkan/VulkanSwapchain.h"
@@ -20,10 +21,6 @@
 #include "vulkan/VulkanDescriptorSetLayoutBuilder.h"
 
 #include <SDL.h>
-#include <SDL_syswm.h>
-#ifdef KL_WINDOWS
-#   include <windows.h>
-#endif
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.inl>
@@ -32,73 +29,10 @@
 
 int main()
 {
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS);
+    const uint32_t CanvasWidth = 1366;
+    const uint32_t CanvasHeight = 768;
 
-    const uint32_t CanvasWidth = 800;
-    const uint32_t CanvasHeight = 600;
-
-    auto window = SDL_CreateWindow("Demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, CanvasWidth, CanvasHeight, SDL_WINDOW_ALLOW_HIGHDPI);
-
-    VkApplicationInfo appInfo {};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "";
-    appInfo.pEngineName = "";
-    appInfo.apiVersion = VK_API_VERSION_1_0;
-
-    std::vector<const char *> enabledExtensions {
-        VK_KHR_SURFACE_EXTENSION_NAME,
-#ifdef KL_WINDOWS
-        VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-#endif
-#ifdef KL_DEBUG
-        VK_EXT_DEBUG_REPORT_EXTENSION_NAME
-#endif
-    };
-
-    std::vector<const char *> enabledLayers {
-#ifdef KL_DEBUG
-        "VK_LAYER_LUNARG_standard_validation",
-#endif
-    };
-
-    VkInstanceCreateInfo instanceInfo {};
-    instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instanceInfo.pNext = nullptr;
-    instanceInfo.pApplicationInfo = &appInfo;
-
-    if (!enabledLayers.empty())
-    {
-        instanceInfo.enabledLayerCount = enabledLayers.size();
-        instanceInfo.ppEnabledLayerNames = enabledLayers.data();
-    }
-
-    if (!enabledExtensions.empty())
-    {
-        instanceInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
-        instanceInfo.ppEnabledExtensionNames = enabledExtensions.data();
-    }
-
-    auto instance = vk::Resource<VkInstance>{vkDestroyInstance};
-    KL_VK_CHECK_RESULT(vkCreateInstance(&instanceInfo, nullptr, instance.cleanAndExpose()));
-
-#ifdef KL_WINDOWS
-    SDL_SysWMinfo wmInfo;
-    SDL_VERSION(&wmInfo.version);
-    SDL_GetWindowWMInfo(window, &wmInfo);
-
-    auto hwnd = wmInfo.info.win.window;
-    auto hinstance = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
-
-    VkWin32SurfaceCreateInfoKHR surfaceInfo;
-    surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    surfaceInfo.flags = 0;
-    surfaceInfo.pNext = nullptr;
-    surfaceInfo.hinstance = hinstance;
-    surfaceInfo.hwnd = hwnd;
-
-    auto surface = vk::Resource<VkSurfaceKHR>{instance, vkDestroySurfaceKHR};
-    KL_VK_CHECK_RESULT(vkCreateWin32SurfaceKHR(instance, &surfaceInfo, nullptr, surface.cleanAndExpose()));
-#endif
+    Window window{CanvasWidth, CanvasHeight, "Demo"};
 
     struct
     {
@@ -108,16 +42,16 @@ int main()
         VkPhysicalDeviceMemoryProperties memProperties;
     } physicalDevice;
 
-    physicalDevice.device = getPhysicalDevice(instance);
+    physicalDevice.device = vk::getPhysicalDevice(window.getInstance());
     vkGetPhysicalDeviceProperties(physicalDevice.device, &physicalDevice.properties);
     vkGetPhysicalDeviceFeatures(physicalDevice.device, &physicalDevice.features);
     vkGetPhysicalDeviceMemoryProperties(physicalDevice.device, &physicalDevice.memProperties);
 
-    auto surfaceFormats = getSurfaceFormats(physicalDevice.device, surface);
+    auto surfaceFormats = vk::getSurfaceFormats(physicalDevice.device, window.getSurface());
     auto colorFormat = std::get<0>(surfaceFormats);
     auto colorSpace = std::get<1>(surfaceFormats);
 
-    auto queueIndex = vk::getQueueIndex(physicalDevice.device, surface);
+    auto queueIndex = vk::getQueueIndex(physicalDevice.device, window.getSurface());
     auto device = vk::createDevice(physicalDevice.device, queueIndex);
 
     VkQueue queue;
@@ -132,7 +66,7 @@ int main()
         .build();
     renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
 
-    auto swapchain = vk::Swapchain(device, physicalDevice.device, surface, renderPass, depthStencil.view,
+    auto swapchain = vk::Swapchain(device, physicalDevice.device, window.getSurface(), renderPass, depthStencil.view,
         CanvasWidth, CanvasHeight, false, colorFormat, colorSpace);
 
     struct
@@ -214,7 +148,7 @@ int main()
 
     std::vector<VkCommandBuffer> renderCmdBuffers;
     renderCmdBuffers.resize(swapchain.getStepCount());
-    createCommandBuffers(device, commandPool, swapchain.getStepCount(), renderCmdBuffers.data());
+    vk::createCommandBuffers(device, commandPool, swapchain.getStepCount(), renderCmdBuffers.data());
 
     std::vector<float> vertices = {
         0.9f, 0.9f, 0,
@@ -275,7 +209,7 @@ int main()
 
     while (run)
     {
-        input.beginUpdate(window);
+        input.beginUpdate(window.getSdlWindow());
 
         SDL_Event evt;
         while (SDL_PollEvent(&evt))
@@ -311,9 +245,6 @@ int main()
     }
 
     vkFreeCommandBuffers(device, commandPool, renderCmdBuffers.size(), renderCmdBuffers.data());
-
-    SDL_DestroyWindow(window);
-    SDL_Quit();
 
     return 0;
 }

@@ -67,7 +67,7 @@ namespace vk
             return &handle;
         }
 
-        auto cleanAndExpose() -> T*
+        auto cleanRef() -> T*
         {
             cleanup();
             return &handle;

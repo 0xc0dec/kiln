@@ -33,7 +33,7 @@ auto vk::DescriptorSetLayoutBuilder::build() -> Resource<VkDescriptorSetLayout>
     layoutInfo.pBindings = bindings.data();
 
     Resource<VkDescriptorSetLayout> result{device, vkDestroyDescriptorSetLayout};
-    KL_VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, result.cleanAndExpose()));
+    KL_VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, result.cleanRef()));
     
     return result;
 }

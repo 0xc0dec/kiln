@@ -142,7 +142,7 @@ auto vk::RenderPassBuilder::build() -> RenderPass
     renderPassInfo.pDependencies = dependencies.data();
 
     vk::Resource<VkRenderPass> pass{device, vkDestroyRenderPass};
-    KL_VK_CHECK_RESULT(vkCreateRenderPass(device, &renderPassInfo, nullptr, pass.cleanAndExpose()));
+    KL_VK_CHECK_RESULT(vkCreateRenderPass(device, &renderPassInfo, nullptr, pass.cleanRef()));
 
     return vk::RenderPass(device, std::move(pass));
 }

@@ -42,7 +42,7 @@ auto vk::createDevice(VkPhysicalDevice physicalDevice, uint32_t queueIndex) -> R
     deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
     Resource<VkDevice> result{vkDestroyDevice};
-    KL_VK_CHECK_RESULT(vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, result.cleanAndExpose()));
+    KL_VK_CHECK_RESULT(vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, result.cleanRef()));
 
     return result;
 }
@@ -115,7 +115,7 @@ auto vk::createCommandPool(VkDevice device, uint32_t queueIndex) -> Resource<VkC
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
     Resource<VkCommandPool> commandPool{device, vkDestroyCommandPool};
-    KL_VK_CHECK_RESULT(vkCreateCommandPool(device, &poolInfo, nullptr, commandPool.cleanAndExpose()));
+    KL_VK_CHECK_RESULT(vkCreateCommandPool(device, &poolInfo, nullptr, commandPool.cleanRef()));
 
     return commandPool;
 }
@@ -157,7 +157,7 @@ auto vk::createDepthStencil(VkDevice device, VkPhysicalDeviceMemoryProperties ph
 
     VkMemoryRequirements memReqs;
     Resource<VkImage> image{device, vkDestroyImage};
-    KL_VK_CHECK_RESULT(vkCreateImage(device, &imageInfo, nullptr, image.cleanAndExpose()));
+    KL_VK_CHECK_RESULT(vkCreateImage(device, &imageInfo, nullptr, image.cleanRef()));
     vkGetImageMemoryRequirements(device, image, &memReqs);
 
     auto memTypeIndex = findMemoryType(physicalDeviceMemProps, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -167,12 +167,12 @@ auto vk::createDepthStencil(VkDevice device, VkPhysicalDeviceMemoryProperties ph
     allocInfo.memoryTypeIndex = memTypeIndex;
 
     Resource<VkDeviceMemory> mem{device, vkFreeMemory};
-    KL_VK_CHECK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, mem.cleanAndExpose()));
+    KL_VK_CHECK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, mem.cleanRef()));
     KL_VK_CHECK_RESULT(vkBindImageMemory(device, image, mem, 0));
 
     viewInfo.image = image;
     Resource<VkImageView> view{device, vkDestroyImageView};
-    KL_VK_CHECK_RESULT(vkCreateImageView(device, &viewInfo, nullptr, view.cleanAndExpose()));
+    KL_VK_CHECK_RESULT(vkCreateImageView(device, &viewInfo, nullptr, view.cleanRef()));
 
     DepthStencil result;
     result.image = std::move(image);
@@ -212,7 +212,7 @@ auto vk::createFrameBuffer(VkDevice device, VkImageView colorAttachment, VkImage
     createInfo.layers = 1;
 
     Resource<VkFramebuffer> frameBuffer{device, vkDestroyFramebuffer};
-    KL_VK_CHECK_RESULT(vkCreateFramebuffer(device, &createInfo, nullptr, frameBuffer.cleanAndExpose()));
+    KL_VK_CHECK_RESULT(vkCreateFramebuffer(device, &createInfo, nullptr, frameBuffer.cleanRef()));
 
     return frameBuffer;
 }
@@ -225,7 +225,7 @@ auto vk::createSemaphore(VkDevice device) -> Resource<VkSemaphore>
     semaphoreCreateInfo.flags = 0;
 
     Resource<VkSemaphore> semaphore{device, vkDestroySemaphore};
-    KL_VK_CHECK_RESULT(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, semaphore.cleanAndExpose()));
+    KL_VK_CHECK_RESULT(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, semaphore.cleanRef()));
 
     return semaphore;
 }
@@ -252,7 +252,7 @@ auto vk::createShader(VkDevice device, const void *data, uint32_t size) -> Resou
     shaderModuleInfo.pCode = reinterpret_cast<const uint32_t*>(data);
 
     Resource<VkShaderModule> module{device, vkDestroyShaderModule};
-    KL_VK_CHECK_RESULT(vkCreateShaderModule(device, &shaderModuleInfo, nullptr, module.cleanAndExpose()));
+    KL_VK_CHECK_RESULT(vkCreateShaderModule(device, &shaderModuleInfo, nullptr, module.cleanRef()));
 
     return module;
 }

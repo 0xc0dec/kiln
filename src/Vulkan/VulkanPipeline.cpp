@@ -109,7 +109,7 @@ auto vk::PipelineBuilder::build() -> Pipeline
     layoutInfo.pPushConstantRanges = nullptr;
 
     Resource<VkPipelineLayout> layout{device, vkDestroyPipelineLayout};
-    KL_VK_CHECK_RESULT(vkCreatePipelineLayout(device, &layoutInfo, nullptr, layout.cleanAndExpose()));
+    KL_VK_CHECK_RESULT(vkCreatePipelineLayout(device, &layoutInfo, nullptr, layout.cleanRef()));
 
     VkPipelineMultisampleStateCreateInfo multisampleState{};
     multisampleState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -210,7 +210,7 @@ auto vk::PipelineBuilder::build() -> Pipeline
     pipelineInfo.basePipelineIndex = -1;
 
     Resource<VkPipeline> pipeline{device, vkDestroyPipeline};
-    KL_VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, pipeline.cleanAndExpose()));
+    KL_VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, pipeline.cleanRef()));
 
     return Pipeline(device, renderPass, std::move(pipeline), std::move(layout));
 }

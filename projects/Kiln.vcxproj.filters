@@ -32,6 +32,7 @@
     <ClCompile Include="..\src\Vulkan\VulkanSwapchain.cpp">
       <Filter>vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Camera.h" />
@@ -68,6 +69,7 @@
     <ClInclude Include="..\src\Vulkan\VulkanSwapchain.h">
       <Filter>vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\Window.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="vulkan">

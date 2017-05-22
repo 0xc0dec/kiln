@@ -34,6 +34,7 @@
     <ClCompile Include="..\src\Vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="..\src\Vulkan\VulkanRenderPass.cpp" />
     <ClCompile Include="..\src\Vulkan\VulkanSwapchain.cpp" />
+    <ClCompile Include="..\src\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Camera.h" />
@@ -52,6 +53,7 @@
     <ClInclude Include="..\src\Vulkan\VulkanRenderPass.h" />
     <ClInclude Include="..\src\Vulkan\VulkanResource.h" />
     <ClInclude Include="..\src\Vulkan\VulkanSwapchain.h" />
+    <ClInclude Include="..\src\Window.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

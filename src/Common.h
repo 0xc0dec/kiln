@@ -25,3 +25,9 @@
 #   define KL_PANIC(...) KL_EMPTY_MACRO_BLOCK()
 #   define KL_PANIC_IF(condition, ...) KL_EMPTY_MACRO_BLOCK()
 #endif
+
+#define KL_DISABLE_COPY_AND_MOVE(type) \
+    type(const type &other) = delete; \
+    type(type &&other) = delete; \
+    type &operator=(const type &other) = delete; \
+    type &operator=(type &&other) = delete;
