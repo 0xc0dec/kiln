@@ -8,6 +8,7 @@
 #include "Spectator.h"
 #include "Camera.h"
 #include "Window.h"
+#include "Image.h"
 #include "vulkan/Vulkan.h"
 #include "vulkan/VulkanRenderPass.h"
 #include "vulkan/VulkanSwapchain.h"
@@ -22,6 +23,28 @@
 #include <glm/gtx/transform.inl>
 #include <glm/gtc/matrix_transform.inl>
 #include <vector>
+
+static auto createMeshBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, VkPhysicalDeviceMemoryProperties physDeviceMemProps) -> vk::Buffer
+{
+    std::vector<float> vertices = {
+        0.9f, 0.9f, 0,
+        -0.9f, 0.9f, 0,
+        -0.9f, -0.9f, 0,
+
+        0.9f, 0.8f, 0,
+        -0.8f, -0.9f, 0,
+        0.9f, -0.9f, 0
+    };
+
+    auto vertexBufSize = sizeof(float) * vertices.size();
+    auto stagingVertexBuf = vk::Buffer(device, vertexBufSize, vk::Buffer::Host | vk::Buffer::TransferSrc, physDeviceMemProps);
+    stagingVertexBuf.update(vertices.data());
+
+    auto vertexBuf = vk::Buffer(device, vertexBufSize, vk::Buffer::Device | vk::Buffer::Vertex | vk::Buffer::TransferDst, physDeviceMemProps);
+    stagingVertexBuf.transferTo(vertexBuf, queue, cmdPool);
+
+    return std::move(vertexBuf);
+}
 
 int main()
 {
@@ -73,6 +96,17 @@ int main()
     semaphores.presentComplete = vk::createSemaphore(device);
     semaphores.renderComplete = vk::createSemaphore(device);
 
+    std::vector<VkCommandBuffer> renderCmdBuffers;
+    renderCmdBuffers.resize(swapchain.getStepCount());
+    vk::createCommandBuffers(device, commandPool, swapchain.getStepCount(), renderCmdBuffers.data());
+
+    // Random test code below
+
+    auto vsBytes = fs::readBytes("../../assets/Test.vert.spv");
+    auto fsBytes = fs::readBytes("../../assets/Test.frag.spv");
+    auto imageBytes = fs::readBytes("../../assets/Freeman.png");
+    auto pngImage = img::loadPNG(imageBytes);
+
     struct
     {
         vk::Resource<VkDescriptorSetLayout> descSetLayout;
@@ -83,8 +117,6 @@ int main()
         uint32_t vertexCount;
     } test;
 
-    auto vsBytes = fs::readBytes("../../assets/Test.vert.spv");
-    auto fsBytes = fs::readBytes("../../assets/Test.frag.spv");
     auto vs = vk::createShader(device, vsBytes.data(), vsBytes.size());
     auto fs = vk::createShader(device, fsBytes.data(), fsBytes.size());
 
@@ -92,9 +124,9 @@ int main()
         .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
         .build();
 
-    VkDescriptorSetLayout descSetLayoutHandle = test.descSetLayout;
+    VkDescriptorSetLayout descSetLayout = test.descSetLayout;
     auto builder = vk::PipelineBuilder(device, renderPass, vs, fs)
-        .withDescriptorSetLayouts(&descSetLayoutHandle, 1)
+        .withDescriptorSetLayouts(&descSetLayout, 1)
         .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
         .withCullMode(VK_CULL_MODE_NONE)
         .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
@@ -137,31 +169,12 @@ int main()
     descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     descriptorWrite.descriptorCount = 1;
     descriptorWrite.pBufferInfo = &uboInfo;
-    descriptorWrite.pImageInfo = nullptr; // Optional
-    descriptorWrite.pTexelBufferView = nullptr; // Optional
+    descriptorWrite.pImageInfo = nullptr;
+    descriptorWrite.pTexelBufferView = nullptr;
 
     vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
 
-    std::vector<VkCommandBuffer> renderCmdBuffers;
-    renderCmdBuffers.resize(swapchain.getStepCount());
-    vk::createCommandBuffers(device, commandPool, swapchain.getStepCount(), renderCmdBuffers.data());
-
-    std::vector<float> vertices = {
-        0.9f, 0.9f, 0,
-        -0.9f, 0.9f, 0,
-        -0.9f, -0.9f, 0,
-
-        0.9f, 0.8f, 0,
-        -0.8f, -0.9f, 0,
-        0.9f, -0.9f, 0
-    };
-
-    auto bufferSize = sizeof(float) * vertices.size();
-    auto stagingVertexBuf = vk::Buffer(device, bufferSize, vk::Buffer::Host | vk::Buffer::TransferSrc, physicalDevice.memProperties);
-    stagingVertexBuf.update(vertices.data());
-
-    auto vertexBuf = vk::Buffer(device, bufferSize, vk::Buffer::Device | vk::Buffer::Vertex | vk::Buffer::TransferDst, physicalDevice.memProperties);
-    stagingVertexBuf.transferTo(vertexBuf, queue, commandPool);
+    auto vertexBuf = createMeshBuffer(device, queue, commandPool, physicalDevice.memProperties);
 
     for (size_t i = 0; i < renderCmdBuffers.size(); i++)
     {

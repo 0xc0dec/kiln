@@ -7,13 +7,11 @@
 #include <png.h>
 #include <cassert>
 
-
 struct ReadContext
 {
     uint8_t *data;
     uint32_t offset;
 };
-
 
 static void callback(png_structp png, png_bytep data, png_size_t length)
 {
@@ -21,7 +19,6 @@ static void callback(png_structp png, png_bytep data, png_size_t length)
     memcpy(data, context->data + context->offset, length);
     context->offset += length;
 }
-
 
 auto img::loadPNG(const std::vector<uint8_t> &bytes) -> Image
 {
