@@ -204,7 +204,7 @@ int main()
 
         auto dt = window.getTimeDelta();
 
-        updateSpectatorTransform(cam.getTransform(), window.getInput(), dt, 1, 1);
+        applySpectator(cam.getTransform(), window.getInput(), dt, 1, 1);
 
         uniformBuf.viewMatrix = cam.getViewMatrix();
         test.uniformBuffer.update(&uniformBuf);

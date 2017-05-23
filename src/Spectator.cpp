@@ -3,7 +3,7 @@
 #include "Input.h"
 #include <glm/gtx/vector_angle.hpp>
 
-void updateSpectatorTransform(Transform &transform, Input &input, float dt, float mouseSensitivity, float movementSpeed)
+void applySpectator(Transform &transform, Input &input, float dt, float mouseSensitivity, float movementSpeed)
 {
     auto mouseMotion = input.getMouseMotion();
 
