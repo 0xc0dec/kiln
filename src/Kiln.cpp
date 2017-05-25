@@ -102,11 +102,6 @@ int main()
 
     // Random test code below
 
-    auto vsBytes = fs::readBytes("../../assets/Test.vert.spv");
-    auto fsBytes = fs::readBytes("../../assets/Test.frag.spv");
-    auto imageBytes = fs::readBytes("../../assets/Freeman.png");
-    auto pngImage = img::loadPNG(imageBytes);
-
     struct
     {
         vk::Resource<VkDescriptorSetLayout> descSetLayout;
@@ -117,6 +112,8 @@ int main()
         uint32_t vertexCount;
     } test;
 
+    auto vsBytes = fs::readBytes("../../assets/Test.vert.spv");
+    auto fsBytes = fs::readBytes("../../assets/Test.frag.spv");
     auto vs = vk::createShader(device, vsBytes.data(), vsBytes.size());
     auto fs = vk::createShader(device, fsBytes.data(), fsBytes.size());
 
@@ -175,6 +172,76 @@ int main()
     vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
 
     auto vertexBuf = createMeshBuffer(device, queue, commandPool, physicalDevice.memProperties);
+
+    // Texture initialization
+
+    struct
+    {
+        VkSampler sampler;
+		VkImage image;
+		VkImageLayout imageLayout;
+		VkDeviceMemory deviceMemory;
+		VkImageView view;
+        const uint32_t mipLevels = 1; // No support for mipmaps yet
+    } texture;
+
+    auto imageBytes = fs::readBytes("../../assets/Freeman.png");
+    auto pngImage = img::loadPNG(imageBytes);
+    assert(pngImage.format == img::ImageFormat::RGBA); // To simplify things for now
+
+    auto imageStagingBuf = vk::Buffer(device, pngImage.data.size(), vk::Buffer::Host | vk::Buffer::TransferSrc, physicalDevice.memProperties);
+    imageStagingBuf.update(pngImage.data.data());
+
+    std::vector<VkBufferImageCopy> bufferCopyRegions;
+	uint32_t offset = 0;
+
+    for (uint32_t i = 0; i < texture.mipLevels; i++)
+	{
+		VkBufferImageCopy bufferCopyRegion{};
+		bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		bufferCopyRegion.imageSubresource.mipLevel = i;
+		bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
+		bufferCopyRegion.imageSubresource.layerCount = 1;
+		bufferCopyRegion.imageExtent.width = static_cast<uint32_t>(pngImage.width); // i-th mip level width should be here
+		bufferCopyRegion.imageExtent.height = static_cast<uint32_t>(pngImage.height); // i-th mip level height should be here
+		bufferCopyRegion.imageExtent.depth = 1;
+		bufferCopyRegion.bufferOffset = offset;
+
+		bufferCopyRegions.push_back(bufferCopyRegion);
+
+		offset += static_cast<uint32_t>(pngImage.data.size()); // i-th mip level size should be here
+	}
+
+    auto format = VK_FORMAT_R8G8B8A8_UNORM;
+
+    VkImageCreateInfo imageCreateInfo{};
+	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageCreateInfo.format = format;
+	imageCreateInfo.mipLevels = texture.mipLevels;
+	imageCreateInfo.arrayLayers = 1;
+	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	// Set initial layout of the image to undefined
+	imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageCreateInfo.extent = { pngImage.width, pngImage.height, 1 };
+	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+    KL_VK_CHECK_RESULT(vkCreateImage(device, &imageCreateInfo, nullptr, &texture.image));
+
+    VkMemoryRequirements memReqs{};
+    vkGetImageMemoryRequirements(device, texture.image, &memReqs);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memReqs.size;
+    allocInfo.memoryTypeIndex = vk::findMemoryType(physicalDevice.memProperties, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    KL_VK_CHECK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, &texture.deviceMemory));
+    KL_VK_CHECK_RESULT(vkBindImageMemory(device, texture.image, texture.deviceMemory, 0));
+
+    // TODO
 
     for (size_t i = 0; i < renderCmdBuffers.size(); i++)
     {
