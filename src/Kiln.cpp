@@ -250,13 +250,9 @@ int main()
 
     // The sub resource range describes the regions of the image we will be transition
     VkImageSubresourceRange subresourceRange{};
-    // Image only contains color data
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    // Start at first mip level
     subresourceRange.baseMipLevel = 0;
-    // We will transition on all mip levels
     subresourceRange.levelCount = texture.mipLevels;
-    // The 2D texture only has one layer
     subresourceRange.layerCount = 1;
 
     auto copyCmdBuf = vk::createCommandBuffer(device, commandPool);
@@ -294,14 +290,8 @@ int main()
 
     vkEndCommandBuffer(copyCmdBuf);
 
-    // TODO use helper function
-    VkSubmitInfo submitInfo = {};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &copyCmdBuf;
-    KL_VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
-
-    vkQueueWaitIdle(queue);
+    vk::queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &copyCmdBuf);
+    KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
 
     // TODO
 
@@ -346,7 +336,7 @@ int main()
 
         auto dt = window.getTimeDelta();
 
-        applySpectator(cam.getTransform(), window.getInput(), dt, 1, 1);
+        applySpectator(cam.getTransform(), window.getInput(), dt, 1, 5);
 
         uniformBuf.viewMatrix = cam.getViewMatrix();
         test.uniformBuffer.update(&uniformBuf);
