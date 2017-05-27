@@ -11,30 +11,6 @@ vk::DescriptorPool::DescriptorPool(VkDevice device, Resource<VkDescriptorPool> p
 {
 }
 
-// TODO use builder
-vk::DescriptorPool::DescriptorPool(VkDevice device, const std::vector<VkDescriptorType> &descriptorTypes,
-    const std::vector<uint32_t> &descriptorCounts, uint32_t maxSetCount):
-    device(device)
-{
-    std::vector<VkDescriptorPoolSize> poolSizes;
-    for (size_t i = 0; i < descriptorTypes.size(); ++i)
-    {
-        VkDescriptorPoolSize poolSize{};
-        poolSize.type = descriptorTypes[i];
-        poolSize.descriptorCount = descriptorCounts[i];
-        poolSizes.push_back(poolSize);
-    }
-
-    VkDescriptorPoolCreateInfo poolInfo {};
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.poolSizeCount = poolSizes.size();
-    poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = maxSetCount;
-
-    this->pool = Resource<VkDescriptorPool>{device, vkDestroyDescriptorPool};
-    KL_VK_CHECK_RESULT(vkCreateDescriptorPool(device, &poolInfo, nullptr, pool.cleanRef()));
-}
-
 vk::DescriptorPool::DescriptorPool(DescriptorPool &&other) noexcept
 {
     swap(other);

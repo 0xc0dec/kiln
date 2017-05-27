@@ -15,8 +15,6 @@ namespace vk
     public:
         DescriptorPool() {}
         DescriptorPool(VkDevice device, Resource<VkDescriptorPool> pool);
-        DescriptorPool(VkDevice device, const std::vector<VkDescriptorType> &descriptorTypes,
-            const std::vector<uint32_t> &descriptorCounts, uint32_t maxSetCount);
         DescriptorPool(const DescriptorPool &other) = delete;
         DescriptorPool(DescriptorPool &&other) noexcept;
 
