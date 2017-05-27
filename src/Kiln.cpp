@@ -8,7 +8,6 @@
 #include "Spectator.h"
 #include "Camera.h"
 #include "Window.h"
-#include "Image.h"
 #include "vulkan/Vulkan.h"
 #include "vulkan/VulkanRenderPass.h"
 #include "vulkan/VulkanSwapchain.h"
@@ -17,11 +16,13 @@
 #include "vulkan/VulkanPipeline.h"
 #include "vulkan/VulkanDescriptorSetLayoutBuilder.h"
 
+#undef max // gli does not compile otherwise, probably because of Windows.h included earlier
 #include <SDL.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.inl>
 #include <glm/gtc/matrix_transform.inl>
+#include <gli/gli.hpp>
 #include <vector>
 
 static auto createMeshBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, VkPhysicalDeviceMemoryProperties physDeviceMemProps) -> vk::Buffer
@@ -139,8 +140,8 @@ int main()
     struct
     {
         glm::mat4 projectionMatrix;
-		glm::mat4 modelMatrix;
-		glm::mat4 viewMatrix;
+        glm::mat4 modelMatrix;
+        glm::mat4 viewMatrix;
     } uniformBuf;
 
     Camera cam;
@@ -178,55 +179,59 @@ int main()
     struct
     {
         VkSampler sampler;
-		VkImage image;
-		VkImageLayout imageLayout;
-		VkDeviceMemory deviceMemory;
-		VkImageView view;
-        const uint32_t mipLevels = 1; // No support for mipmaps yet
+        VkImage image;
+        VkImageLayout imageLayout;
+        VkDeviceMemory deviceMemory;
+        VkImageView view;
+        uint32_t mipLevels;
+        uint32_t width;
+        uint32_t height;
     } texture;
 
-    auto imageBytes = fs::readBytes("../../assets/Freeman.png");
-    auto pngImage = img::loadPNG(imageBytes);
-    assert(pngImage.format == img::ImageFormat::RGBA); // To simplify things for now
+    gli::texture2d texData(gli::load("../../assets/metalplate01_rgba.ktx"));
+    assert(!texData.empty());
+    texture.width = texData[0].extent().x;
+    texture.height = texData[0].extent().y;
+    texture.mipLevels = texData.levels();
 
-    auto imageStagingBuf = vk::Buffer(device, pngImage.data.size(), vk::Buffer::Host | vk::Buffer::TransferSrc, physicalDevice.memProperties);
-    imageStagingBuf.update(pngImage.data.data());
+    auto imageStagingBuf = vk::Buffer(device, texData.size(), vk::Buffer::Host | vk::Buffer::TransferSrc, physicalDevice.memProperties);
+    imageStagingBuf.update(texData.data());
 
     std::vector<VkBufferImageCopy> bufferCopyRegions;
-	uint32_t offset = 0;
+    uint32_t offset = 0;
 
     for (uint32_t i = 0; i < texture.mipLevels; i++)
-	{
-		VkBufferImageCopy bufferCopyRegion{};
-		bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		bufferCopyRegion.imageSubresource.mipLevel = i;
-		bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
-		bufferCopyRegion.imageSubresource.layerCount = 1;
-		bufferCopyRegion.imageExtent.width = static_cast<uint32_t>(pngImage.width); // i-th mip level width should be here
-		bufferCopyRegion.imageExtent.height = static_cast<uint32_t>(pngImage.height); // i-th mip level height should be here
-		bufferCopyRegion.imageExtent.depth = 1;
-		bufferCopyRegion.bufferOffset = offset;
+    {
+        VkBufferImageCopy bufferCopyRegion{};
+        bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        bufferCopyRegion.imageSubresource.mipLevel = i;
+        bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
+        bufferCopyRegion.imageSubresource.layerCount = 1;
+        bufferCopyRegion.imageExtent.width = static_cast<uint32_t>(texData[i].extent().x);
+        bufferCopyRegion.imageExtent.height = static_cast<uint32_t>(texData[i].extent().y);
+        bufferCopyRegion.imageExtent.depth = 1;
+        bufferCopyRegion.bufferOffset = offset;
 
-		bufferCopyRegions.push_back(bufferCopyRegion);
+        bufferCopyRegions.push_back(bufferCopyRegion);
 
-		offset += static_cast<uint32_t>(pngImage.data.size()); // i-th mip level size should be here
-	}
+        offset += static_cast<uint32_t>(texData[i].size());
+    }
 
     auto format = VK_FORMAT_R8G8B8A8_UNORM;
 
     VkImageCreateInfo imageCreateInfo{};
-	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-	imageCreateInfo.format = format;
-	imageCreateInfo.mipLevels = texture.mipLevels;
-	imageCreateInfo.arrayLayers = 1;
-	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	// Set initial layout of the image to undefined
-	imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageCreateInfo.extent = { pngImage.width, pngImage.height, 1 };
-	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageCreateInfo.format = format;
+    imageCreateInfo.mipLevels = texture.mipLevels;
+    imageCreateInfo.arrayLayers = 1;
+    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    // Set initial layout of the image to undefined
+    imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageCreateInfo.extent = {texture.width, texture.height, 1};
+    imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
     KL_VK_CHECK_RESULT(vkCreateImage(device, &imageCreateInfo, nullptr, &texture.image));
 
@@ -241,6 +246,63 @@ int main()
     KL_VK_CHECK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, &texture.deviceMemory));
     KL_VK_CHECK_RESULT(vkBindImageMemory(device, texture.image, texture.deviceMemory, 0));
 
+    // Image barrier for optimal image
+
+    // The sub resource range describes the regions of the image we will be transition
+    VkImageSubresourceRange subresourceRange{};
+    // Image only contains color data
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    // Start at first mip level
+    subresourceRange.baseMipLevel = 0;
+    // We will transition on all mip levels
+    subresourceRange.levelCount = texture.mipLevels;
+    // The 2D texture only has one layer
+    subresourceRange.layerCount = 1;
+
+    auto copyCmdBuf = vk::createCommandBuffer(device, commandPool);
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    vkBeginCommandBuffer(copyCmdBuf, &beginInfo);
+
+    vk::setImageLayout(
+        copyCmdBuf,
+        texture.image,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        subresourceRange,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+
+    vkCmdCopyBufferToImage(
+        copyCmdBuf,
+        imageStagingBuf.getHandle(),
+        texture.image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        static_cast<uint32_t>(bufferCopyRegions.size()),
+        bufferCopyRegions.data());
+
+    // Change texture image layout to shader read after all mip levels have been copied
+    texture.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    vk::setImageLayout(
+		copyCmdBuf,
+		texture.image,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		texture.imageLayout,
+		subresourceRange,
+		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+
+    vkEndCommandBuffer(copyCmdBuf);
+
+    // TODO use helper function
+    VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &copyCmdBuf;
+    KL_VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+
+    vkQueueWaitIdle(queue);
+
     // TODO
 
     for (size_t i = 0; i < renderCmdBuffers.size(); i++)
@@ -250,11 +312,11 @@ int main()
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         KL_VK_CHECK_RESULT(vkBeginCommandBuffer(buf, &beginInfo));
-        
+
         renderPass.begin(buf, swapchain.getFramebuffer(i), CanvasWidth, CanvasHeight);
 
         auto vp = VkViewport{0, 0, CanvasWidth, CanvasHeight, 1, 100};
-                
+
         vkCmdSetViewport(buf, 0, 1, &vp);
 
         VkRect2D scissor{};

@@ -11,6 +11,13 @@
 #endif
 #include <vector>
 
+static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType,
+        uint64_t obj, size_t location, int32_t code, const char *layerPrefix, const char *msg, void *userData)
+{
+    // TODO do something here
+    return VK_FALSE;
+}
+
 Window::Window(uint32_t canvasWidth, uint32_t canvasHeight, const char *title)
 {
     window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, canvasWidth, canvasHeight, SDL_WINDOW_ALLOW_HIGHDPI);
@@ -72,6 +79,10 @@ Window::Window(uint32_t canvasWidth, uint32_t canvasHeight, const char *title)
     surfaceInfo.hwnd = hwnd;
 
     KL_VK_CHECK_RESULT(vkCreateWin32SurfaceKHR(instance, &surfaceInfo, nullptr, surface.cleanRef()));
+#endif
+
+#ifdef KL_DEBUG
+    debugCallback = vk::createDebugCallback(instance, debugCallbackFunc);
 #endif
 }
 

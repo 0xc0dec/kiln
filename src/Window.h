@@ -35,6 +35,7 @@ private:
     SDL_Window *window = nullptr;
     vk::Resource<VkInstance> instance;
     vk::Resource<VkSurfaceKHR> surface;
+    vk::Resource<VkDebugReportCallbackEXT> debugCallback;
 
     float dt = 0;
     bool _closeRequested = false;
