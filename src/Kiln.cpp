@@ -28,13 +28,13 @@
 static auto createMeshBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, VkPhysicalDeviceMemoryProperties physDeviceMemProps) -> vk::Buffer
 {
     std::vector<float> vertices = {
-        0.9f, 0.9f, 0,
-        -0.9f, 0.9f, 0,
-        -0.9f, -0.9f, 0,
+        0.9f, 0.9f, 0, 1, 0,
+        -0.9f, 0.9f, 0, 0, 0,
+        -0.9f, -0.9f, 0, 0, 1,
 
-        0.9f, 0.8f, 0,
-        -0.8f, -0.9f, 0,
-        0.9f, -0.9f, 0
+        0.9f, 0.8f, 0, 1, 0,
+        -0.8f, -0.9f, 0, 0, 1,
+        0.9f, -0.9f, 0, 1, 1
     };
 
     auto vertexBufSize = sizeof(float) * vertices.size();
@@ -130,9 +130,10 @@ int main()
         .withCullMode(VK_CULL_MODE_NONE)
         .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
     // Three position coordinates
-    builder.withVertexBinding(0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX);
-    builder.withVertexAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT, 0);
-    builder.withVertexSize(sizeof(float) * 3);
+    builder.withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX);
+    builder.withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
+    builder.withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3);
+    builder.withVertexSize(sizeof(float) * 5);
 
     test.pipeline = builder.build();
     test.descriptorPool = vk::DescriptorPool(device,
@@ -313,6 +314,7 @@ int main()
     // Texture view
 
 	VkImageViewCreateInfo view{};
+    view.viewType = VK_IMAGE_VIEW_TYPE_2D;
     view.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	view.format = format;
 	view.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
