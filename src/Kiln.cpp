@@ -134,12 +134,16 @@ int main()
     builder.withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
     builder.withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3);
     builder.withVertexSize(sizeof(float) * 5);
-
     test.pipeline = builder.build();
-    test.descriptorPool = vk::DescriptorPool(device,
+
+    test.descriptorPool = vk::DescriptorPoolBuilder(device)
+        .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
+        .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
+        .build(2);
+    /*test.descriptorPool = vk::DescriptorPool(device,
         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},
         {1, 1},
-        2);
+        2);*/
     test.descriptorSet = test.descriptorPool.allocateSet(test.descSetLayout);
 
     struct

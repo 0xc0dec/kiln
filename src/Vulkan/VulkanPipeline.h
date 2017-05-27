@@ -14,6 +14,7 @@ namespace vk
     {
     public:
         Pipeline() {}
+        // TODO why not pass pipeline/layout as const refs?
         Pipeline(VkDevice device, VkRenderPass renderPass, Resource<VkPipeline> pipeline, Resource<VkPipelineLayout> layout);
         Pipeline(Pipeline &&other) noexcept;
         Pipeline(const Pipeline &other) = delete;
