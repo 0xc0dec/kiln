@@ -5,17 +5,24 @@
 
 #include "VulkanDescriptorPool.h"
 
-vk::DescriptorPool::DescriptorPool(VkDevice device, VkDescriptorType type, uint32_t descriptorCount, uint32_t maxSetCount):
+// TODO use builder
+vk::DescriptorPool::DescriptorPool(VkDevice device, const std::vector<VkDescriptorType> &descriptorTypes,
+    const std::vector<uint32_t> &descriptorCounts, uint32_t maxSetCount):
     device(device)
 {
-    VkDescriptorPoolSize poolSize{};
-    poolSize.type = type;
-    poolSize.descriptorCount = descriptorCount;
+    std::vector<VkDescriptorPoolSize> poolSizes;
+    for (size_t i = 0; i < descriptorTypes.size(); ++i)
+    {
+        VkDescriptorPoolSize poolSize{};
+        poolSize.type = descriptorTypes[i];
+        poolSize.descriptorCount = descriptorCounts[i];
+        poolSizes.push_back(poolSize);
+    }
 
     VkDescriptorPoolCreateInfo poolInfo {};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.poolSizeCount = 1;
-    poolInfo.pPoolSizes = &poolSize;
+    poolInfo.poolSizeCount = poolSizes.size();
+    poolInfo.pPoolSizes = poolSizes.data();
     poolInfo.maxSets = maxSetCount;
 
     this->pool = Resource<VkDescriptorPool>{device, vkDestroyDescriptorPool};

@@ -120,6 +120,7 @@ int main()
 
     test.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
         .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+        .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
         .build();
 
     VkDescriptorSetLayout descSetLayout = test.descSetLayout;
@@ -134,7 +135,10 @@ int main()
     builder.withVertexSize(sizeof(float) * 3);
 
     test.pipeline = builder.build();
-    test.descriptorPool = vk::DescriptorPool(device, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, 1);
+    test.descriptorPool = vk::DescriptorPool(device,
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},
+        {1, 1},
+        2);
     test.descriptorSet = test.descriptorPool.allocateSet(test.descSetLayout);
 
     struct
@@ -154,27 +158,9 @@ int main()
     test.uniformBuffer = vk::Buffer(device, sizeof(uniformBuf), vk::Buffer::Uniform | vk::Buffer::Host, physicalDevice.memProperties);
     test.uniformBuffer.update(&uniformBuf);
 
-    VkDescriptorBufferInfo uboInfo{};
-    uboInfo.buffer = test.uniformBuffer.getHandle();
-    uboInfo.offset = 0;
-    uboInfo.range = sizeof(uniformBuf);
-
-    VkWriteDescriptorSet descriptorWrite{};
-    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = test.descriptorSet;
-    descriptorWrite.dstBinding = 0;
-    descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pBufferInfo = &uboInfo;
-    descriptorWrite.pImageInfo = nullptr;
-    descriptorWrite.pTexelBufferView = nullptr;
-
-    vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
-
     auto vertexBuf = createMeshBuffer(device, queue, commandPool, physicalDevice.memProperties);
 
-    // Texture initialization
+    // Texture
 
     struct
     {
@@ -293,7 +279,90 @@ int main()
     vk::queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &copyCmdBuf);
     KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
 
-    // TODO
+    // Sampler
+
+    VkSamplerCreateInfo sampler{};
+	sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	sampler.maxAnisotropy = 1.0f;
+	sampler.magFilter = VK_FILTER_LINEAR;
+	sampler.minFilter = VK_FILTER_LINEAR;
+	sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	sampler.mipLodBias = 0.0f;
+	sampler.compareOp = VK_COMPARE_OP_NEVER;
+	sampler.minLod = 0.0f;
+	// Set max level-of-detail to mip level count of the texture
+	sampler.maxLod = static_cast<float>(texture.mipLevels);
+	// Enable anisotropic filtering
+	// This feature is optional, so we must check if it's supported on the device
+	if (physicalDevice.features.samplerAnisotropy)
+	{
+		sampler.maxAnisotropy = physicalDevice.properties.limits.maxSamplerAnisotropy;
+		sampler.anisotropyEnable = VK_TRUE;
+	}
+	else
+	{
+		sampler.maxAnisotropy = 1.0;
+		sampler.anisotropyEnable = VK_FALSE;
+	}
+	sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+	KL_VK_CHECK_RESULT(vkCreateSampler(device, &sampler, nullptr, &texture.sampler));
+
+    // Texture view
+
+	VkImageViewCreateInfo view{};
+    view.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	view.format = format;
+	view.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
+	view.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	view.subresourceRange.baseMipLevel = 0;
+	view.subresourceRange.baseArrayLayer = 0;
+	view.subresourceRange.layerCount = 1;
+	view.subresourceRange.levelCount = texture.mipLevels;
+	view.image = texture.image;
+	KL_VK_CHECK_RESULT(vkCreateImageView(device, &view, nullptr, &texture.view));
+
+    // Descriptor sets
+
+    std::vector<VkWriteDescriptorSet> writeDescriptorSets;
+
+    VkDescriptorBufferInfo uboInfo{};
+    uboInfo.buffer = test.uniformBuffer.getHandle();
+    uboInfo.offset = 0;
+    uboInfo.range = sizeof(uniformBuf);
+
+    VkWriteDescriptorSet uboDescriptorWrite{};
+    uboDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    uboDescriptorWrite.dstSet = test.descriptorSet;
+    uboDescriptorWrite.dstBinding = 0;
+    uboDescriptorWrite.dstArrayElement = 0;
+    uboDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboDescriptorWrite.descriptorCount = 1;
+    uboDescriptorWrite.pBufferInfo = &uboInfo;
+    uboDescriptorWrite.pImageInfo = nullptr;
+    uboDescriptorWrite.pTexelBufferView = nullptr;
+    writeDescriptorSets.push_back(uboDescriptorWrite);
+
+    VkDescriptorImageInfo textureDescriptor{};
+	textureDescriptor.imageView = texture.view;
+	textureDescriptor.sampler = texture.sampler;
+	textureDescriptor.imageLayout = texture.imageLayout;
+
+    VkWriteDescriptorSet textureDescriptorWrite{};
+    textureDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    textureDescriptorWrite.dstSet = test.descriptorSet;
+    textureDescriptorWrite.dstBinding = 1;
+    textureDescriptorWrite.dstArrayElement = 0;
+    textureDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    textureDescriptorWrite.descriptorCount = 1;
+    textureDescriptorWrite.pBufferInfo = nullptr;
+    textureDescriptorWrite.pImageInfo = &textureDescriptor;
+    textureDescriptorWrite.pTexelBufferView = nullptr;
+    writeDescriptorSets.push_back(textureDescriptorWrite);
+    
+    vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
 
     for (size_t i = 0; i < renderCmdBuffers.size(); i++)
     {
@@ -349,6 +418,11 @@ int main()
 
         window.endUpdate();
     }
+
+    vkDestroyImageView(device, texture.view, nullptr);
+	vkDestroyImage(device, texture.image, nullptr);
+	vkDestroySampler(device, texture.sampler, nullptr);
+	vkFreeMemory(device, texture.deviceMemory, nullptr);
 
     vkFreeCommandBuffers(device, commandPool, renderCmdBuffers.size(), renderCmdBuffers.data());
 

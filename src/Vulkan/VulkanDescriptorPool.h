@@ -6,6 +6,7 @@
 #pragma once
 
 #include "Vulkan.h"
+#include <vector>
 
 namespace vk
 {
@@ -13,7 +14,8 @@ namespace vk
     {
     public:
         DescriptorPool() {}
-        DescriptorPool(VkDevice device, VkDescriptorType type, uint32_t descriptorCount, uint32_t maxSetCount);
+        DescriptorPool(VkDevice device, const std::vector<VkDescriptorType> &descriptorTypes,
+            const std::vector<uint32_t> &descriptorCounts, uint32_t maxSetCount);
         DescriptorPool(const DescriptorPool &other) = delete;
         DescriptorPool(DescriptorPool &&other) noexcept;
 
