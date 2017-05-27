@@ -150,6 +150,7 @@ int main()
     } uniformBuf;
 
     Camera cam;
+    cam.setPerspective(glm::radians(45.0f), CanvasWidth / (CanvasHeight * 1.0f), 0.01f, 100.0f);
     cam.getTransform().setLocalPosition({0, 0, -5});
     cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
