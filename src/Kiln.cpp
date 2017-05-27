@@ -140,10 +140,6 @@ int main()
         .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
         .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
         .build(2);
-    /*test.descriptorPool = vk::DescriptorPool(device,
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},
-        {1, 1},
-        2);*/
     test.descriptorSet = test.descriptorPool.allocateSet(test.descSetLayout);
 
     struct
@@ -180,7 +176,7 @@ int main()
         uint32_t height;
     } texture;
 
-    gli::texture2d texData(gli::load("../../assets/metalplate01_rgba.ktx"));
+    gli::texture2d texData(gli::load("../../assets/MetalPlate_rgba.ktx"));
     assert(!texData.empty());
     texture.width = texData[0].extent().x;
     texture.height = texData[0].extent().y;
