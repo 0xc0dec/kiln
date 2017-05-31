@@ -12,19 +12,9 @@ namespace vk
     class Buffer
     {
     public:
-        enum Flags
-        {
-            Host = 1,
-            Device = 1 << 1,
-            Uniform = 1 << 2,
-            Vertex = 1 << 3,
-            Index = 1 << 4,
-            TransferSrc = 1 << 5,
-            TransferDst = 1 << 6
-        };
-
         Buffer() {}
-        Buffer(VkDevice device, VkDeviceSize size, uint32_t flags, VkPhysicalDeviceMemoryProperties memProps);
+        Buffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memPropertyFlags,
+            VkPhysicalDeviceMemoryProperties memProps);
         Buffer(Buffer &&other) noexcept;
         Buffer(const Buffer &other) = delete;
 

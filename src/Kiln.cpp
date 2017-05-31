@@ -38,10 +38,16 @@ static auto createMeshBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPo
     };
 
     auto vertexBufSize = sizeof(float) * vertices.size();
-    auto stagingVertexBuf = vk::Buffer(device, vertexBufSize, vk::Buffer::Host | vk::Buffer::TransferSrc, physDeviceMemProps);
+    auto stagingVertexBuf = vk::Buffer(device, vertexBufSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        physDeviceMemProps);
     stagingVertexBuf.update(vertices.data());
 
-    auto vertexBuf = vk::Buffer(device, vertexBufSize, vk::Buffer::Device | vk::Buffer::Vertex | vk::Buffer::TransferDst, physDeviceMemProps);
+    auto vertexBuf = vk::Buffer(device, vertexBufSize,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        physDeviceMemProps);
     stagingVertexBuf.transferTo(vertexBuf, queue, cmdPool);
 
     return std::move(vertexBuf);
@@ -157,7 +163,10 @@ int main()
     uniformBuf.projectionMatrix = cam.getProjectionMatrix();
     uniformBuf.modelMatrix = glm::mat4();
 
-    test.uniformBuffer = vk::Buffer(device, sizeof(uniformBuf), vk::Buffer::Uniform | vk::Buffer::Host, physicalDevice.memProperties);
+    test.uniformBuffer = vk::Buffer(device, sizeof(uniformBuf),
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        physicalDevice.memProperties);
     test.uniformBuffer.update(&uniformBuf);
 
     auto vertexBuf = createMeshBuffer(device, queue, commandPool, physicalDevice.memProperties);
@@ -182,7 +191,10 @@ int main()
     texture.height = texData[0].extent().y;
     texture.mipLevels = texData.levels();
 
-    auto imageStagingBuf = vk::Buffer(device, texData.size(), vk::Buffer::Host | vk::Buffer::TransferSrc, physicalDevice.memProperties);
+    auto imageStagingBuf = vk::Buffer(device, texData.size(),
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        physicalDevice.memProperties);
     imageStagingBuf.update(texData.data());
 
     std::vector<VkBufferImageCopy> bufferCopyRegions;

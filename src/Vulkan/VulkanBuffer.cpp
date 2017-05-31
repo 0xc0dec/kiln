@@ -5,32 +5,15 @@
 
 #include "VulkanBuffer.h"
 
-vk::Buffer::Buffer(VkDevice device, VkDeviceSize size, uint32_t flags, VkPhysicalDeviceMemoryProperties memProps):
+vk::Buffer::Buffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memPropertyFlags,
+    VkPhysicalDeviceMemoryProperties memProps):
     device(device),
     size(size)
 {
-    VkBufferUsageFlags usage = 0;
-    VkMemoryPropertyFlags propFlags = 0;
-
-    if (flags & Host)
-        propFlags |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-    if (flags & Device)
-        propFlags |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-    if (flags & Vertex)
-        usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    if (flags & Index)
-        usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    if (flags & Uniform)
-        usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    if (flags & TransferSrc)
-        usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    if (flags & TransferDst)
-        usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-
     VkBufferCreateInfo bufferInfo {};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = size;
-    bufferInfo.usage = usage;
+    bufferInfo.usage = usageFlags;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     bufferInfo.flags = 0;
     bufferInfo.queueFamilyIndexCount = 0;
@@ -45,7 +28,7 @@ vk::Buffer::Buffer(VkDevice device, VkDeviceSize size, uint32_t flags, VkPhysica
     VkMemoryAllocateInfo allocInfo {};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memReqs.size;
-    allocInfo.memoryTypeIndex = findMemoryType(memProps, memReqs.memoryTypeBits, propFlags);
+    allocInfo.memoryTypeIndex = findMemoryType(memProps, memReqs.memoryTypeBits, memPropertyFlags);
 
     memory = Resource<VkDeviceMemory>{device, vkFreeMemory};
     KL_VK_CHECK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, memory.cleanRef()));
