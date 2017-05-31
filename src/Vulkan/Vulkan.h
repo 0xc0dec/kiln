@@ -31,6 +31,14 @@ namespace vk
         Resource<VkImageView> view;
     };
 
+    struct PhysicalDevice
+    {
+        VkPhysicalDevice device;
+        VkPhysicalDeviceFeatures features;
+        VkPhysicalDeviceProperties properties;
+        VkPhysicalDeviceMemoryProperties memoryProperties;
+    };
+
     auto getPhysicalDevice(VkInstance instance) -> VkPhysicalDevice;
     auto createDevice(VkPhysicalDevice physicalDevice, uint32_t queueIndex) -> Resource<VkDevice>;
     auto getSurfaceFormats(VkPhysicalDevice device, VkSurfaceKHR surface) -> std::tuple<VkFormat, VkColorSpaceKHR>;

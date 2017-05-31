@@ -15,6 +15,7 @@
 #include "vulkan/VulkanBuffer.h"
 #include "vulkan/VulkanPipeline.h"
 #include "vulkan/VulkanDescriptorSetLayoutBuilder.h"
+#include "vulkan/VulkanTexture.h"
 
 #undef max // gli does not compile otherwise, probably because of Windows.h included earlier
 #include <SDL.h>
@@ -60,18 +61,12 @@ int main()
 
     Window window{CanvasWidth, CanvasHeight, "Demo"};
 
-    struct
-    {
-        VkPhysicalDevice device;
-        VkPhysicalDeviceFeatures features;
-        VkPhysicalDeviceProperties properties;
-        VkPhysicalDeviceMemoryProperties memProperties;
-    } physicalDevice;
+    vk::PhysicalDevice physicalDevice;
 
     physicalDevice.device = vk::getPhysicalDevice(window.getInstance());
     vkGetPhysicalDeviceProperties(physicalDevice.device, &physicalDevice.properties);
     vkGetPhysicalDeviceFeatures(physicalDevice.device, &physicalDevice.features);
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice.device, &physicalDevice.memProperties);
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice.device, &physicalDevice.memoryProperties);
 
     auto surfaceFormats = vk::getSurfaceFormats(physicalDevice.device, window.getSurface());
     auto colorFormat = std::get<0>(surfaceFormats);
@@ -85,7 +80,7 @@ int main()
 
     auto depthFormat = vk::getDepthFormat(physicalDevice.device);
     auto commandPool = vk::createCommandPool(device, queueIndex);
-    auto depthStencil = vk::createDepthStencil(device, physicalDevice.memProperties, depthFormat, CanvasWidth, CanvasHeight);
+    auto depthStencil = vk::createDepthStencil(device, physicalDevice.memoryProperties, depthFormat, CanvasWidth, CanvasHeight);
     auto renderPass = vk::RenderPassBuilder(device)
         .withColorAttachment(colorFormat)
         .withDepthAttachment(depthFormat)
@@ -166,178 +161,23 @@ int main()
     test.uniformBuffer = vk::Buffer(device, sizeof(uniformBuf),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        physicalDevice.memProperties);
+        physicalDevice.memoryProperties);
     test.uniformBuffer.update(&uniformBuf);
 
-    auto vertexBuf = createMeshBuffer(device, queue, commandPool, physicalDevice.memProperties);
+    auto vertexBuf = createMeshBuffer(device, queue, commandPool, physicalDevice.memoryProperties);
 
     // Texture
 
-    struct
-    {
-        VkSampler sampler;
-        VkImage image;
-        VkImageLayout imageLayout;
-        VkDeviceMemory deviceMemory;
-        VkImageView view;
-        uint32_t mipLevels;
-        uint32_t width;
-        uint32_t height;
-    } texture;
-
     gli::texture2d texData(gli::load("../../assets/MetalPlate_rgba.ktx"));
     assert(!texData.empty());
-    texture.width = texData[0].extent().x;
-    texture.height = texData[0].extent().y;
-    texture.mipLevels = texData.levels();
 
-    auto imageStagingBuf = vk::Buffer(device, texData.size(),
+    auto textureStagingBuf = vk::Buffer(device, texData.size(),
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        physicalDevice.memProperties);
-    imageStagingBuf.update(texData.data());
+        physicalDevice.memoryProperties);
+    textureStagingBuf.update(texData.data());
 
-    std::vector<VkBufferImageCopy> bufferCopyRegions;
-    uint32_t offset = 0;
-
-    for (uint32_t i = 0; i < texture.mipLevels; i++)
-    {
-        VkBufferImageCopy bufferCopyRegion{};
-        bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        bufferCopyRegion.imageSubresource.mipLevel = i;
-        bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
-        bufferCopyRegion.imageSubresource.layerCount = 1;
-        bufferCopyRegion.imageExtent.width = static_cast<uint32_t>(texData[i].extent().x);
-        bufferCopyRegion.imageExtent.height = static_cast<uint32_t>(texData[i].extent().y);
-        bufferCopyRegion.imageExtent.depth = 1;
-        bufferCopyRegion.bufferOffset = offset;
-
-        bufferCopyRegions.push_back(bufferCopyRegion);
-
-        offset += static_cast<uint32_t>(texData[i].size());
-    }
-
-    auto format = VK_FORMAT_R8G8B8A8_UNORM;
-
-    VkImageCreateInfo imageCreateInfo{};
-    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageCreateInfo.format = format;
-    imageCreateInfo.mipLevels = texture.mipLevels;
-    imageCreateInfo.arrayLayers = 1;
-    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    // Set initial layout of the image to undefined
-    imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageCreateInfo.extent = {texture.width, texture.height, 1};
-    imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-    KL_VK_CHECK_RESULT(vkCreateImage(device, &imageCreateInfo, nullptr, &texture.image));
-
-    VkMemoryRequirements memReqs{};
-    vkGetImageMemoryRequirements(device, texture.image, &memReqs);
-
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memReqs.size;
-    allocInfo.memoryTypeIndex = vk::findMemoryType(physicalDevice.memProperties, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-    KL_VK_CHECK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, &texture.deviceMemory));
-    KL_VK_CHECK_RESULT(vkBindImageMemory(device, texture.image, texture.deviceMemory, 0));
-
-    // Image barrier for optimal image
-
-    // The sub resource range describes the regions of the image we will be transition
-    VkImageSubresourceRange subresourceRange{};
-    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    subresourceRange.baseMipLevel = 0;
-    subresourceRange.levelCount = texture.mipLevels;
-    subresourceRange.layerCount = 1;
-
-    auto copyCmdBuf = vk::createCommandBuffer(device, commandPool);
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    vkBeginCommandBuffer(copyCmdBuf, &beginInfo);
-
-    vk::setImageLayout(
-        copyCmdBuf,
-        texture.image,
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        subresourceRange,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-
-    vkCmdCopyBufferToImage(
-        copyCmdBuf,
-        imageStagingBuf.getHandle(),
-        texture.image,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        static_cast<uint32_t>(bufferCopyRegions.size()),
-        bufferCopyRegions.data());
-
-    // Change texture image layout to shader read after all mip levels have been copied
-    texture.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    vk::setImageLayout(
-		copyCmdBuf,
-		texture.image,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		texture.imageLayout,
-		subresourceRange,
-		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-
-    vkEndCommandBuffer(copyCmdBuf);
-
-    vk::queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &copyCmdBuf);
-    KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
-
-    // Sampler
-
-    VkSamplerCreateInfo sampler{};
-	sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	sampler.maxAnisotropy = 1.0f;
-	sampler.magFilter = VK_FILTER_LINEAR;
-	sampler.minFilter = VK_FILTER_LINEAR;
-	sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	sampler.mipLodBias = 0.0f;
-	sampler.compareOp = VK_COMPARE_OP_NEVER;
-	sampler.minLod = 0.0f;
-	// Set max level-of-detail to mip level count of the texture
-	sampler.maxLod = static_cast<float>(texture.mipLevels);
-	// Enable anisotropic filtering
-	// This feature is optional, so we must check if it's supported on the device
-	if (physicalDevice.features.samplerAnisotropy)
-	{
-		sampler.maxAnisotropy = physicalDevice.properties.limits.maxSamplerAnisotropy;
-		sampler.anisotropyEnable = VK_TRUE;
-	}
-	else
-	{
-		sampler.maxAnisotropy = 1.0;
-		sampler.anisotropyEnable = VK_FALSE;
-	}
-	sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	KL_VK_CHECK_RESULT(vkCreateSampler(device, &sampler, nullptr, &texture.sampler));
-
-    // Texture view
-
-	VkImageViewCreateInfo view{};
-    view.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    view.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	view.format = format;
-	view.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
-	view.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	view.subresourceRange.baseMipLevel = 0;
-	view.subresourceRange.baseArrayLayer = 0;
-	view.subresourceRange.layerCount = 1;
-	view.subresourceRange.levelCount = texture.mipLevels;
-	view.image = texture.image;
-	KL_VK_CHECK_RESULT(vkCreateImageView(device, &view, nullptr, &texture.view));
+    auto texture = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureStagingBuf.getHandle(), texData, commandPool, queue);
 
     // Descriptor sets
 
@@ -361,9 +201,9 @@ int main()
     writeDescriptorSets.push_back(uboDescriptorWrite);
 
     VkDescriptorImageInfo textureDescriptor{};
-	textureDescriptor.imageView = texture.view;
-	textureDescriptor.sampler = texture.sampler;
-	textureDescriptor.imageLayout = texture.imageLayout;
+	textureDescriptor.imageView = texture.getView();
+	textureDescriptor.sampler = texture.getSampler();
+	textureDescriptor.imageLayout = texture.getLayout();
 
     VkWriteDescriptorSet textureDescriptorWrite{};
     textureDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -433,11 +273,6 @@ int main()
 
         window.endUpdate();
     }
-
-    vkDestroyImageView(device, texture.view, nullptr);
-	vkDestroyImage(device, texture.image, nullptr);
-	vkDestroySampler(device, texture.sampler, nullptr);
-	vkFreeMemory(device, texture.deviceMemory, nullptr);
 
     vkFreeCommandBuffers(device, commandPool, renderCmdBuffers.size(), renderCmdBuffers.data());
 
