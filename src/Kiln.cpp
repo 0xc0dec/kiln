@@ -30,13 +30,13 @@
 static auto createMeshBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, VkPhysicalDeviceMemoryProperties physDeviceMemProps) -> vk::Buffer
 {
     std::vector<float> vertices = {
-        0.9f, 0.9f, 0, 1, 0,
-        -0.9f, 0.9f, 0, 0, 0,
-        -0.9f, -0.9f, 0, 0, 1,
-
-        0.9f, 0.8f, 0, 1, 0,
-        -0.8f, -0.9f, 0, 0, 1,
-        0.9f, -0.9f, 0, 1, 1
+        /* position */  1,  1, 0,  /* uv */ 1, 0,
+        /* position */ -1,  1, 0,  /* uv */ 0, 0,
+        /* position */ -1, -1, 0,  /* uv */ 0, 1,
+        
+        /* position */  1,  1, 0,  /* uv */ 1, 0,
+        /* position */ -1, -1, 0,  /* uv */ 0, 1,
+        /* position */  1, -1, 0,  /* uv */ 1, 1
     };
 
     auto vertexBufSize = sizeof(float) * vertices.size();
@@ -57,10 +57,10 @@ static auto createMeshBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPo
 
 int main()
 {
-    const uint32_t CanvasWidth = 1366;
-    const uint32_t CanvasHeight = 768;
+    const uint32_t canvasWidth = 1366;
+    const uint32_t canvasHeight = 768;
 
-    Window window{CanvasWidth, CanvasHeight, "Demo"};
+    Window window{canvasWidth, canvasHeight, "Demo"};
 
     vk::PhysicalDevice physicalDevice;
 
@@ -81,7 +81,7 @@ int main()
 
     auto depthFormat = vk::getDepthFormat(physicalDevice.device);
     auto commandPool = vk::createCommandPool(device, queueIndex);
-    auto depthStencil = vk::createDepthStencil(device, physicalDevice.memoryProperties, depthFormat, CanvasWidth, CanvasHeight);
+    auto depthStencil = vk::createDepthStencil(device, physicalDevice.memoryProperties, depthFormat, canvasWidth, canvasHeight);
     auto renderPass = vk::RenderPassBuilder(device)
         .withColorAttachment(colorFormat)
         .withDepthAttachment(depthFormat)
@@ -89,7 +89,7 @@ int main()
     renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
 
     auto swapchain = vk::Swapchain(device, physicalDevice.device, window.getSurface(), renderPass, depthStencil.view,
-        CanvasWidth, CanvasHeight, false, colorFormat, colorSpace);
+        canvasWidth, canvasHeight, false, colorFormat, colorSpace);
 
     struct
     {
@@ -126,17 +126,16 @@ int main()
         .build();
 
     VkDescriptorSetLayout descSetLayout = test.descSetLayout;
-    auto builder = vk::PipelineBuilder(device, renderPass, vs, fs)
+    test.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
         .withDescriptorSetLayouts(&descSetLayout, 1)
         .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
         .withCullMode(VK_CULL_MODE_NONE)
-        .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-    // Three position coordinates
-    builder.withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX);
-    builder.withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
-    builder.withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3);
-    builder.withVertexSize(sizeof(float) * 5);
-    test.pipeline = builder.build();
+        .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+        .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
+        .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
+        .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3)
+        .withVertexSize(sizeof(float) * 5)
+        .build();
 
     test.descriptorPool = vk::DescriptorPoolBuilder(device)
         .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
@@ -152,7 +151,7 @@ int main()
     } uniformBuf;
 
     Camera cam;
-    cam.setPerspective(glm::radians(45.0f), CanvasWidth / (CanvasHeight * 1.0f), 0.01f, 100.0f);
+    cam.setPerspective(glm::radians(45.0f), canvasWidth / (canvasHeight * 1.0f), 0.01f, 100.0f);
     cam.getTransform().setLocalPosition({0, 0, -5});
     cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
@@ -188,9 +187,9 @@ int main()
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         KL_VK_CHECK_RESULT(vkBeginCommandBuffer(buf, &beginInfo));
 
-        renderPass.begin(buf, swapchain.getFramebuffer(i), CanvasWidth, CanvasHeight);
+        renderPass.begin(buf, swapchain.getFramebuffer(i), canvasWidth, canvasHeight);
 
-        auto vp = VkViewport{0, 0, CanvasWidth, CanvasHeight, 1, 100};
+        auto vp = VkViewport{0, 0, canvasWidth, canvasHeight, 1, 100};
 
         vkCmdSetViewport(buf, 0, 1, &vp);
 
