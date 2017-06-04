@@ -115,8 +115,8 @@ int main()
         uint32_t vertexCount;
     } test;
 
-    auto vsBytes = fs::readBytes("../../assets/Test.vert.spv");
-    auto fsBytes = fs::readBytes("../../assets/Test.frag.spv");
+    auto vsBytes = fs::readBytes("../../assets/Textured.vert.spv");
+    auto fsBytes = fs::readBytes("../../assets/Textured.frag.spv");
     auto vs = vk::createShader(device, vsBytes.data(), vsBytes.size());
     auto fs = vk::createShader(device, fsBytes.data(), fsBytes.size());
 
