@@ -67,6 +67,11 @@ namespace vk
             return &handle;
         }
 
+        auto operator&() -> T*
+        {
+            return &handle;
+        }
+
         auto cleanRef() -> T*
         {
             cleanup();

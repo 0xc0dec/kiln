@@ -105,84 +105,6 @@ int main()
 
     // Random test code below
 
-    vk::Buffer uniformBuffer;
-
-    struct
-    {
-        vk::Resource<VkDescriptorSetLayout> descSetLayout;
-        vk::DescriptorPool descriptorPool;
-        vk::Pipeline pipeline;
-        VkDescriptorSet descriptorSet;
-        uint32_t vertexCount;
-    } quad;
-
-    struct
-    {
-        vk::Resource<VkDescriptorSetLayout> descSetLayout;
-        vk::DescriptorPool descriptorPool;
-        vk::Pipeline pipeline;
-        VkDescriptorSet descriptorSet;
-        uint32_t vertexCount;
-    } skybox;
-
-    auto texturedVsSrc = fs::readBytes("../../assets/Textured.vert.spv");
-    auto texturedFsSrc = fs::readBytes("../../assets/Textured.frag.spv");
-    auto texturedVs = vk::createShader(device, texturedVsSrc.data(), texturedVsSrc.size());
-    auto texturedFs = vk::createShader(device, texturedFsSrc.data(), texturedFsSrc.size());
-
-    auto skyboxVsSrc = fs::readBytes("../../assets/Skybox.vert.spv");
-    auto skyboxFsSrc = fs::readBytes("../../assets/Skybox.frag.spv");
-    auto skyboxVs = vk::createShader(device, skyboxVsSrc.data(), skyboxVsSrc.size());
-    auto skyboxFs = vk::createShader(device, skyboxFsSrc.data(), skyboxFsSrc.size());
-
-    quad.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
-        .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-        .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
-        .build();
-
-    skybox.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
-        .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-        .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
-        .build();
-
-    VkDescriptorSetLayout quadDescSetLayout = quad.descSetLayout;
-    quad.pipeline = vk::PipelineBuilder(device, renderPass, texturedVs, texturedFs)
-        .withDescriptorSetLayouts(&quadDescSetLayout, 1)
-        .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
-        .withCullMode(VK_CULL_MODE_NONE)
-        .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-        .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
-        .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
-        .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3)
-        .withVertexSize(sizeof(float) * 5)
-        .build();
-
-    VkDescriptorSetLayout skyboxDescSetLayout = skybox.descSetLayout;
-    skybox.pipeline = vk::PipelineBuilder(device, renderPass, skyboxVs, skyboxFs)
-        .withDescriptorSetLayouts(&skyboxDescSetLayout, 1)
-        .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
-        .withCullMode(VK_CULL_MODE_NONE)
-        .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-        .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
-        .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
-        .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3)
-        .withVertexSize(sizeof(float) * 5)
-        .build();
-
-    quad.descriptorPool = vk::DescriptorPoolBuilder(device)
-        .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
-        .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
-        .build(2);
-
-    skybox.descriptorPool = vk::DescriptorPoolBuilder(device)
-        .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
-        .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
-        .build(2);
-
-    quad.descriptorSet = quad.descriptorPool.allocateSet(quad.descSetLayout);
-
-    skybox.descriptorSet = skybox.descriptorPool.allocateSet(skybox.descSetLayout);
-
     struct
     {
         glm::mat4 projectionMatrix;
@@ -198,7 +120,7 @@ int main()
     uniformBuf.projectionMatrix = cam.getProjectionMatrix();
     uniformBuf.modelMatrix = glm::mat4();
 
-    uniformBuffer = vk::Buffer(device, sizeof(uniformBuf),
+    auto uniformBuffer = vk::Buffer(device, sizeof(uniformBuf),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         physicalDevice.memoryProperties);
@@ -206,23 +128,99 @@ int main()
 
     auto vertexBuf = createQuadMeshBuffer(device, queue, commandPool, physicalDevice.memoryProperties);
 
-    // Textures
+    struct
+    {
+        vk::Resource<VkDescriptorSetLayout> descSetLayout;
+        vk::DescriptorPool descriptorPool;
+        vk::Pipeline pipeline;
+        vk::Texture texture;
+        VkDescriptorSet descriptorSet;
+    } quad;
 
-    gli::texture2d textureData2d(gli::load("../../assets/MetalPlate_rgba.ktx"));
-    gli::texture_cube textureDataCube(gli::load("../../assets/Cubemap_space.ktx"));
+    {
+        auto vsSrc = fs::readBytes("../../assets/Textured.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/Textured.frag.spv");
+        auto vs = vk::createShader(device, vsSrc.data(), vsSrc.size());
+        auto fs = vk::createShader(device, fsSrc.data(), fsSrc.size());
 
-    auto texture2d = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData2d, commandPool, queue);
-    auto textureCube = vk::Texture::createCube(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureDataCube, commandPool, queue);
+        quad.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
+            .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .build();
 
-    vk::DescriptorSetUpdater()
-        .forUniformBuffer(0, quad.descriptorSet, uniformBuffer.getHandle(), 0, sizeof(uniformBuf))
-        .forTexture(1, quad.descriptorSet, texture2d.getView(), texture2d.getSampler(), texture2d.getLayout())
-        .updateSets(device);
+        quad.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
+            .withDescriptorSetLayouts(&quad.descSetLayout, 1)
+            .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
+            .withCullMode(VK_CULL_MODE_NONE)
+            .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+            .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
+            .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
+            .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3)
+            .withVertexSize(sizeof(float) * 5)
+            .build();
 
-    vk::DescriptorSetUpdater()
-        .forUniformBuffer(0, skybox.descriptorSet, uniformBuffer.getHandle(), 0, sizeof(uniformBuf))
-        .forTexture(1, skybox.descriptorSet, textureCube.getView(), textureCube.getSampler(), textureCube.getLayout())
-        .updateSets(device);
+        quad.descriptorPool = vk::DescriptorPoolBuilder(device)
+            .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
+            .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
+            .build(2);
+
+        quad.descriptorSet = quad.descriptorPool.allocateSet(quad.descSetLayout);
+
+        gli::texture2d textureData(gli::load("../../assets/MetalPlate_rgba.ktx"));
+        quad.texture = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
+
+        vk::DescriptorSetUpdater()
+            .forUniformBuffer(0, quad.descriptorSet, uniformBuffer.getHandle(), 0, sizeof(uniformBuf))
+            .forTexture(1, quad.descriptorSet, quad.texture.getView(), quad.texture.getSampler(), quad.texture.getLayout())
+            .updateSets(device);
+    }
+
+    struct
+    {
+        vk::Resource<VkDescriptorSetLayout> descSetLayout;
+        vk::DescriptorPool descriptorPool;
+        vk::Pipeline pipeline;
+        vk::Texture texture;
+        VkDescriptorSet descriptorSet;
+    } skybox;
+
+    {
+        auto skyboxVsSrc = fs::readBytes("../../assets/Skybox.vert.spv");
+        auto skyboxFsSrc = fs::readBytes("../../assets/Skybox.frag.spv");
+        auto skyboxVs = vk::createShader(device, skyboxVsSrc.data(), skyboxVsSrc.size());
+        auto skyboxFs = vk::createShader(device, skyboxFsSrc.data(), skyboxFsSrc.size());
+
+        skybox.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
+            .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .build();
+
+        skybox.pipeline = vk::PipelineBuilder(device, renderPass, skyboxVs, skyboxFs)
+            .withDescriptorSetLayouts(&skybox.descSetLayout, 1)
+            .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
+            .withCullMode(VK_CULL_MODE_NONE)
+            .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+            .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
+            .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
+            .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3)
+            .withVertexSize(sizeof(float) * 5)
+            .build();
+
+        skybox.descriptorPool = vk::DescriptorPoolBuilder(device)
+            .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
+            .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
+            .build(2);
+
+        skybox.descriptorSet = skybox.descriptorPool.allocateSet(skybox.descSetLayout);
+
+        gli::texture_cube textureData(gli::load("../../assets/Cubemap_space.ktx"));
+        skybox.texture = vk::Texture::createCube(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
+
+        vk::DescriptorSetUpdater()
+            .forUniformBuffer(0, skybox.descriptorSet, uniformBuffer.getHandle(), 0, sizeof(uniformBuf))
+            .forTexture(1, skybox.descriptorSet, skybox.texture.getView(), skybox.texture.getSampler(), skybox.texture.getLayout())
+            .updateSets(device);
+    }
 
     for (size_t i = 0; i < renderCmdBuffers.size(); i++)
     {

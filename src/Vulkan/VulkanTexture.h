@@ -21,6 +21,7 @@ namespace vk
         static auto createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
             const gli::texture_cube &data, VkCommandPool cmdPool, VkQueue queue) -> Texture;
 
+        Texture() {}
         Texture(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view,
             Resource<VkSampler> sampler, VkImageLayout layout);
         Texture(const Texture &other) = delete;
