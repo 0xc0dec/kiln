@@ -167,16 +167,17 @@ int main()
 
     auto vertexBuf = createMeshBuffer(device, queue, commandPool, physicalDevice.memoryProperties);
 
-    // Texture
+    // Textures
 
-    gli::texture2d texData(gli::load("../../assets/MetalPlate_rgba.ktx"));
-    assert(!texData.empty());
+    gli::texture2d textureData2d(gli::load("../../assets/MetalPlate_rgba.ktx"));
+    gli::texture_cube textureDataCube(gli::load("../../assets/Cubemap_space.ktx"));
 
-    auto texture = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, texData, commandPool, queue);
+    auto texture2d = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData2d, commandPool, queue);
+    auto textureCube = vk::Texture::createCube(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureDataCube, commandPool, queue);
 
     vk::DescriptorSetUpdater()
         .forUniformBuffer(0, test.descriptorSet, test.uniformBuffer.getHandle(), 0, sizeof(uniformBuf))
-        .forTexture(1, test.descriptorSet, texture.getView(), texture.getSampler(), texture.getLayout())
+        .forTexture(1, test.descriptorSet, texture2d.getView(), texture2d.getSampler(), texture2d.getLayout())
         .updateSets(device);
 
     for (size_t i = 0; i < renderCmdBuffers.size(); i++)
