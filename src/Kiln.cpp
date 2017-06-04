@@ -27,32 +27,92 @@
 #include <gli/gli.hpp>
 #include <vector>
 
-static auto createQuadMeshBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, VkPhysicalDeviceMemoryProperties physDeviceMemProps) -> vk::Buffer
+static const std::vector<float> quadData =
 {
-    std::vector<float> vertices = {
-        /* position */  1,  1, 0,  /* uv */ 1, 0,
-        /* position */ -1,  1, 0,  /* uv */ 0, 0,
-        /* position */ -1, -1, 0,  /* uv */ 0, 1,
+     1,  1, 0, 1, 0,
+    -1,  1, 0, 0, 0,
+    -1, -1, 0, 0, 1,
         
-        /* position */  1,  1, 0,  /* uv */ 1, 0,
-        /* position */ -1, -1, 0,  /* uv */ 0, 1,
-        /* position */  1, -1, 0,  /* uv */ 1, 1
-    };
+     1,  1, 0, 1, 0,
+    -1, -1, 0, 0, 1,
+     1, -1, 0, 1, 1
+};
 
-    auto vertexBufSize = sizeof(float) * vertices.size();
-    auto stagingVertexBuf = vk::Buffer(device, vertexBufSize,
+// TODO render with indexes
+static const std::vector<float> boxData =
+{
+    // Negitive X
+    -1, -1, -1, 1, 0,
+    -1, -1,  1, 0, 0,
+    -1,  1,  1, 0, 1,
+
+    -1, -1, -1, 1, 0,
+    -1,  1,  1, 0, 1,
+    -1,  1, -1, 1, 1,
+
+    // Positive X
+     1,  1,  1, 1, 1,
+     1, -1, -1, 0, 0,
+     1,  1, -1, 0, 1,
+
+     1, -1, -1, 0, 0,
+     1,  1,  1, 1, 1,
+     1, -1,  1, 1, 0,
+
+    // Positive Y
+     1,  1,  1, 1, 1,
+     1,  1, -1, 1, 0,
+    -1,  1, -1, 0, 0,
+
+     1,  1,  1, 1, 1,
+    -1,  1, -1, 0, 0,
+    -1,  1,  1, 0, 1,
+
+    // Negative Y
+     1, -1,  1, 0, 1,
+    -1, -1, -1, 1, 0,
+     1, -1, -1, 0, 0,
+
+     1, -1,  1, 0, 1,
+    -1, -1,  1, 1, 1,
+    -1, -1, -1, 1, 0,
+
+    // Positive Z
+    -1,  1,  1, 1, 1,
+    -1, -1,  1, 1, 0,
+     1, -1,  1, 0, 0,
+
+     1,  1,  1, 0, 1,
+    -1,  1,  1, 1, 1,
+     1, -1,  1, 0, 0,
+
+    // Negative Z
+     1,  1, -1, 1, 1,
+    -1, -1, -1, 0, 0,
+    -1,  1, -1, 0, 1,
+
+     1,  1, -1, 1, 1,
+     1, -1, -1, 1, 0,
+    -1, -1, -1, 0, 0
+};
+
+static auto createMeshBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, const vk::PhysicalDevice &physicalDevice,
+    const std::vector<float> &data) -> vk::Buffer
+{
+    auto bufferSize = sizeof(float) * data.size();
+    auto stagingBuffer = vk::Buffer(device, bufferSize,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        physDeviceMemProps);
-    stagingVertexBuf.update(vertices.data());
+        physicalDevice.memoryProperties);
+    stagingBuffer.update(data.data());
 
-    auto vertexBuf = vk::Buffer(device, vertexBufSize,
+    auto vertexBuffer = vk::Buffer(device, bufferSize,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        physDeviceMemProps);
-    stagingVertexBuf.transferTo(vertexBuf, queue, cmdPool);
+        physicalDevice.memoryProperties);
+    stagingBuffer.transferTo(vertexBuffer, queue, cmdPool);
 
-    return std::move(vertexBuf);
+    return std::move(vertexBuffer);
 }
 
 int main()
@@ -113,7 +173,7 @@ int main()
     } uniformBuf;
 
     Camera cam;
-    cam.setPerspective(glm::radians(45.0f), canvasWidth / (canvasHeight * 1.0f), 0.01f, 100.0f);
+    cam.setPerspective(glm::radians(45.0f), canvasWidth / (canvasHeight * 1.0f), 0.01f, 100);
     cam.getTransform().setLocalPosition({0, 0, -5});
     cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
@@ -126,7 +186,8 @@ int main()
         physicalDevice.memoryProperties);
     uniformBuffer.update(&uniformBuf);
 
-    auto vertexBuf = createQuadMeshBuffer(device, queue, commandPool, physicalDevice.memoryProperties);
+    auto quadVertexBuffer = createMeshBuffer(device, queue, commandPool, physicalDevice, quadData);
+    auto boxVertexBuffer = createMeshBuffer(device, queue, commandPool, physicalDevice, boxData);
 
     struct
     {
@@ -151,7 +212,7 @@ int main()
         quad.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
             .withDescriptorSetLayouts(&quad.descSetLayout, 1)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
-            .withCullMode(VK_CULL_MODE_NONE)
+            .withCullMode(VK_CULL_MODE_BACK_BIT)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
@@ -243,18 +304,19 @@ int main()
         scissor.extent.height = vp.height;
         vkCmdSetScissor(buf, 0, 1, &scissor);
 
-        std::vector<VkBuffer> vertexBuffers = {vertexBuf.getHandle()};
         std::vector<VkDeviceSize> offsets = {0};
 
+        std::vector<VkBuffer> quadVertexBuffers = {quadVertexBuffer.getHandle()};
         vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox.pipeline);
         vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox.pipeline.getLayout(), 0, 1, &skybox.descriptorSet, 0, nullptr);
-        vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), offsets.data());
+        vkCmdBindVertexBuffers(buf, 0, 1, quadVertexBuffers.data(), offsets.data());
         vkCmdDraw(buf, 6, 1, 0, 0);
 
+        std::vector<VkBuffer> boxVertexBuffers = {boxVertexBuffer.getHandle()};
         vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, quad.pipeline);
         vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, quad.pipeline.getLayout(), 0, 1, &quad.descriptorSet, 0, nullptr);
-        vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), offsets.data());
-        vkCmdDraw(buf, 6, 1, 0, 0);
+        vkCmdBindVertexBuffers(buf, 0, 1, boxVertexBuffers.data(), offsets.data());
+        vkCmdDraw(buf, 36, 1, 0, 0);
 
         renderPass.end(buf);
 

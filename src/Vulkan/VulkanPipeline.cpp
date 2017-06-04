@@ -150,8 +150,8 @@ auto vk::PipelineBuilder::build() -> Pipeline
 	depthStencilState.depthTestEnable = true;
 	depthStencilState.depthWriteEnable = true;
 	depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-	depthStencilState.front = depthStencilState.back;
 	depthStencilState.back.compareOp = VK_COMPARE_OP_ALWAYS;
+    depthStencilState.front = depthStencilState.back;
 
     std::vector<VkPipelineShaderStageCreateInfo> shaderStageStates{vertexShaderStageInfo, fragmentShaderStageInfo};
 
