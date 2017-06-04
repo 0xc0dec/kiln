@@ -1,3 +1,6 @@
+// TODO Investigate axes directions. Currently Y axis seems pointing down
+// TODO Render with indexes
+
 /*
     Copyright (c) Aleksey Fedotov
     MIT license
@@ -38,7 +41,6 @@ static const std::vector<float> quadData =
      1, -1, 0, 1, 1
 };
 
-// TODO render with indexes
 static const std::vector<float> boxData =
 {
     // Negitive X
@@ -174,7 +176,7 @@ int main()
 
     Camera cam;
     cam.setPerspective(glm::radians(45.0f), canvasWidth / (canvasHeight * 1.0f), 0.01f, 100);
-    cam.getTransform().setLocalPosition({0, 0, -5});
+    cam.getTransform().setLocalPosition({3, -3, -8});
     cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
     uniformBuf.projectionMatrix = cam.getProjectionMatrix();
@@ -334,10 +336,10 @@ int main()
         uniformBuf.viewMatrix = cam.getViewMatrix();
         uniformBuffer.update(&uniformBuf);
 
-        auto currentSwapchainStep = swapchain.getNextStep(semaphores.presentComplete);
+        auto swapchainStep = swapchain.getNextStep(semaphores.presentComplete);
 
-        vk::queueSubmit(queue, 1, &semaphores.presentComplete, 1, &semaphores.renderComplete, 1, &renderCmdBuffers[currentSwapchainStep]);
-        vk::queuePresent(queue, swapchain, currentSwapchainStep, 1, &semaphores.renderComplete);
+        vk::queueSubmit(queue, 1, &semaphores.presentComplete, 1, &semaphores.renderComplete, 1, &renderCmdBuffers[swapchainStep]);
+        vk::queuePresent(queue, swapchain, swapchainStep, 1, &semaphores.renderComplete);
         KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
 
         window.endUpdate();
