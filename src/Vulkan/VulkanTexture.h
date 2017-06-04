@@ -16,11 +16,15 @@ namespace vk
     class Texture
     {
     public:
-        static auto create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format, VkBuffer dataBuffer,
+        static auto create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
             const gli::texture2d &info, VkCommandPool cmdPool, VkQueue queue) -> Texture;
 
         Texture(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view,
             Resource<VkSampler> sampler, VkImageLayout layout);
+        Texture(const Texture &other) = delete;
+        Texture(Texture &&other) noexcept;
+
+        auto operator=(Texture other) noexcept -> Texture&;
 
         auto getLayout() -> VkImageLayout;
         auto getSampler() -> VkSampler;
@@ -32,6 +36,8 @@ namespace vk
         Resource<VkImageView> view;
         Resource<VkSampler> sampler;
         VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+        void swap(Texture &other) noexcept;
     };
 
     inline auto Texture::getLayout() -> VkImageLayout

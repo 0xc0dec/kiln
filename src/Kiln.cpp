@@ -172,15 +172,7 @@ int main()
     gli::texture2d texData(gli::load("../../assets/MetalPlate_rgba.ktx"));
     assert(!texData.empty());
 
-    auto textureStagingBuf = vk::Buffer(device, texData.size(),
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        physicalDevice.memoryProperties);
-    textureStagingBuf.update(texData.data());
-
-    auto texture = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureStagingBuf.getHandle(), texData, commandPool, queue);
-
-    // Descriptor sets
+    auto texture = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, texData, commandPool, queue);
 
     vk::DescriptorSetUpdater()
         .forUniformBuffer(0, test.descriptorSet, test.uniformBuffer.getHandle(), 0, sizeof(uniformBuf))
