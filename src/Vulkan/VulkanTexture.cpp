@@ -154,13 +154,15 @@ auto vk::Texture::create2D(VkDevice device, const PhysicalDevice &physicalDevice
     Resource<VkImageView> view{device, vkDestroyImageView};
 	KL_VK_CHECK_RESULT(vkCreateImageView(device, &viewInfo, nullptr, view.cleanRef()));
 
-    return Texture{std::move(image), std::move(memory), std::move(view), std::move(sampler)};
+    return Texture{std::move(image), std::move(memory), std::move(view), std::move(sampler), imageLayout};
 }
 
-vk::Texture::Texture(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view, Resource<VkSampler> sampler):
+vk::Texture::Texture(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view, Resource<VkSampler> sampler,
+    VkImageLayout layout):
     image(std::move(image)),
     memory(std::move(memory)),
     view(std::move(view)),
-    sampler(std::move(sampler))
+    sampler(std::move(sampler)),
+    layout(layout)
 {
 }

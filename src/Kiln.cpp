@@ -16,6 +16,7 @@
 #include "vulkan/VulkanPipeline.h"
 #include "vulkan/VulkanDescriptorSetLayoutBuilder.h"
 #include "vulkan/VulkanTexture.h"
+#include "vulkan/VulkanDescriptorSetUpdater.h"
 
 #undef max // gli does not compile otherwise, probably because of Windows.h included earlier
 #include <SDL.h>
@@ -181,43 +182,10 @@ int main()
 
     // Descriptor sets
 
-    std::vector<VkWriteDescriptorSet> writeDescriptorSets;
-
-    VkDescriptorBufferInfo uboInfo{};
-    uboInfo.buffer = test.uniformBuffer.getHandle();
-    uboInfo.offset = 0;
-    uboInfo.range = sizeof(uniformBuf);
-
-    VkWriteDescriptorSet uboDescriptorWrite{};
-    uboDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    uboDescriptorWrite.dstSet = test.descriptorSet;
-    uboDescriptorWrite.dstBinding = 0;
-    uboDescriptorWrite.dstArrayElement = 0;
-    uboDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboDescriptorWrite.descriptorCount = 1;
-    uboDescriptorWrite.pBufferInfo = &uboInfo;
-    uboDescriptorWrite.pImageInfo = nullptr;
-    uboDescriptorWrite.pTexelBufferView = nullptr;
-    writeDescriptorSets.push_back(uboDescriptorWrite);
-
-    VkDescriptorImageInfo textureDescriptor{};
-	textureDescriptor.imageView = texture.getView();
-	textureDescriptor.sampler = texture.getSampler();
-	textureDescriptor.imageLayout = texture.getLayout();
-
-    VkWriteDescriptorSet textureDescriptorWrite{};
-    textureDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    textureDescriptorWrite.dstSet = test.descriptorSet;
-    textureDescriptorWrite.dstBinding = 1;
-    textureDescriptorWrite.dstArrayElement = 0;
-    textureDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    textureDescriptorWrite.descriptorCount = 1;
-    textureDescriptorWrite.pBufferInfo = nullptr;
-    textureDescriptorWrite.pImageInfo = &textureDescriptor;
-    textureDescriptorWrite.pTexelBufferView = nullptr;
-    writeDescriptorSets.push_back(textureDescriptorWrite);
-    
-    vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
+    vk::DescriptorSetUpdater()
+        .forUniformBuffer(0, test.descriptorSet, test.uniformBuffer.getHandle(), 0, sizeof(uniformBuf))
+        .forTexture(1, test.descriptorSet, texture.getView(), texture.getSampler(), texture.getLayout())
+        .updateSets(device);
 
     for (size_t i = 0; i < renderCmdBuffers.size(); i++)
     {

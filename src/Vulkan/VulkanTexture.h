@@ -19,7 +19,8 @@ namespace vk
         static auto create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format, VkBuffer dataBuffer,
             const gli::texture2d &info, VkCommandPool cmdPool, VkQueue queue) -> Texture;
 
-        Texture(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view, Resource<VkSampler> sampler);
+        Texture(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view,
+            Resource<VkSampler> sampler, VkImageLayout layout);
 
         auto getLayout() -> VkImageLayout;
         auto getSampler() -> VkSampler;

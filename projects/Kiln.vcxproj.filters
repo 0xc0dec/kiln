@@ -36,6 +36,9 @@
     <ClCompile Include="..\src\Vulkan\VulkanTexture.cpp">
       <Filter>vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Vulkan\VulkanDescriptorSetUpdater.cpp">
+      <Filter>vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Camera.h" />
@@ -74,6 +77,9 @@
     </ClInclude>
     <ClInclude Include="..\src\Window.h" />
     <ClInclude Include="..\src\Vulkan\VulkanTexture.h">
+      <Filter>vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Vulkan\VulkanDescriptorSetUpdater.h">
       <Filter>vulkan</Filter>
     </ClInclude>
   </ItemGroup>
