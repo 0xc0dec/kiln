@@ -246,17 +246,17 @@ int main()
     } skybox;
 
     {
-        auto skyboxVsSrc = fs::readBytes("../../assets/Skybox.vert.spv");
-        auto skyboxFsSrc = fs::readBytes("../../assets/Skybox.frag.spv");
-        auto skyboxVs = vk::createShader(device, skyboxVsSrc.data(), skyboxVsSrc.size());
-        auto skyboxFs = vk::createShader(device, skyboxFsSrc.data(), skyboxFsSrc.size());
+        auto vsSrc = fs::readBytes("../../assets/Skybox.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/Skybox.frag.spv");
+        auto vs = vk::createShader(device, vsSrc.data(), vsSrc.size());
+        auto fs = vk::createShader(device, fsSrc.data(), fsSrc.size());
 
         skybox.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
             .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        skybox.pipeline = vk::PipelineBuilder(device, renderPass, skyboxVs, skyboxFs)
+        skybox.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
             .withDescriptorSetLayouts(&skybox.descSetLayout, 1)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_NONE)
@@ -304,18 +304,18 @@ int main()
         scissor.extent.height = vp.height;
         vkCmdSetScissor(buf, 0, 1, &scissor);
 
-        std::vector<VkDeviceSize> offsets = {0};
+        std::vector<VkDeviceSize> vertexBufferOffsets = {0};
 
         std::vector<VkBuffer> quadVertexBuffers = {quadVertexBuffer.getHandle()};
         vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox.pipeline);
         vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox.pipeline.getLayout(), 0, 1, &skybox.descriptorSet, 0, nullptr);
-        vkCmdBindVertexBuffers(buf, 0, 1, quadVertexBuffers.data(), offsets.data());
+        vkCmdBindVertexBuffers(buf, 0, 1, quadVertexBuffers.data(), vertexBufferOffsets.data());
         vkCmdDraw(buf, 6, 1, 0, 0);
 
         std::vector<VkBuffer> boxVertexBuffers = {boxVertexBuffer.getHandle()};
         vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, quad.pipeline);
         vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, quad.pipeline.getLayout(), 0, 1, &quad.descriptorSet, 0, nullptr);
-        vkCmdBindVertexBuffers(buf, 0, 1, boxVertexBuffers.data(), offsets.data());
+        vkCmdBindVertexBuffers(buf, 0, 1, boxVertexBuffers.data(), vertexBufferOffsets.data());
         vkCmdDraw(buf, 36, 1, 0, 0);
 
         renderPass.end(buf);
