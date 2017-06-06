@@ -1,3 +1,7 @@
+// TODO Fix weird camera rotation lags
+// TODO Continue with uniform experiments
+// TODO Cleanup, refactor
+
 /*
     Copyright (c) Aleksey Fedotov
     MIT license
@@ -181,7 +185,7 @@ int main()
     } uniformBuf;
 
     Camera cam;
-    cam.getTransform().setLocalPosition({5, -5, 5});
+    cam.getTransform().setLocalPosition({0, 0, -5});
     cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
     uniformBuf.projectionMatrix = cam.getProjectionMatrix();
@@ -290,11 +294,10 @@ int main()
         auto dt = time - lastTime;
         lastTime = time;
 
-        updateSpectatorTransform(cam.getTransform(), input, dt, 0.05f, 5);
+        updateSpectatorTransform(cam.getTransform(), input, dt, 2, 5);
 
         uniformBuf.viewMatrix = cam.getViewMatrix();
         test.uniformBuffer.update(&uniformBuf);
-        //vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
 
         auto currentSwapchainStep = swapchain.getNextStep(semaphores.presentComplete);
 

@@ -20,7 +20,7 @@ void updateSpectatorTransform(Transform &transform, Input &input, float dt, floa
         if (mouseMotion.y != 0)
         {
             auto angleToUp = glm::angle(glm::normalize(transform.getLocalForward()), glm::vec3(0, 1, 0));
-            auto delta = mouseSensitivity * dt * -mouseMotion.y;
+            auto delta = mouseSensitivity * dt * mouseMotion.y;
             if (delta > 0)
             {
                 if (angleToUp - delta <= 0.1f)

@@ -112,25 +112,25 @@ inline auto Transform::getWorldPosition() const -> glm::vec3
 inline auto Transform::getWorldUp() const -> glm::vec3
 {
     auto m = getWorldMatrix();
-    return {m[1][0], m[1][1], m[1][2]};
+    return {-m[1][0], -m[1][1], -m[1][2]};
 }
 
 inline auto Transform::getLocalUp() const -> glm::vec3
 {
     auto m = getMatrix();
-    return {m[1][0], m[1][1], m[1][2]};
+    return {-m[1][0], -m[1][1], -m[1][2]};
 }
 
 inline auto Transform::getWorldDown() const -> glm::vec3
 {
     auto m = getWorldMatrix();
-    return {-m[1][0], -m[1][1], -m[1][2]};
+    return {m[1][0], m[1][1], m[1][2]};
 }
 
 inline auto Transform::getLocalDown() const -> glm::vec3
 {
     auto m = getMatrix();
-    return {-m[1][0], -m[1][1], -m[1][2]};
+    return {m[1][0], m[1][1], m[1][2]};
 }
 
 inline auto Transform::getWorldLeft() const -> glm::vec3
