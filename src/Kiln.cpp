@@ -1,5 +1,4 @@
 // TODO Investigate axes directions. Currently Y axis seems pointing down
-// TODO Render with indexes
 
 /*
     Copyright (c) Aleksey Fedotov
@@ -30,7 +29,7 @@
 #include <gli/gli.hpp>
 #include <vector>
 
-static const std::vector<float> quadData =
+static const std::vector<float> quadVertexData =
 {
      1,  1, 0, 1, 0,
     -1,  1, 0, 0, 0,
@@ -41,14 +40,11 @@ static const std::vector<float> quadData =
      1, -1, 0, 1, 1
 };
 
-static const std::vector<float> boxData =
+static const std::vector<float> boxVertexData =
 {
     // Negitive X
     -1, -1, -1, 1, 0,
     -1, -1,  1, 0, 0,
-    -1,  1,  1, 0, 1,
-
-    -1, -1, -1, 1, 0,
     -1,  1,  1, 0, 1,
     -1,  1, -1, 1, 1,
 
@@ -56,17 +52,11 @@ static const std::vector<float> boxData =
      1,  1,  1, 1, 1,
      1, -1, -1, 0, 0,
      1,  1, -1, 0, 1,
-
-     1, -1, -1, 0, 0,
-     1,  1,  1, 1, 1,
      1, -1,  1, 1, 0,
 
     // Positive Y
      1,  1,  1, 1, 1,
      1,  1, -1, 1, 0,
-    -1,  1, -1, 0, 0,
-
-     1,  1,  1, 1, 1,
     -1,  1, -1, 0, 0,
     -1,  1,  1, 0, 1,
 
@@ -74,47 +64,84 @@ static const std::vector<float> boxData =
      1, -1,  1, 0, 1,
     -1, -1, -1, 1, 0,
      1, -1, -1, 0, 0,
-
-     1, -1,  1, 0, 1,
     -1, -1,  1, 1, 1,
-    -1, -1, -1, 1, 0,
 
     // Positive Z
     -1,  1,  1, 1, 1,
     -1, -1,  1, 1, 0,
      1, -1,  1, 0, 0,
-
      1,  1,  1, 0, 1,
-    -1,  1,  1, 1, 1,
-     1, -1,  1, 0, 0,
 
     // Negative Z
      1,  1, -1, 1, 1,
     -1, -1, -1, 0, 0,
     -1,  1, -1, 0, 1,
-
-     1,  1, -1, 1, 1,
-     1, -1, -1, 1, 0,
-    -1, -1, -1, 0, 0
+     1, -1, -1, 1, 0
 };
 
-static auto createMeshBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, const vk::PhysicalDevice &physicalDevice,
+static const std::vector<uint32_t> boxIndexData = 
+{
+    // Negative X
+    0, 1, 2,
+    0, 2, 3,
+
+    // Positive X
+    4, 5, 6,
+    5, 4, 7,
+
+    // Positive Y
+    8, 9, 10,
+    8, 10, 11,
+    
+    // Negative Y
+    12, 13, 14,
+    12, 15, 13,
+
+    // Positive Z
+    16, 17, 18,
+    19, 16, 18,
+
+    // Negative Z
+    20, 21, 22,
+    20, 23, 21
+};
+
+static auto createVertexBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, const vk::PhysicalDevice &physicalDevice,
     const std::vector<float> &data) -> vk::Buffer
 {
-    auto bufferSize = sizeof(float) * data.size();
-    auto stagingBuffer = vk::Buffer(device, bufferSize,
+    auto size = sizeof(float) * data.size();
+    auto stagingBuffer = vk::Buffer(device, size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         physicalDevice.memoryProperties);
     stagingBuffer.update(data.data());
 
-    auto vertexBuffer = vk::Buffer(device, bufferSize,
+    auto buffer = vk::Buffer(device, size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         physicalDevice.memoryProperties);
-    stagingBuffer.transferTo(vertexBuffer, queue, cmdPool);
+    stagingBuffer.transferTo(buffer, queue, cmdPool);
 
-    return std::move(vertexBuffer);
+    return std::move(buffer);
+}
+
+static auto createIndexBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, const vk::PhysicalDevice &physicalDevice,
+    const std::vector<uint32_t> &data) -> vk::Buffer
+{
+    auto size = sizeof(uint32_t) * data.size();
+    auto stagingBuffer = vk::Buffer(device, size,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        physicalDevice.memoryProperties);
+    stagingBuffer.update(data.data());
+
+    auto buffer = vk::Buffer(device, size,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        physicalDevice.memoryProperties);
+    stagingBuffer.transferTo(buffer, queue, cmdPool);
+
+    return std::move(buffer);
 }
 
 int main()
@@ -188,8 +215,9 @@ int main()
         physicalDevice.memoryProperties);
     uniformBuffer.update(&uniformBuf);
 
-    auto quadVertexBuffer = createMeshBuffer(device, queue, commandPool, physicalDevice, quadData);
-    auto boxVertexBuffer = createMeshBuffer(device, queue, commandPool, physicalDevice, boxData);
+    auto quadVertexBuffer = createVertexBuffer(device, queue, commandPool, physicalDevice, quadVertexData);
+    auto boxVertexBuffer = createVertexBuffer(device, queue, commandPool, physicalDevice, boxVertexData);
+    auto boxIndexBuffer = createIndexBuffer(device, queue, commandPool, physicalDevice, boxIndexData);
 
     struct
     {
@@ -318,7 +346,8 @@ int main()
         vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, quad.pipeline);
         vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, quad.pipeline.getLayout(), 0, 1, &quad.descriptorSet, 0, nullptr);
         vkCmdBindVertexBuffers(buf, 0, 1, boxVertexBuffers.data(), vertexBufferOffsets.data());
-        vkCmdDraw(buf, 36, 1, 0, 0);
+        vkCmdBindIndexBuffer(buf, boxIndexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(buf, boxIndexData.size(), 1, 0, 0, 0);
 
         renderPass.end(buf);
 
