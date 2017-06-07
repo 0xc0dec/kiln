@@ -106,37 +106,17 @@ static const std::vector<uint32_t> boxIndexData =
     20, 23, 21
 };
 
-static auto createVertexBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, const vk::PhysicalDevice &physicalDevice,
-    const std::vector<float> &data) -> vk::Buffer
+static auto createDeviceLocalBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, const vk::PhysicalDevice &physicalDevice,
+    const void *data, uint32_t size, VkBufferUsageFlags usageFlags) -> vk::Buffer
 {
-    auto size = sizeof(float) * data.size();
     auto stagingBuffer = vk::Buffer(device, size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         physicalDevice.memoryProperties);
-    stagingBuffer.update(data.data());
+    stagingBuffer.update(data);
 
     auto buffer = vk::Buffer(device, size,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        physicalDevice.memoryProperties);
-    stagingBuffer.transferTo(buffer, queue, cmdPool);
-
-    return std::move(buffer);
-}
-
-static auto createIndexBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, const vk::PhysicalDevice &physicalDevice,
-    const std::vector<uint32_t> &data) -> vk::Buffer
-{
-    auto size = sizeof(uint32_t) * data.size();
-    auto stagingBuffer = vk::Buffer(device, size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        physicalDevice.memoryProperties);
-    stagingBuffer.update(data.data());
-
-    auto buffer = vk::Buffer(device, size,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | usageFlags,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         physicalDevice.memoryProperties);
     stagingBuffer.transferTo(buffer, queue, cmdPool);
@@ -215,9 +195,12 @@ int main()
         physicalDevice.memoryProperties);
     uniformBuffer.update(&uniformBuf);
 
-    auto quadVertexBuffer = createVertexBuffer(device, queue, commandPool, physicalDevice, quadVertexData);
-    auto boxVertexBuffer = createVertexBuffer(device, queue, commandPool, physicalDevice, boxVertexData);
-    auto boxIndexBuffer = createIndexBuffer(device, queue, commandPool, physicalDevice, boxIndexData);
+    auto quadVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, quadVertexData.data(),
+        sizeof(float) * quadVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    auto boxVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, boxVertexData.data(),
+        sizeof(float) * boxVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    auto boxIndexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice,
+        boxIndexData.data(), sizeof(uint32_t) * boxIndexData.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
     struct
     {
