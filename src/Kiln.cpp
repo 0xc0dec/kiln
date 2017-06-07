@@ -316,10 +316,7 @@ int main()
     for (size_t i = 0; i < renderCmdBuffers.size(); i++)
     {
         auto buf = renderCmdBuffers[i];
-
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        KL_VK_CHECK_RESULT(vkBeginCommandBuffer(buf, &beginInfo));
+        vk::beginCommandBuffer(buf, false);
 
         renderPass.begin(buf, swapchain.getFramebuffer(i), canvasWidth, canvasHeight);
 

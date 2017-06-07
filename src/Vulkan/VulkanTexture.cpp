@@ -142,11 +142,8 @@ auto vk::Texture::create2D(VkDevice device, const PhysicalDevice &physicalDevice
     subresourceRange.levelCount = mipLevels;
     subresourceRange.layerCount = 1;
 
-    // TODO use some helper funcs
     auto copyCmdBuf = vk::createCommandBuffer(device, cmdPool);
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    vkBeginCommandBuffer(copyCmdBuf, &beginInfo);
+    vk::beginCommandBuffer(copyCmdBuf, true);
 
     vk::setImageLayout(
         copyCmdBuf,
@@ -231,11 +228,8 @@ auto vk::Texture::createCube(VkDevice device, const PhysicalDevice &physicalDevi
 	subresourceRange.levelCount = mipLevels;
 	subresourceRange.layerCount = 6;
 
-    // TODO use some helper funcs
     auto copyCmdBuf = vk::createCommandBuffer(device, cmdPool);
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    vkBeginCommandBuffer(copyCmdBuf, &beginInfo);
+    vk::beginCommandBuffer(copyCmdBuf, true);
 
     vk::setImageLayout(
         copyCmdBuf,

@@ -56,21 +56,8 @@ void vk::Buffer::update(const void *newData) const
 
 void vk::Buffer::transferTo(const Buffer &dst, VkQueue queue, VkCommandPool cmdPool) const
 {
-    // TODO use cmd buffer creation helper func
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = cmdPool;
-    allocInfo.commandBufferCount = 1;
-
-    VkCommandBuffer cmdBuf;
-    KL_VK_CHECK_RESULT(vkAllocateCommandBuffers(device, &allocInfo, &cmdBuf));
-
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    KL_VK_CHECK_RESULT(vkBeginCommandBuffer(cmdBuf, &beginInfo));
+    auto cmdBuf = vk::createCommandBuffer(device, cmdPool);
+    vk::beginCommandBuffer(cmdBuf, true);
 
     VkBufferCopy copyRegion{};
     copyRegion.size = dst.size;
@@ -78,12 +65,7 @@ void vk::Buffer::transferTo(const Buffer &dst, VkQueue queue, VkCommandPool cmdP
 
     KL_VK_CHECK_RESULT(vkEndCommandBuffer(cmdBuf));
 
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &cmdBuf;
-
-    KL_VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, nullptr));
+    vk::queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &cmdBuf);
     KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
 
     vkFreeCommandBuffers(device, cmdPool, 1, &cmdBuf);

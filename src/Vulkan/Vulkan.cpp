@@ -257,6 +257,14 @@ auto vk::createCommandBuffer(VkDevice device, VkCommandPool commandPool) -> VkCo
     return buffer;
 }
 
+void vk::beginCommandBuffer(VkCommandBuffer buffer, bool oneTime)
+{
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = oneTime ? VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT : 0;
+    KL_VK_CHECK_RESULT(vkBeginCommandBuffer(buffer, &beginInfo));
+}
+
 auto vk::createShader(VkDevice device, const void *data, uint32_t size) -> Resource<VkShaderModule>
 {
     VkShaderModuleCreateInfo shaderModuleInfo{};
