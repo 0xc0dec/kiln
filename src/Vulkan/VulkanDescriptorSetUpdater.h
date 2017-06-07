@@ -13,27 +13,23 @@ namespace vk
     class DescriptorSetUpdater
     {
     public:
-        auto forUniformBuffer(uint32_t binding, VkDescriptorSet set, VkBuffer buffer, VkDeviceSize offset, VkDeviceSize range) -> DescriptorSetUpdater&;
+        explicit DescriptorSetUpdater(VkDevice device);
+
+        auto forUniformBuffer(uint32_t binding, VkDescriptorSet set, VkBuffer buffer,VkDeviceSize offset, VkDeviceSize range) -> DescriptorSetUpdater&;
         auto forTexture(uint32_t binding, VkDescriptorSet set, VkImageView view, VkSampler sampler, VkImageLayout layout) -> DescriptorSetUpdater&;
 
-        void updateSets(VkDevice device);
+        void updateSets();
 
     private:
-        struct Buffer
+        struct Item
         {
-            VkDescriptorBufferInfo info;
+            VkDescriptorBufferInfo buffer;
+            VkDescriptorImageInfo image;
             uint32_t binding;
             VkDescriptorSet targetSet;
         };
 
-        struct Texture
-        {
-            VkDescriptorImageInfo info;
-            uint32_t binding;
-            VkDescriptorSet targetSet;
-        };
-
-        std::vector<Buffer> buffers;
-        std::vector<Texture> textures;
+        VkDevice device = nullptr;
+        std::vector<Item> items;
     };
 }

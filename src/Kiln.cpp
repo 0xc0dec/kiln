@@ -268,10 +268,10 @@ int main()
         gli::texture2d textureData(gli::load("../../assets/MetalPlate_rgba.ktx"));
         quad.texture = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
 
-        vk::DescriptorSetUpdater()
+        vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, quad.descriptorSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
             .forTexture(1, quad.descriptorSet, quad.texture.getView(), quad.texture.getSampler(), quad.texture.getLayout())
-            .updateSets(device);
+            .updateSets();
     }
 
     struct
@@ -315,10 +315,10 @@ int main()
         gli::texture_cube textureData(gli::load("../../assets/Cubemap_space.ktx"));
         skybox.texture = vk::Texture::createCube(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
 
-        vk::DescriptorSetUpdater()
+        vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, skybox.descriptorSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
             .forTexture(1, skybox.descriptorSet, skybox.texture.getView(), skybox.texture.getSampler(), skybox.texture.getLayout())
-            .updateSets(device);
+            .updateSets();
     }
 
     struct
@@ -394,20 +394,20 @@ int main()
         axes.greenDescSet = axes.descriptorPool.allocateSet(axes.descSetLayout);
         axes.blueDescSet = axes.descriptorPool.allocateSet(axes.descSetLayout);
 
-        vk::DescriptorSetUpdater()
+        vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, axes.redDescSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
             .forUniformBuffer(1, axes.redDescSet, axes.redColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
-            .updateSets(device);
+            .updateSets();
 
-        vk::DescriptorSetUpdater()
+        vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, axes.greenDescSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
             .forUniformBuffer(1, axes.greenDescSet, axes.greenColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
-            .updateSets(device);
+            .updateSets();
 
-        vk::DescriptorSetUpdater()
+        vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, axes.blueDescSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
             .forUniformBuffer(1, axes.blueDescSet, axes.blueColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
-            .updateSets(device);
+            .updateSets();
     }
 
     for (size_t i = 0; i < renderCmdBuffers.size(); i++)
