@@ -307,11 +307,7 @@ int main()
 
         vkCmdSetViewport(buf, 0, 1, &vp);
 
-        VkRect2D scissor{};
-        scissor.offset.x = 0;
-        scissor.offset.y = 0;
-        scissor.extent.width = vp.width;
-        scissor.extent.height = vp.height;
+        VkRect2D scissor{{0, 0}, {vp.width, vp.height}};
         vkCmdSetScissor(buf, 0, 1, &scissor);
 
         std::vector<VkDeviceSize> vertexBufferOffsets = {0};
