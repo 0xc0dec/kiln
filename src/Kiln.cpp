@@ -1,4 +1,5 @@
 // TODO Investigate axes directions. Currently Y axis seems pointing down
+// TODO Common descriptor sets for view/projection matrices
 
 /*
     Copyright (c) Aleksey Fedotov
@@ -150,10 +151,10 @@ static auto createDeviceLocalBuffer(VkDevice device, VkQueue queue, VkCommandPoo
 
 int main()
 {
-    const uint32_t canvasWidth = 1366;
-    const uint32_t canvasHeight = 768;
+    const uint32_t CanvasWidth = 1366;
+    const uint32_t CanvasHeight = 768;
 
-    Window window{canvasWidth, canvasHeight, "Demo"};
+    Window window{CanvasWidth, CanvasHeight, "Demo"};
 
     vk::PhysicalDevice physicalDevice;
 
@@ -174,7 +175,7 @@ int main()
 
     auto depthFormat = vk::getDepthFormat(physicalDevice.device);
     auto commandPool = vk::createCommandPool(device, queueIndex);
-    auto depthStencil = vk::createDepthStencil(device, physicalDevice.memoryProperties, depthFormat, canvasWidth, canvasHeight);
+    auto depthStencil = vk::createDepthStencil(device, physicalDevice.memoryProperties, depthFormat, CanvasWidth, CanvasHeight);
     auto renderPass = vk::RenderPassBuilder(device)
         .withColorAttachment(colorFormat)
         .withDepthAttachment(depthFormat)
@@ -182,7 +183,7 @@ int main()
     renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
 
     auto swapchain = vk::Swapchain(device, physicalDevice.device, window.getSurface(), renderPass, depthStencil.view,
-        canvasWidth, canvasHeight, false, colorFormat, colorSpace);
+        CanvasWidth, CanvasHeight, false, colorFormat, colorSpace);
 
     struct
     {
@@ -206,7 +207,7 @@ int main()
     } matrices;
 
     Camera cam;
-    cam.setPerspective(glm::radians(45.0f), canvasWidth / (canvasHeight * 1.0f), 0.01f, 100);
+    cam.setPerspective(glm::radians(45.0f), CanvasWidth / (CanvasHeight * 1.0f), 0.01f, 100);
     cam.getTransform().setLocalPosition({3, -3, -8});
     cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
@@ -415,9 +416,9 @@ int main()
         auto buf = renderCmdBuffers[i];
         vk::beginCommandBuffer(buf, false);
 
-        renderPass.begin(buf, swapchain.getFramebuffer(i), canvasWidth, canvasHeight);
+        renderPass.begin(buf, swapchain.getFramebuffer(i), CanvasWidth, CanvasHeight);
 
-        auto vp = VkViewport{0, 0, canvasWidth, canvasHeight, 1, 100};
+        auto vp = VkViewport{0, 0, CanvasWidth, CanvasHeight, 1, 100};
 
         vkCmdSetViewport(buf, 0, 1, &vp);
 
