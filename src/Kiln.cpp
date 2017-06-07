@@ -29,6 +29,30 @@
 #include <gli/gli.hpp>
 #include <vector>
 
+static const std::vector<float> xAxisVertexData = 
+{
+    0, 0, 0,
+    1, 0, 0,
+    0.8f, 0, 0.2f,
+    0.8f, 0, -0.2f
+};
+
+static const std::vector<float> yAxisVertexData = 
+{
+    0, 0, 0,
+    0, 1, 0,
+    0, 0.8f, 0.2f,
+    0, 0.8f, -0.2f
+};
+
+static const std::vector<float> zAxisVertexData = 
+{
+    0, 0, 0,
+    0, 0, 1,
+    0, 0.2f, 0.8f,
+    0, -0.2f, 0.8f
+};
+
 static const std::vector<float> quadVertexData =
 {
      1,  1, 0, 1, 0,
@@ -179,22 +203,23 @@ int main()
         glm::mat4 projectionMatrix;
         glm::mat4 modelMatrix;
         glm::mat4 viewMatrix;
-    } uniformBuf;
+    } matrices;
 
     Camera cam;
     cam.setPerspective(glm::radians(45.0f), canvasWidth / (canvasHeight * 1.0f), 0.01f, 100);
     cam.getTransform().setLocalPosition({3, -3, -8});
     cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
-    uniformBuf.projectionMatrix = cam.getProjectionMatrix();
-    uniformBuf.modelMatrix = glm::mat4();
+    matrices.projectionMatrix = cam.getProjectionMatrix();
+    matrices.modelMatrix = glm::mat4();
 
-    auto uniformBuffer = vk::Buffer(device, sizeof(uniformBuf),
+    auto matrixUniformBuffer = vk::Buffer(device, sizeof(matrices),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         physicalDevice.memoryProperties);
-    uniformBuffer.update(&uniformBuf);
+    matrixUniformBuffer.update(&matrices);
 
+    // TODO move to corresponding structs
     auto quadVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, quadVertexData.data(),
         sizeof(float) * quadVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
     auto boxVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, boxVertexData.data(),
@@ -244,7 +269,7 @@ int main()
         quad.texture = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
 
         vk::DescriptorSetUpdater()
-            .forUniformBuffer(0, quad.descriptorSet, uniformBuffer.getHandle(), 0, sizeof(uniformBuf))
+            .forUniformBuffer(0, quad.descriptorSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
             .forTexture(1, quad.descriptorSet, quad.texture.getView(), quad.texture.getSampler(), quad.texture.getLayout())
             .updateSets(device);
     }
@@ -291,8 +316,97 @@ int main()
         skybox.texture = vk::Texture::createCube(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
 
         vk::DescriptorSetUpdater()
-            .forUniformBuffer(0, skybox.descriptorSet, uniformBuffer.getHandle(), 0, sizeof(uniformBuf))
+            .forUniformBuffer(0, skybox.descriptorSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
             .forTexture(1, skybox.descriptorSet, skybox.texture.getView(), skybox.texture.getSampler(), skybox.texture.getLayout())
+            .updateSets(device);
+    }
+
+    struct
+    {
+        vk::Resource<VkDescriptorSetLayout> descSetLayout;
+        vk::DescriptorPool descriptorPool;
+        vk::Pipeline pipeline;
+        vk::Buffer redColorUniformBuffer;
+        vk::Buffer greenColorUniformBuffer;
+        vk::Buffer blueColorUniformBuffer;
+        vk::Buffer xAxisVertexBuffer;
+        vk::Buffer yAxisVertexBuffer;
+        vk::Buffer zAxisVertexBuffer;
+        VkDescriptorSet redDescSet;
+        VkDescriptorSet greenDescSet;
+        VkDescriptorSet blueDescSet;
+    } axes;
+
+    {
+        glm::vec3 red{1.0f, 0, 0};
+        axes.redColorUniformBuffer = vk::Buffer(device, sizeof(glm::vec3),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            physicalDevice.memoryProperties);
+        axes.redColorUniformBuffer.update(&red);
+
+        glm::vec3 green{0, 1.0f, 0};
+        axes.greenColorUniformBuffer = vk::Buffer(device, sizeof(glm::vec3),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            physicalDevice.memoryProperties);
+        axes.greenColorUniformBuffer.update(&green);
+
+        glm::vec3 blue{0, 0, 1.0f};
+        axes.blueColorUniformBuffer = vk::Buffer(device, sizeof(glm::vec3),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            physicalDevice.memoryProperties);
+        axes.blueColorUniformBuffer.update(&blue);
+
+        auto vsSrc = fs::readBytes("../../assets/Axis.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/Axis.frag.spv");
+        auto vs = vk::createShader(device, vsSrc.data(), vsSrc.size());
+        auto fs = vk::createShader(device, fsSrc.data(), fsSrc.size());
+
+        axes.xAxisVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, xAxisVertexData.data(),
+            sizeof(float) * xAxisVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        axes.yAxisVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, yAxisVertexData.data(),
+            sizeof(float) * yAxisVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        axes.zAxisVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, zAxisVertexData.data(),
+            sizeof(float) * zAxisVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+
+        axes.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
+            .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .withBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .build();
+
+        axes.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
+            .withDescriptorSetLayouts(&axes.descSetLayout, 1)
+            .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
+            .withCullMode(VK_CULL_MODE_NONE)
+            .withTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
+            .withVertexBinding(0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX)
+            .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
+            .withVertexSize(sizeof(float) * 3)
+            .build();
+
+        axes.descriptorPool = vk::DescriptorPoolBuilder(device)
+            .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 6)
+            .build(3);
+
+        axes.redDescSet = axes.descriptorPool.allocateSet(axes.descSetLayout);
+        axes.greenDescSet = axes.descriptorPool.allocateSet(axes.descSetLayout);
+        axes.blueDescSet = axes.descriptorPool.allocateSet(axes.descSetLayout);
+
+        vk::DescriptorSetUpdater()
+            .forUniformBuffer(0, axes.redDescSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
+            .forUniformBuffer(1, axes.redDescSet, axes.redColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
+            .updateSets(device);
+
+        vk::DescriptorSetUpdater()
+            .forUniformBuffer(0, axes.greenDescSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
+            .forUniformBuffer(1, axes.greenDescSet, axes.greenColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
+            .updateSets(device);
+
+        vk::DescriptorSetUpdater()
+            .forUniformBuffer(0, axes.blueDescSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
+            .forUniformBuffer(1, axes.blueDescSet, axes.blueColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
             .updateSets(device);
     }
 
@@ -312,18 +426,45 @@ int main()
 
         std::vector<VkDeviceSize> vertexBufferOffsets = {0};
 
-        std::vector<VkBuffer> quadVertexBuffers = {quadVertexBuffer.getHandle()};
-        vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox.pipeline);
-        vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox.pipeline.getLayout(), 0, 1, &skybox.descriptorSet, 0, nullptr);
-        vkCmdBindVertexBuffers(buf, 0, 1, quadVertexBuffers.data(), vertexBufferOffsets.data());
-        vkCmdDraw(buf, 6, 1, 0, 0);
+        // Skybox 
+        {
+            std::vector<VkBuffer> vertexBuffers = {quadVertexBuffer.getHandle()};
+            vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox.pipeline);
+            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox.pipeline.getLayout(), 0, 1, &skybox.descriptorSet, 0, nullptr);
+            vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
+            vkCmdDraw(buf, 6, 1, 0, 0);
+        }
 
-        std::vector<VkBuffer> boxVertexBuffers = {boxVertexBuffer.getHandle()};
-        vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, quad.pipeline);
-        vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, quad.pipeline.getLayout(), 0, 1, &quad.descriptorSet, 0, nullptr);
-        vkCmdBindVertexBuffers(buf, 0, 1, boxVertexBuffers.data(), vertexBufferOffsets.data());
-        vkCmdBindIndexBuffer(buf, boxIndexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(buf, boxIndexData.size(), 1, 0, 0, 0);
+        // Axes
+        {
+            vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, axes.pipeline);
+            
+            // TODO bind all at once
+            std::vector<VkBuffer> vertexBuffers = {axes.xAxisVertexBuffer.getHandle()};
+            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, axes.pipeline.getLayout(), 0, 1, &axes.redDescSet, 0, nullptr);
+            vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
+            vkCmdDraw(buf, 4, 1, 0, 0);
+
+            vertexBuffers[0] = axes.yAxisVertexBuffer.getHandle();
+            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, axes.pipeline.getLayout(), 0, 1, &axes.greenDescSet, 0, nullptr);
+            vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
+            vkCmdDraw(buf, 4, 1, 0, 0);
+
+            vertexBuffers[0] = axes.zAxisVertexBuffer.getHandle();
+            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, axes.pipeline.getLayout(), 0, 1, &axes.blueDescSet, 0, nullptr);
+            vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
+            vkCmdDraw(buf, 4, 1, 0, 0);
+        }
+
+        // Box
+        {
+            std::vector<VkBuffer> vertexBuffers = {boxVertexBuffer.getHandle()};
+            vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, quad.pipeline);
+            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, quad.pipeline.getLayout(), 0, 1, &quad.descriptorSet, 0, nullptr);
+            vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
+            vkCmdBindIndexBuffer(buf, boxIndexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
+            vkCmdDrawIndexed(buf, boxIndexData.size(), 1, 0, 0, 0);
+        }
 
         renderPass.end(buf);
 
@@ -338,8 +479,8 @@ int main()
 
         applySpectator(cam.getTransform(), window.getInput(), dt, 1, 5);
 
-        uniformBuf.viewMatrix = cam.getViewMatrix();
-        uniformBuffer.update(&uniformBuf);
+        matrices.viewMatrix = cam.getViewMatrix();
+        matrixUniformBuffer.update(&matrices);
 
         auto swapchainStep = swapchain.getNextStep(semaphores.presentComplete);
 

@@ -19,8 +19,21 @@ namespace vk
         void updateSets(VkDevice device);
 
     private:
-        std::vector<VkDescriptorBufferInfo> bufferInfos;
-        std::vector<VkDescriptorImageInfo> imageInfos;
-        std::vector<VkWriteDescriptorSet> writes;
+        struct Buffer
+        {
+            VkDescriptorBufferInfo info;
+            uint32_t binding;
+            VkDescriptorSet targetSet;
+        };
+
+        struct Texture
+        {
+            VkDescriptorImageInfo info;
+            uint32_t binding;
+            VkDescriptorSet targetSet;
+        };
+
+        std::vector<Buffer> buffers;
+        std::vector<Texture> textures;
     };
 }
