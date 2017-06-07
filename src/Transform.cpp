@@ -9,12 +9,10 @@
 #include <glm/gtc/matrix_transform.inl>
 #include <algorithm>
 
-
 static const uint32_t DirtyBitLocal = 1;
 static const uint32_t DirtyBitWorld = 1 << 1;
 static const uint32_t DirtyBitInvTransposedWorld = 1 << 2;
 static const uint32_t DirtyBitAll = DirtyBitLocal | DirtyBitWorld | DirtyBitInvTransposedWorld;
-
 
 auto Transform::setParent(Transform *parent) -> Transform&
 {
@@ -34,7 +32,6 @@ auto Transform::setParent(Transform *parent) -> Transform&
     return *this;
 }
 
-
 auto Transform::clearChildren() -> Transform&
 {
     while (!children.empty())
@@ -45,7 +42,6 @@ auto Transform::clearChildren() -> Transform&
 
     return *this;
 }
-
 
 auto Transform::getMatrix() const -> glm::mat4
 {
@@ -59,7 +55,6 @@ auto Transform::getMatrix() const -> glm::mat4
 
     return matrix;
 }
-
 
 auto Transform::getWorldMatrix() const -> glm::mat4
 {
@@ -75,7 +70,6 @@ auto Transform::getWorldMatrix() const -> glm::mat4
     return worldMatrix;
 }
 
-
 auto Transform::getInvTransposedWorldMatrix() const -> glm::mat4
 {
     if (dirtyFlags & DirtyBitInvTransposedWorld)
@@ -88,24 +82,20 @@ auto Transform::getInvTransposedWorldMatrix() const -> glm::mat4
     return invTransposedWorldMatrix;
 }
 
-
 auto Transform::getWorldViewMatrix(const Camera &camera) const -> glm::mat4
 {
     return camera.getViewMatrix() * getWorldMatrix();
 }
-
 
 auto Transform::getWorldViewProjMatrix(const Camera &camera) const -> glm::mat4
 {
     return camera.getViewProjectionMatrix() * getWorldMatrix();
 }
 
-
 auto Transform::getInvTransposedWorldViewMatrix(const Camera &camera) const -> glm::mat4
 {
     return glm::transpose(glm::inverse(camera.getViewMatrix() * getWorldMatrix()));
 }
-
 
 auto Transform::translateLocal(const glm::vec3 &translation) -> Transform&
 {
@@ -113,7 +103,6 @@ auto Transform::translateLocal(const glm::vec3 &translation) -> Transform&
     setDirtyWithChildren(DirtyBitAll);
     return *this;
 }
-
 
 auto Transform::rotate(const glm::quat &rotation, TransformSpace space) -> Transform&
 {
@@ -142,14 +131,12 @@ auto Transform::rotate(const glm::quat &rotation, TransformSpace space) -> Trans
     return *this;
 }
 
-
 auto Transform::rotate(const glm::vec3 &axis, float angle, TransformSpace space) -> Transform&
 {
     auto rotation = glm::angleAxis(angle, axis);
     rotate(rotation, space);
     return *this;
 }
-
 
 auto Transform::scaleLocal(const glm::vec3 &scale) -> Transform&
 {
@@ -160,14 +147,12 @@ auto Transform::scaleLocal(const glm::vec3 &scale) -> Transform&
     return *this;
 }
 
-
 auto Transform::setLocalScale(const glm::vec3 &scale) -> Transform&
 {
     localScale = scale;
     setDirtyWithChildren(DirtyBitAll);
     return *this;
 }
-
 
 auto Transform::lookAt(const glm::vec3 &target, const glm::vec3 &up) -> Transform&
 {
@@ -187,18 +172,15 @@ auto Transform::lookAt(const glm::vec3 &target, const glm::vec3 &up) -> Transfor
     return *this;
 }
 
-
 auto Transform::transformPoint(const glm::vec3 &point) const -> glm::vec3
 {
     return getMatrix() * glm::vec4(point, 1.0f);
 }
 
-
 auto Transform::transformDirection(const glm::vec3 &direction) const -> glm::vec3
 {
     return getMatrix() * glm::vec4(direction, 0);
 }
-
 
 auto Transform::setLocalRotation(const glm::quat &rotation) -> Transform&
 {
@@ -207,14 +189,12 @@ auto Transform::setLocalRotation(const glm::quat &rotation) -> Transform&
     return *this;
 }
 
-
 auto Transform::setLocalRotation(const glm::vec3 &axis, float angle) -> Transform&
 {
     localRotation = glm::angleAxis(angle, axis);
     setDirtyWithChildren(DirtyBitAll);
     return *this;
 }
-
 
 auto Transform::setLocalPosition(const glm::vec3 &position) -> Transform&
 {
@@ -223,7 +203,6 @@ auto Transform::setLocalPosition(const glm::vec3 &position) -> Transform&
     return *this;
 }
 
-
 void Transform::setDirtyWithChildren(uint32_t flags)
 {
     version++;
@@ -231,7 +210,6 @@ void Transform::setDirtyWithChildren(uint32_t flags)
     for (auto child : children)
         child->setDirtyWithChildren(flags);
 }
-
 
 void Transform::setChildrenDirty(uint32_t flags)
 {

@@ -6,7 +6,6 @@
 #include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
 
-
 auto Camera::setPerspective(float fov, float aspectRatio, float nearClip, float farClip) -> Camera&
 {
     this->fov = fov;
@@ -17,7 +16,6 @@ auto Camera::setPerspective(float fov, float aspectRatio, float nearClip, float 
     return *this;
 }
 
-
 auto Camera::setOrthographic(float width, float height, float nearClip, float farClip) -> Camera&
 {
     this->nearClip = nearClip;
@@ -27,7 +25,6 @@ auto Camera::setOrthographic(float width, float height, float nearClip, float fa
     ortho = true;
     return *this;
 }
-
 
 auto Camera::getProjectionMatrix() const -> const glm::mat4
 {

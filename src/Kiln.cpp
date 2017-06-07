@@ -208,8 +208,8 @@ int main()
 
     Camera cam;
     cam.setPerspective(glm::radians(45.0f), CanvasWidth / (CanvasHeight * 1.0f), 0.01f, 100);
-    cam.getTransform().setLocalPosition({3, -3, -8});
-    cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
+    cam.getTransform().setLocalPosition({0, 0, 5});
+    //cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
     matrices.projectionMatrix = cam.getProjectionMatrix();
     matrices.modelMatrix = glm::mat4();
