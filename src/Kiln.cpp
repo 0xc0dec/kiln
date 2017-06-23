@@ -202,6 +202,7 @@ int main()
             vk::Resource<VkDescriptorSetLayout> descSetLayout;
             vk::Pipeline pipeline;
             vk::Texture texture;
+            vk::Buffer modelMatrixBuffer;
             VkDescriptorSet descriptorSet;
         } box;
 
@@ -210,6 +211,7 @@ int main()
             vk::Resource<VkDescriptorSetLayout> descSetLayout;
             vk::Pipeline pipeline;
             vk::Texture texture;
+            vk::Buffer modelMatrixBuffer;
             VkDescriptorSet descriptorSet;
         } skybox;
 
@@ -223,6 +225,7 @@ int main()
             vk::Buffer xAxisVertexBuffer;
             vk::Buffer yAxisVertexBuffer;
             vk::Buffer zAxisVertexBuffer;
+            vk::Buffer modelMatrixBuffer;
             VkDescriptorSet redDescSet;
             VkDescriptorSet greenDescSet;
             VkDescriptorSet blueDescSet;
@@ -232,23 +235,22 @@ int main()
     struct
     {
         glm::mat4 projectionMatrix;
-        glm::mat4 modelMatrix;
         glm::mat4 viewMatrix;
-    } matrices;
+    } viewMatrices;
 
     Camera cam;
     cam.setPerspective(glm::radians(45.0f), CanvasWidth / (CanvasHeight * 1.0f), 0.01f, 100);
     cam.getTransform().setLocalPosition({10, -5, 10});
     cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
-    matrices.projectionMatrix = cam.getProjectionMatrix();
-    matrices.modelMatrix = glm::mat4();
+    viewMatrices.projectionMatrix = cam.getProjectionMatrix();
+    viewMatrices.viewMatrix = glm::mat4();
 
-    auto matrixUniformBuffer = vk::Buffer(device, sizeof(matrices),
+    auto viewMatricesBuffer = vk::Buffer(device, sizeof(viewMatrices),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         physicalDevice.memoryProperties);
-    matrixUniformBuffer.update(&matrices);
+    viewMatricesBuffer.update(&viewMatrices);
 
     // TODO move to corresponding structs
     auto quadVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, quadVertexData.data(),
@@ -259,9 +261,9 @@ int main()
         boxIndexData.data(), sizeof(uint32_t) * boxIndexData.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
     scene.descriptorPool = vk::DescriptorPoolBuilder(device)
-        .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10)
-        .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10)
-        .build(10);
+        .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 20)
+        .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 20)
+        .build(20);
 
     {
         auto vsSrc = fs::readBytes("../../assets/Textured.vert.spv");
@@ -269,9 +271,17 @@ int main()
         auto vs = vk::createShader(device, vsSrc.data(), vsSrc.size());
         auto fs = vk::createShader(device, fsSrc.data(), fsSrc.size());
 
+        glm::mat4 modelMatrix{};
+        scene.box.modelMatrixBuffer = vk::Buffer(device, sizeof(glm::mat4),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            physicalDevice.memoryProperties);
+        scene.box.modelMatrixBuffer.update(&modelMatrix);
+
         scene.box.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .withBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .withBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
         scene.box.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
@@ -291,8 +301,9 @@ int main()
         scene.box.texture = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
 
         vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.box.descriptorSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
-            .forTexture(1, scene.box.descriptorSet, scene.box.texture.getView(), scene.box.texture.getSampler(), scene.box.texture.getLayout())
+            .forUniformBuffer(0, scene.box.descriptorSet, viewMatricesBuffer.getHandle(), 0, sizeof(viewMatrices))
+            .forUniformBuffer(1, scene.box.descriptorSet, scene.box.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
+            .forTexture(2, scene.box.descriptorSet, scene.box.texture.getView(), scene.box.texture.getSampler(), scene.box.texture.getLayout())
             .updateSets();
     }
 
@@ -302,9 +313,17 @@ int main()
         auto vs = vk::createShader(device, vsSrc.data(), vsSrc.size());
         auto fs = vk::createShader(device, fsSrc.data(), fsSrc.size());
 
+        glm::mat4 modelMatrix{};
+        scene.skybox.modelMatrixBuffer = vk::Buffer(device, sizeof(glm::mat4),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            physicalDevice.memoryProperties);
+        scene.skybox.modelMatrixBuffer.update(&modelMatrix);
+
         scene.skybox.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .withBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .withBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
         scene.skybox.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
@@ -324,12 +343,20 @@ int main()
         scene.skybox.texture = vk::Texture::createCube(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
 
         vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.skybox.descriptorSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
-            .forTexture(1, scene.skybox.descriptorSet, scene.skybox.texture.getView(), scene.skybox.texture.getSampler(), scene.skybox.texture.getLayout())
+            .forUniformBuffer(0, scene.skybox.descriptorSet, viewMatricesBuffer.getHandle(), 0, sizeof(viewMatrices))
+            .forUniformBuffer(1, scene.skybox.descriptorSet, scene.skybox.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
+            .forTexture(2, scene.skybox.descriptorSet, scene.skybox.texture.getView(), scene.skybox.texture.getSampler(), scene.skybox.texture.getLayout())
             .updateSets();
     }
 
     {
+        glm::mat4 modelMatrix{};
+        scene.axes.modelMatrixBuffer = vk::Buffer(device, sizeof(glm::mat4),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            physicalDevice.memoryProperties);
+        scene.axes.modelMatrixBuffer.update(&modelMatrix);
+
         glm::vec3 red{1.0f, 0, 0};
         scene.axes.redColorUniformBuffer = vk::Buffer(device, sizeof(glm::vec3),
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -366,6 +393,7 @@ int main()
         scene.axes.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
             .withBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .withBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
             .build();
 
         scene.axes.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
@@ -383,18 +411,21 @@ int main()
         scene.axes.blueDescSet = scene.descriptorPool.allocateSet(scene.axes.descSetLayout);
 
         vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.axes.redDescSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
-            .forUniformBuffer(1, scene.axes.redDescSet, scene.axes.redColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
+            .forUniformBuffer(0, scene.axes.redDescSet, viewMatricesBuffer.getHandle(), 0, sizeof(viewMatrices))
+            .forUniformBuffer(1, scene.axes.redDescSet, scene.axes.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
+            .forUniformBuffer(2, scene.axes.redDescSet, scene.axes.redColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
             .updateSets();
 
         vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.axes.greenDescSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
-            .forUniformBuffer(1, scene.axes.greenDescSet, scene.axes.greenColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
+            .forUniformBuffer(0, scene.axes.greenDescSet, viewMatricesBuffer.getHandle(), 0, sizeof(viewMatrices))
+            .forUniformBuffer(1, scene.axes.greenDescSet, scene.axes.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
+            .forUniformBuffer(2, scene.axes.greenDescSet, scene.axes.greenColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
             .updateSets();
 
         vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.axes.blueDescSet, matrixUniformBuffer.getHandle(), 0, sizeof(matrices))
-            .forUniformBuffer(1, scene.axes.blueDescSet, scene.axes.blueColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
+            .forUniformBuffer(0, scene.axes.blueDescSet, viewMatricesBuffer.getHandle(), 0, sizeof(viewMatrices))
+            .forUniformBuffer(1, scene.axes.blueDescSet, scene.axes.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
+            .forUniformBuffer(2, scene.axes.blueDescSet, scene.axes.blueColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
             .updateSets();
     }
 
@@ -467,8 +498,8 @@ int main()
 
         applySpectator(cam.getTransform(), window.getInput(), dt, 1, 5);
 
-        matrices.viewMatrix = cam.getViewMatrix();
-        matrixUniformBuffer.update(&matrices);
+        viewMatrices.viewMatrix = cam.getViewMatrix();
+        viewMatricesBuffer.update(&viewMatrices);
 
         auto swapchainStep = swapchain.getNextStep(semaphores.presentComplete);
 

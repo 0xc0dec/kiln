@@ -2,19 +2,23 @@
 
 layout (location = 0) in vec3 inPos;
 
-layout (binding = 0) uniform UBO 
+layout (binding = 0) uniform ViewMatrices 
 {
-	mat4 projectionMatrix;
-	mat4 modelMatrix;
-	mat4 viewMatrix;
-} ubo;
+	mat4 projection;
+	mat4 view;
+} viewMatrices;
+
+layout (binding = 1) uniform ModelMatrix 
+{
+	mat4 model;
+} modelMatrix;
 
 layout (location = 0) out vec3 outEyeDir;
 
 void main()
 {
-	mat4 modelViewMatrix = ubo.viewMatrix * ubo.modelMatrix;
-	mat4 invProjMatrix = inverse(ubo.projectionMatrix);
+	mat4 modelViewMatrix = viewMatrices.view * modelMatrix.model;
+	mat4 invProjMatrix = inverse(viewMatrices.projection);
 	mat3 invModelViewMatrix = inverse(mat3(modelViewMatrix));
 	vec3 unprojected = (invProjMatrix * vec4(inPos, 1)).xyz;
 	outEyeDir = invModelViewMatrix * unprojected;

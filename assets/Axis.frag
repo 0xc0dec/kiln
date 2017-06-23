@@ -1,6 +1,6 @@
 #version 450
 
-layout (binding = 1) uniform Variables 
+layout (binding = 2) uniform Variables 
 {
 	vec3 color;
 } variables;

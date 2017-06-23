@@ -1,6 +1,6 @@
 #version 450
 
-layout (binding = 1) uniform sampler2D colorSampler;
+layout (binding = 2) uniform sampler2D colorSampler;
 
 layout (location = 0) in vec2 inTexCoord;
 
