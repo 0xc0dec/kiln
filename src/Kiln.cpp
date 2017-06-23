@@ -1,5 +1,5 @@
 // TODO Investigate axes directions. Currently Y axis seems pointing down
-// TODO Common descriptor sets for view/projection matrices
+// TODO Common descriptor sets for view matrices instead of common buffer
 
 /*
     Copyright (c) Aleksey Fedotov
