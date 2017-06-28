@@ -2,13 +2,13 @@
 
 layout (location = 0) in vec3 inPos;
 
-layout (binding = 0) uniform ViewMatrices
+layout (set = 0, binding = 0) uniform ViewMatrices
 {
 	mat4 projection;
 	mat4 view;
 } viewMatrices;
 
-layout (binding = 1) uniform ModelMatrix 
+layout (set = 1, binding = 0) uniform ModelMatrix 
 {
 	mat4 model;
 } modelMatrix;

@@ -196,6 +196,8 @@ int main()
     struct
     {
         vk::DescriptorPool descriptorPool;
+        vk::Resource<VkDescriptorSetLayout> globalDescSetLayout;
+        VkDescriptorSet globalDescriptorSet;
 
         struct
         {
@@ -265,6 +267,15 @@ int main()
         .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 20)
         .build(20);
 
+    scene.globalDescSetLayout = vk::DescriptorSetLayoutBuilder(device)
+        .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+        .build();
+    scene.globalDescriptorSet = scene.descriptorPool.allocateSet(scene.globalDescSetLayout);
+
+    vk::DescriptorSetUpdater(device)
+        .forUniformBuffer(0, scene.globalDescriptorSet, viewMatricesBuffer.getHandle(), 0, sizeof(viewMatrices))
+        .updateSets();
+
     {
         auto vsSrc = fs::readBytes("../../assets/Textured.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/Textured.frag.spv");
@@ -280,12 +291,12 @@ int main()
 
         scene.box.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .withBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .withBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
+        std::vector<VkDescriptorSetLayout> descSetLayouts = {scene.globalDescSetLayout, scene.box.descSetLayout};
         scene.box.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
-            .withDescriptorSetLayouts(&scene.box.descSetLayout, 1)
+            .withDescriptorSetLayouts(descSetLayouts.data(), 2) // TODO allow several calls
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_BACK_BIT)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
@@ -301,9 +312,8 @@ int main()
         scene.box.texture = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
 
         vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.box.descriptorSet, viewMatricesBuffer.getHandle(), 0, sizeof(viewMatrices))
-            .forUniformBuffer(1, scene.box.descriptorSet, scene.box.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
-            .forTexture(2, scene.box.descriptorSet, scene.box.texture.getView(), scene.box.texture.getSampler(), scene.box.texture.getLayout())
+            .forUniformBuffer(0, scene.box.descriptorSet, scene.box.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
+            .forTexture(1, scene.box.descriptorSet, scene.box.texture.getView(), scene.box.texture.getSampler(), scene.box.texture.getLayout())
             .updateSets();
     }
 
@@ -322,12 +332,12 @@ int main()
 
         scene.skybox.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .withBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .withBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
+        std::vector<VkDescriptorSetLayout> descSetLayouts = {scene.globalDescSetLayout, scene.skybox.descSetLayout};
         scene.skybox.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
-            .withDescriptorSetLayouts(&scene.skybox.descSetLayout, 1)
+            .withDescriptorSetLayouts(descSetLayouts.data(), 2)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_NONE)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
@@ -343,9 +353,8 @@ int main()
         scene.skybox.texture = vk::Texture::createCube(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
 
         vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.skybox.descriptorSet, viewMatricesBuffer.getHandle(), 0, sizeof(viewMatrices))
-            .forUniformBuffer(1, scene.skybox.descriptorSet, scene.skybox.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
-            .forTexture(2, scene.skybox.descriptorSet, scene.skybox.texture.getView(), scene.skybox.texture.getSampler(), scene.skybox.texture.getLayout())
+            .forUniformBuffer(0, scene.skybox.descriptorSet, scene.skybox.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
+            .forTexture(1, scene.skybox.descriptorSet, scene.skybox.texture.getView(), scene.skybox.texture.getSampler(), scene.skybox.texture.getLayout())
             .updateSets();
     }
 
@@ -393,11 +402,11 @@ int main()
         scene.axes.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
             .withBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .withBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
             .build();
 
+        std::vector<VkDescriptorSetLayout> descSetLayouts = {scene.globalDescSetLayout, scene.axes.descSetLayout};
         scene.axes.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
-            .withDescriptorSetLayouts(&scene.axes.descSetLayout, 1)
+            .withDescriptorSetLayouts(descSetLayouts.data(), 2)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_NONE)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
@@ -411,21 +420,18 @@ int main()
         scene.axes.blueDescSet = scene.descriptorPool.allocateSet(scene.axes.descSetLayout);
 
         vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.axes.redDescSet, viewMatricesBuffer.getHandle(), 0, sizeof(viewMatrices))
-            .forUniformBuffer(1, scene.axes.redDescSet, scene.axes.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
-            .forUniformBuffer(2, scene.axes.redDescSet, scene.axes.redColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
+            .forUniformBuffer(0, scene.axes.redDescSet, scene.axes.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
+            .forUniformBuffer(1, scene.axes.redDescSet, scene.axes.redColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
             .updateSets();
 
         vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.axes.greenDescSet, viewMatricesBuffer.getHandle(), 0, sizeof(viewMatrices))
-            .forUniformBuffer(1, scene.axes.greenDescSet, scene.axes.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
-            .forUniformBuffer(2, scene.axes.greenDescSet, scene.axes.greenColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
+            .forUniformBuffer(0, scene.axes.greenDescSet, scene.axes.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
+            .forUniformBuffer(1, scene.axes.greenDescSet, scene.axes.greenColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
             .updateSets();
 
         vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.axes.blueDescSet, viewMatricesBuffer.getHandle(), 0, sizeof(viewMatrices))
-            .forUniformBuffer(1, scene.axes.blueDescSet, scene.axes.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
-            .forUniformBuffer(2, scene.axes.blueDescSet, scene.axes.blueColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
+            .forUniformBuffer(0, scene.axes.blueDescSet, scene.axes.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
+            .forUniformBuffer(1, scene.axes.blueDescSet, scene.axes.blueColorUniformBuffer.getHandle(), 0, sizeof(glm::vec3))
             .updateSets();
     }
 
@@ -448,8 +454,9 @@ int main()
         // Skybox 
         {
             std::vector<VkBuffer> vertexBuffers = {quadVertexBuffer.getHandle()};
+            std::vector<VkDescriptorSet> descSets = {scene.globalDescriptorSet, scene.skybox.descriptorSet};
             vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.skybox.pipeline);
-            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.skybox.pipeline.getLayout(), 0, 1, &scene.skybox.descriptorSet, 0, nullptr);
+            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.skybox.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
             vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
             vkCmdDraw(buf, 6, 1, 0, 0);
         }
@@ -457,20 +464,24 @@ int main()
         // Axes
         {
             vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.axes.pipeline);
+
+            std::vector<VkDescriptorSet> descSets = {scene.globalDescriptorSet, scene.axes.redDescSet};
             
             // TODO bind all at once
             std::vector<VkBuffer> vertexBuffers = {scene.axes.xAxisVertexBuffer.getHandle()};
-            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.axes.pipeline.getLayout(), 0, 1, &scene.axes.redDescSet, 0, nullptr);
+            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.axes.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
             vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
             vkCmdDraw(buf, 4, 1, 0, 0);
 
             vertexBuffers[0] = scene.axes.yAxisVertexBuffer.getHandle();
-            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.axes.pipeline.getLayout(), 0, 1, &scene.axes.greenDescSet, 0, nullptr);
+            descSets[1] = scene.axes.greenDescSet;
+            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.axes.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
             vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
             vkCmdDraw(buf, 4, 1, 0, 0);
 
             vertexBuffers[0] = scene.axes.zAxisVertexBuffer.getHandle();
-            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.axes.pipeline.getLayout(), 0, 1, &scene.axes.blueDescSet, 0, nullptr);
+            descSets[1] = scene.axes.blueDescSet;
+            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.axes.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
             vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
             vkCmdDraw(buf, 4, 1, 0, 0);
         }
@@ -478,8 +489,9 @@ int main()
         // Box
         {
             std::vector<VkBuffer> vertexBuffers = {boxVertexBuffer.getHandle()};
+            std::vector<VkDescriptorSet> descSets = {scene.globalDescriptorSet, scene.box.descriptorSet};
             vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.box.pipeline);
-            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.box.pipeline.getLayout(), 0, 1, &scene.box.descriptorSet, 0, nullptr);
+            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.box.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
             vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
             vkCmdBindIndexBuffer(buf, boxIndexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
             vkCmdDrawIndexed(buf, boxIndexData.size(), 1, 0, 0, 0);

@@ -1,6 +1,6 @@
 #version 450
 
-layout (binding = 2) uniform samplerCube colorSampler;
+layout (set = 1, binding = 1) uniform samplerCube colorSampler;
 
 layout (location = 0) in vec3 inEyeDir;
 
