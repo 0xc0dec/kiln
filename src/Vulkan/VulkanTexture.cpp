@@ -176,6 +176,8 @@ auto vk::Texture::create2D(VkDevice device, const PhysicalDevice &physicalDevice
 
     vk::queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &copyCmdBuf);
     KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
+    
+    vkFreeCommandBuffers(device, cmdPool, 1, &copyCmdBuf);
 
     auto sampler = createSampler(device, physicalDevice, mipLevels);
     auto view = createView(device, format, VK_IMAGE_VIEW_TYPE_2D, mipLevels, 1, image);
@@ -262,6 +264,8 @@ auto vk::Texture::createCube(VkDevice device, const PhysicalDevice &physicalDevi
 
     vk::queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &copyCmdBuf);
     KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
+
+    vkFreeCommandBuffers(device, cmdPool, 1, &copyCmdBuf);
 
     auto sampler = createSampler(device, physicalDevice, mipLevels);
     auto view = createView(device, format, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, 6, image);
