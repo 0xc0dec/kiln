@@ -1,5 +1,4 @@
-// TODO Investigate axes directions. Currently Y axis seems pointing down
-// TODO Common descriptor sets for view matrices instead of common buffer
+// TODO Fix depth
 
 /*
     Copyright (c) Aleksey Fedotov
@@ -358,7 +357,9 @@ int main()
     }
 
     {
-        glm::mat4 modelMatrix{};
+        Transform t;
+        t.setLocalPosition({3, 0, 3});
+        glm::mat4 modelMatrix = t.getWorldMatrix();
         scene.axes.modelMatrixBuffer = vk::Buffer(device, sizeof(glm::mat4),
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
