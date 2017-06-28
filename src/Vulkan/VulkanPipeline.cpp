@@ -77,11 +77,9 @@ auto vk::PipelineBuilder::withVertexBinding(uint32_t binding, uint32_t stride, V
     return *this;
 }
 
-auto vk::PipelineBuilder::withDescriptorSetLayouts(VkDescriptorSetLayout *layouts, uint32_t count) -> PipelineBuilder&
+auto vk::PipelineBuilder::withDescriptorSetLayout(VkDescriptorSetLayout layout) -> PipelineBuilder&
 {
-    descSetLayouts.resize(count);
-    for (auto i = 0; i < count; i++)
-        descSetLayouts[i] = layouts[i];
+    descSetLayouts.push_back(layout);
     return *this;
 }
 

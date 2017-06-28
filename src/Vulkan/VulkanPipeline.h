@@ -51,7 +51,7 @@ namespace vk
         auto withVertexAttribute(uint32_t location, uint32_t binding, VkFormat format, uint32_t offset) -> PipelineBuilder&;
         auto withVertexBinding(uint32_t binding, uint32_t stride, VkVertexInputRate inputRate) -> PipelineBuilder&;
 
-        auto withDescriptorSetLayouts(VkDescriptorSetLayout* layouts, uint32_t count) -> PipelineBuilder&;
+        auto withDescriptorSetLayout(VkDescriptorSetLayout layout) -> PipelineBuilder&;
 
         auto withFrontFace(VkFrontFace frontFace) -> PipelineBuilder&;
         auto withCullMode(VkCullModeFlags cullFlags) -> PipelineBuilder&;

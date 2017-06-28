@@ -294,9 +294,9 @@ int main()
             .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        std::vector<VkDescriptorSetLayout> descSetLayouts = {scene.globalDescSetLayout, scene.box.descSetLayout};
         scene.box.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
-            .withDescriptorSetLayouts(descSetLayouts.data(), 2) // TODO allow several calls
+            .withDescriptorSetLayout(scene.globalDescSetLayout)
+            .withDescriptorSetLayout(scene.box.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_BACK_BIT)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
@@ -335,9 +335,9 @@ int main()
             .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        std::vector<VkDescriptorSetLayout> descSetLayouts = {scene.globalDescSetLayout, scene.skybox.descSetLayout};
         scene.skybox.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
-            .withDescriptorSetLayouts(descSetLayouts.data(), 2)
+            .withDescriptorSetLayout(scene.globalDescSetLayout)
+            .withDescriptorSetLayout(scene.skybox.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_NONE)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
@@ -404,9 +404,9 @@ int main()
             .withBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
             .build();
 
-        std::vector<VkDescriptorSetLayout> descSetLayouts = {scene.globalDescSetLayout, scene.axes.descSetLayout};
         scene.axes.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
-            .withDescriptorSetLayouts(descSetLayouts.data(), 2)
+            .withDescriptorSetLayout(scene.globalDescSetLayout)
+            .withDescriptorSetLayout(scene.axes.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_NONE)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
