@@ -128,11 +128,7 @@ static const std::vector<uint32_t> boxIndexData =
 static auto createDeviceLocalBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, const vk::PhysicalDevice &physicalDevice,
     const void *data, uint32_t size, VkBufferUsageFlags usageFlags) -> vk::Buffer
 {
-    auto stagingBuffer = vk::Buffer(device, size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        physicalDevice.memoryProperties);
-    stagingBuffer.update(data);
+    auto stagingBuffer = vk::Buffer::createStaging(device, size, physicalDevice, data);
 
     auto buffer = vk::Buffer(device, size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | usageFlags,

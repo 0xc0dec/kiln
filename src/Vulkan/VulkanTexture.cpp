@@ -130,11 +130,7 @@ auto vk::Texture::create2D(VkDevice device, const PhysicalDevice &physicalDevice
         offset += static_cast<uint32_t>(data[i].size());
     }
 
-    auto stagingBuf = vk::Buffer(device, data.size(),
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        physicalDevice.memoryProperties);
-    stagingBuf.update(data.data());
+    auto stagingBuf = vk::Buffer::createStaging(device, data.size(), physicalDevice, data.data());
 
     VkImageSubresourceRange subresourceRange{};
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -218,11 +214,7 @@ auto vk::Texture::createCube(VkDevice device, const PhysicalDevice &physicalDevi
         }
     }
 
-    auto stagingBuf = vk::Buffer(device, data.size(),
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        physicalDevice.memoryProperties);
-    stagingBuf.update(data.data());
+    auto stagingBuf = vk::Buffer::createStaging(device, data.size(), physicalDevice, data.data());
 
     VkImageSubresourceRange subresourceRange{};
 	subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;

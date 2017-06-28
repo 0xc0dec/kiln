@@ -5,6 +5,19 @@
 
 #include "VulkanBuffer.h"
 
+auto vk::Buffer::createStaging(VkDevice device, uint32_t size, const vk::PhysicalDevice &physicalDevice, const void *initialData) -> vk::Buffer
+{
+    auto buffer = vk::Buffer(device, size,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        physicalDevice.memoryProperties);
+
+    if (initialData)
+        buffer.update(initialData);
+
+    return buffer;
+}
+
 vk::Buffer::Buffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memPropertyFlags,
     VkPhysicalDeviceMemoryProperties memProps):
     device(device),
