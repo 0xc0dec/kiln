@@ -205,6 +205,8 @@ int main()
             vk::Pipeline pipeline;
             vk::Texture texture;
             vk::Buffer modelMatrixBuffer;
+            vk::Buffer vertexBuffer;
+            vk::Buffer indexBuffer;
             VkDescriptorSet descriptorSet;
         } box;
 
@@ -214,6 +216,7 @@ int main()
             vk::Pipeline pipeline;
             vk::Texture texture;
             vk::Buffer modelMatrixBuffer;
+            vk::Buffer vertexBuffer;
             VkDescriptorSet descriptorSet;
         } skybox;
 
@@ -254,14 +257,6 @@ int main()
         physicalDevice.memoryProperties);
     viewMatricesBuffer.update(&viewMatrices);
 
-    // TODO move to corresponding structs
-    auto quadVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, quadVertexData.data(),
-        sizeof(float) * quadVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-    auto boxVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, boxVertexData.data(),
-        sizeof(float) * boxVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-    auto boxIndexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice,
-        boxIndexData.data(), sizeof(uint32_t) * boxIndexData.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-
     scene.descriptorPool = vk::DescriptorPoolBuilder(device)
         .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 20)
         .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 20)
@@ -288,6 +283,11 @@ int main()
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             physicalDevice.memoryProperties);
         scene.box.modelMatrixBuffer.update(&modelMatrix);
+
+        scene.box.vertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, boxVertexData.data(),
+            sizeof(float) * boxVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        scene.box.indexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice,
+            boxIndexData.data(), sizeof(uint32_t) * boxIndexData.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
         scene.box.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
@@ -329,6 +329,9 @@ int main()
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             physicalDevice.memoryProperties);
         scene.skybox.modelMatrixBuffer.update(&modelMatrix);
+
+        scene.skybox.vertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, quadVertexData.data(),
+            sizeof(float) * quadVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
         scene.skybox.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
@@ -453,7 +456,7 @@ int main()
 
         // Skybox 
         {
-            std::vector<VkBuffer> vertexBuffers = {quadVertexBuffer.getHandle()};
+            std::vector<VkBuffer> vertexBuffers = {scene.skybox.vertexBuffer.getHandle()};
             std::vector<VkDescriptorSet> descSets = {scene.globalDescriptorSet, scene.skybox.descriptorSet};
             vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.skybox.pipeline);
             vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.skybox.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
@@ -488,12 +491,12 @@ int main()
 
         // Box
         {
-            std::vector<VkBuffer> vertexBuffers = {boxVertexBuffer.getHandle()};
+            std::vector<VkBuffer> vertexBuffers = {scene.box.vertexBuffer.getHandle()};
             std::vector<VkDescriptorSet> descSets = {scene.globalDescriptorSet, scene.box.descriptorSet};
             vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.box.pipeline);
             vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.box.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
             vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
-            vkCmdBindIndexBuffer(buf, boxIndexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(buf, scene.box.indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
             vkCmdDrawIndexed(buf, boxIndexData.size(), 1, 0, 0, 0);
         }
 
