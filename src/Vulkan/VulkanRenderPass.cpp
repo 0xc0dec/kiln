@@ -52,7 +52,8 @@ void vk::RenderPass::swap(RenderPass &other) noexcept
 }
 
 vk::RenderPassBuilder::RenderPassBuilder(VkDevice device):
-    device(device)
+    device(device),
+    depthAttachmentRef{0, VK_IMAGE_LAYOUT_UNDEFINED}
 {
 }
 
@@ -100,15 +101,18 @@ auto vk::RenderPassBuilder::withDepthAttachment(VkFormat depthFormat) -> RenderP
 
 auto vk::RenderPassBuilder::build() -> RenderPass
 {
+    auto colorAttachments = colorAttachmentRefs.empty() ? nullptr : colorAttachmentRefs.data();
+    auto depthAttachment = depthAttachmentRef.layout != VK_IMAGE_LAYOUT_UNDEFINED ? &depthAttachmentRef : nullptr;
+
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.flags = 0;
     subpass.inputAttachmentCount = 0;
     subpass.pInputAttachments = nullptr;
     subpass.colorAttachmentCount = colorAttachmentRefs.size();
-    subpass.pColorAttachments = colorAttachmentRefs.data();
+    subpass.pColorAttachments = colorAttachments;
     subpass.pResolveAttachments = nullptr;
-    subpass.pDepthStencilAttachment = &depthAttachmentRef;
+    subpass.pDepthStencilAttachment = depthAttachment;
     subpass.preserveAttachmentCount = 0;
     subpass.pPreserveAttachments = nullptr;
 
