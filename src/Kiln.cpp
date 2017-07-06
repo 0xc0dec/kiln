@@ -1,4 +1,4 @@
-// TODO Load png via stb lib
+// TODO Refactor image loading
 
 /*
     Copyright (c) Aleksey Fedotov
