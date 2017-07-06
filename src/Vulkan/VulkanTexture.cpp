@@ -7,29 +7,6 @@
 #include "VulkanBuffer.h"
 #include <vector>
 
-static auto createImage(VkDevice device, VkFormat format, uint32_t width, uint32_t height,
-    uint32_t mipLevels, uint32_t arrayLayers, VkImageCreateFlags flags) -> vk::Resource<VkImage>
-{
-    VkImageCreateInfo imageCreateInfo{};
-    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageCreateInfo.format = format;
-    imageCreateInfo.mipLevels = mipLevels;
-    imageCreateInfo.arrayLayers = arrayLayers;
-    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageCreateInfo.extent = {width, height, 1};
-    imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    imageCreateInfo.flags = flags;
-
-    vk::Resource<VkImage> image{device, vkDestroyImage};
-    KL_VK_CHECK_RESULT(vkCreateImage(device, &imageCreateInfo, nullptr, image.cleanRef()));
-
-    return image;
-}
-
 static auto createView(VkDevice device, VkFormat format, VkImageViewType type, uint32_t mipLevels, uint32_t layers, VkImage image) -> vk::Resource<VkImageView>
 {
     VkImageViewCreateInfo viewInfo{};
@@ -107,7 +84,7 @@ auto vk::Texture::create2D(VkDevice device, const PhysicalDevice &physicalDevice
     const auto width = data[0].extent().x;
     const auto height = data[0].extent().y;
 
-    auto image = createImage(device, format, width, height, mipLevels, 1, 0);
+    auto image = vk::createImage(device, format, width, height, mipLevels, 1, 0, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
     auto memory = allocateImageMemory(device, image, physicalDevice);
 
     std::vector<VkBufferImageCopy> copyRegions;
@@ -188,7 +165,8 @@ auto vk::Texture::createCube(VkDevice device, const PhysicalDevice &physicalDevi
     const auto width = data.extent().x;
     const auto height = data.extent().y;
 
-    auto image = createImage(device, format, width, height, mipLevels, 6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
+    auto image = vk::createImage(device, format, width, height, mipLevels, 6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
     auto memory = allocateImageMemory(device, image, physicalDevice);
 
     std::vector<VkBufferImageCopy> copyRegions;

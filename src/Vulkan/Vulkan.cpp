@@ -123,33 +123,19 @@ auto vk::createCommandPool(VkDevice device, uint32_t queueIndex) -> Resource<VkC
 auto vk::createDepthStencil(VkDevice device, VkPhysicalDeviceMemoryProperties physicalDeviceMemProps, VkFormat depthFormat,
     uint32_t canvasWidth, uint32_t canvasHeight) -> DepthStencil
 {
-    VkImageCreateInfo imageInfo{};
-    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.pNext = nullptr;
-    imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.format = depthFormat;
-    imageInfo.extent = {canvasWidth, canvasHeight, 1};
-    imageInfo.mipLevels = 1;
-    imageInfo.arrayLayers = 1;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    imageInfo.flags = 0;
+    auto image = createImage(device, depthFormat, canvasWidth, canvasHeight, 1, 1, 0,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+    
+    VkMemoryRequirements memReqs;
+    vkGetImageMemoryRequirements(device, image, &memReqs);
+    auto memTypeIndex = findMemoryType(physicalDeviceMemProps, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    KL_PANIC_IF(memTypeIndex < 0);
 
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.pNext = nullptr;
     allocInfo.allocationSize = 0;
     allocInfo.memoryTypeIndex = 0;
-
-    VkMemoryRequirements memReqs;
-    Resource<VkImage> image{device, vkDestroyImage};
-    KL_VK_CHECK_RESULT(vkCreateImage(device, &imageInfo, nullptr, image.cleanRef()));
-    vkGetImageMemoryRequirements(device, image, &memReqs);
-
-    auto memTypeIndex = findMemoryType(physicalDeviceMemProps, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    KL_PANIC_IF(memTypeIndex < 0);
-
     allocInfo.allocationSize = memReqs.size;
     allocInfo.memoryTypeIndex = memTypeIndex;
 
@@ -262,6 +248,29 @@ void vk::beginCommandBuffer(VkCommandBuffer buffer, bool oneTime)
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = oneTime ? VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT : 0;
     KL_VK_CHECK_RESULT(vkBeginCommandBuffer(buffer, &beginInfo));
+}
+
+auto vk::createImage(VkDevice device, VkFormat format, uint32_t width, uint32_t height, uint32_t mipLevels,
+    uint32_t arrayLayers, VkImageCreateFlags createFlags, VkImageUsageFlags usageFlags) -> vk::Resource<VkImage>
+{
+    VkImageCreateInfo imageCreateInfo{};
+    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageCreateInfo.format = format;
+    imageCreateInfo.mipLevels = mipLevels;
+    imageCreateInfo.arrayLayers = arrayLayers;
+    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageCreateInfo.extent = {width, height, 1};
+    imageCreateInfo.usage = usageFlags;
+    imageCreateInfo.flags = createFlags;
+
+    vk::Resource<VkImage> image{device, vkDestroyImage};
+    KL_VK_CHECK_RESULT(vkCreateImage(device, &imageCreateInfo, nullptr, image.cleanRef()));
+
+    return image;
 }
 
 auto vk::createShader(VkDevice device, const void *data, uint32_t size) -> Resource<VkShaderModule>

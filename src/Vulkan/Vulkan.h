@@ -65,4 +65,6 @@ namespace vk
         VkImageSubresourceRange subresourceRange, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask);
     auto createDebugCallback(VkInstance instance, PFN_vkDebugReportCallbackEXT callbackFunc) -> VkDebugReportCallbackEXT;
     void beginCommandBuffer(VkCommandBuffer buffer, bool oneTime);
+    auto createImage(VkDevice device, VkFormat format, uint32_t width, uint32_t height, uint32_t mipLevels,
+        uint32_t arrayLayers, VkImageCreateFlags createFlags, VkImageUsageFlags usageFlags) -> vk::Resource<VkImage>;
 }
