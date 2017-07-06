@@ -7,26 +7,6 @@
 #include "VulkanBuffer.h"
 #include <vector>
 
-static auto createView(VkDevice device, VkFormat format, VkImageViewType type, uint32_t mipLevels, uint32_t layers, VkImage image) -> vk::Resource<VkImageView>
-{
-    VkImageViewCreateInfo viewInfo{};
-    viewInfo.viewType = type;
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.format = format;
-    viewInfo.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
-    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = layers;
-    viewInfo.subresourceRange.levelCount = mipLevels;
-    viewInfo.image = image;
-
-    vk::Resource<VkImageView> view{device, vkDestroyImageView};
-    KL_VK_CHECK_RESULT(vkCreateImageView(device, &viewInfo, nullptr, view.cleanRef()));
-
-    return view;
-}
-
 static auto createSampler(VkDevice device, vk::PhysicalDevice physicalDevice, uint32_t mipLevels) -> vk::Resource<VkSampler>
 {
     VkSamplerCreateInfo samplerInfo{};
@@ -136,7 +116,7 @@ auto vk::Texture::create2D(VkDevice device, const PhysicalDevice &physicalDevice
     vkFreeCommandBuffers(device, cmdPool, 1, &copyCmdBuf);
 
     auto sampler = createSampler(device, physicalDevice, mipLevels);
-    auto view = createView(device, format, VK_IMAGE_VIEW_TYPE_2D, mipLevels, 1, image);
+    auto view = vk::createImageView(device, format, VK_IMAGE_VIEW_TYPE_2D, mipLevels, 1, image, VK_IMAGE_ASPECT_COLOR_BIT);
 
     return Texture{std::move(image), std::move(memory), std::move(view), std::move(sampler), imageLayout};
 }
@@ -221,7 +201,7 @@ auto vk::Texture::createCube(VkDevice device, const PhysicalDevice &physicalDevi
     vkFreeCommandBuffers(device, cmdPool, 1, &copyCmdBuf);
 
     auto sampler = createSampler(device, physicalDevice, mipLevels);
-    auto view = createView(device, format, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, 6, image);
+    auto view = vk::createImageView(device, format, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, 6, image, VK_IMAGE_ASPECT_COLOR_BIT);
 
     return Texture{std::move(image), std::move(memory), std::move(view), std::move(sampler), imageLayout};
 }

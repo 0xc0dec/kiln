@@ -1,4 +1,4 @@
-// TODO Fix depth
+// TODO Load png via stb lib
 
 /*
     Copyright (c) Aleksey Fedotov

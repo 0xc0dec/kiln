@@ -126,22 +126,7 @@ auto vk::createDepthStencil(VkDevice device, const PhysicalDevice &physicalDevic
     auto image = createImage(device, depthFormat, canvasWidth, canvasHeight, 1, 1, 0,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
     auto mem = allocateImageMemory(device, image, physicalDevice);
-
-    VkImageViewCreateInfo viewInfo{};
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.pNext = nullptr;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = depthFormat;
-    viewInfo.flags = 0;
-    viewInfo.subresourceRange = {};
-    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = 1;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = 1;
-    viewInfo.image = image;
-    Resource<VkImageView> view{device, vkDestroyImageView};
-    KL_VK_CHECK_RESULT(vkCreateImageView(device, &viewInfo, nullptr, view.cleanRef()));
+    auto view = createImageView(device, depthFormat, VK_IMAGE_VIEW_TYPE_2D, 1, 1, image, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
 
     DepthStencil result;
     result.image = std::move(image);
@@ -255,6 +240,27 @@ auto vk::createImage(VkDevice device, VkFormat format, uint32_t width, uint32_t 
     KL_VK_CHECK_RESULT(vkCreateImage(device, &imageCreateInfo, nullptr, image.cleanRef()));
 
     return image;
+}
+
+auto vk::createImageView(VkDevice device, VkFormat format, VkImageViewType type, uint32_t mipLevels, uint32_t layers,
+    VkImage image, VkImageAspectFlags aspectMask) -> vk::Resource<VkImageView>
+{
+    VkImageViewCreateInfo viewInfo{};
+    viewInfo.viewType = type;
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.format = format;
+    viewInfo.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
+    viewInfo.subresourceRange.aspectMask = aspectMask;
+    viewInfo.subresourceRange.baseMipLevel = 0;
+    viewInfo.subresourceRange.baseArrayLayer = 0;
+    viewInfo.subresourceRange.layerCount = layers;
+    viewInfo.subresourceRange.levelCount = mipLevels;
+    viewInfo.image = image;
+
+    vk::Resource<VkImageView> view{device, vkDestroyImageView};
+    KL_VK_CHECK_RESULT(vkCreateImageView(device, &viewInfo, nullptr, view.cleanRef()));
+
+    return view;
 }
 
 auto vk::allocateImageMemory(VkDevice device, VkImage image, vk::PhysicalDevice physicalDevice) -> vk::Resource<VkDeviceMemory>

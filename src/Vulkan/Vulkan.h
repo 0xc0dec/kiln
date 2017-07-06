@@ -66,5 +66,7 @@ namespace vk
     void beginCommandBuffer(VkCommandBuffer buffer, bool oneTime);
     auto createImage(VkDevice device, VkFormat format, uint32_t width, uint32_t height, uint32_t mipLevels,
         uint32_t arrayLayers, VkImageCreateFlags createFlags, VkImageUsageFlags usageFlags) -> vk::Resource<VkImage>;
+    auto createImageView(VkDevice device, VkFormat format, VkImageViewType type, uint32_t mipLevels, uint32_t layers,
+        VkImage image, VkImageAspectFlags aspectMask) -> vk::Resource<VkImageView>;
     auto allocateImageMemory(VkDevice device, VkImage image, vk::PhysicalDevice physicalDevice) -> vk::Resource<VkDeviceMemory>;
 }
