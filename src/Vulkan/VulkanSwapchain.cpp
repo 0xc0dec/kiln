@@ -71,7 +71,7 @@ vk::Swapchain::Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSur
     swapchainInfo.queueFamilyIndexCount = 0;
     swapchainInfo.pQueueFamilyIndices = nullptr;
     swapchainInfo.presentMode = presentMode;
-    swapchainInfo.oldSwapchain = nullptr; // TODO
+    swapchainInfo.oldSwapchain = nullptr;
     swapchainInfo.clipped = VK_TRUE;
     swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
@@ -89,29 +89,7 @@ vk::Swapchain::Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSur
 
     for (uint32_t i = 0; i < imageCount; i++)
     {
-        VkImageViewCreateInfo imageViewInfo{};
-        imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        imageViewInfo.pNext = nullptr;
-        imageViewInfo.format = colorFormat;
-        imageViewInfo.components =
-        {
-            VK_COMPONENT_SWIZZLE_R,
-            VK_COMPONENT_SWIZZLE_G,
-            VK_COMPONENT_SWIZZLE_B,
-            VK_COMPONENT_SWIZZLE_A
-        };
-        imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        imageViewInfo.subresourceRange.baseMipLevel = 0;
-        imageViewInfo.subresourceRange.levelCount = 1;
-        imageViewInfo.subresourceRange.baseArrayLayer = 0;
-        imageViewInfo.subresourceRange.layerCount = 1;
-        imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        imageViewInfo.flags = 0;
-        imageViewInfo.image = images[i];
-
-        vk::Resource<VkImageView> view{device, vkDestroyImageView};
-        KL_VK_CHECK_RESULT(vkCreateImageView(device, &imageViewInfo, nullptr, view.cleanRef()));
-
+        auto view = createImageView(device, colorFormat, VK_IMAGE_VIEW_TYPE_2D, 1, 1, images[i], VK_IMAGE_ASPECT_COLOR_BIT);
         steps[i].framebuffer = createFrameBuffer(device, view, depthStencilView, renderPass, width, height);
         steps[i].image = images[i];
         steps[i].imageView = std::move(view);
