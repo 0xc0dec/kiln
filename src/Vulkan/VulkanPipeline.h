@@ -56,6 +56,8 @@ namespace vk
         auto withFrontFace(VkFrontFace frontFace) -> PipelineBuilder&;
         auto withCullMode(VkCullModeFlags cullFlags) -> PipelineBuilder&;
 
+        auto withDepthTest(bool write, bool test) -> PipelineBuilder&;
+
         auto build() -> Pipeline;
 
     private:
@@ -67,6 +69,7 @@ namespace vk
         VkPipelineShaderStageCreateInfo vertexShaderStageInfo;
         VkPipelineShaderStageCreateInfo fragmentShaderStageInfo;
         VkPipelineRasterizationStateCreateInfo rasterState;
+        VkPipelineDepthStencilStateCreateInfo depthStencilState;
 
         std::vector<VkVertexInputAttributeDescription> vertexAttrs;
         std::vector<VkVertexInputBindingDescription> vertexBindings;

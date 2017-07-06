@@ -105,7 +105,7 @@ auto vk::RenderPassBuilder::build() -> RenderPass
     subpass.flags = 0;
     subpass.inputAttachmentCount = 0;
     subpass.pInputAttachments = nullptr;
-    subpass.colorAttachmentCount = 1;
+    subpass.colorAttachmentCount = colorAttachmentRefs.size();
     subpass.pColorAttachments = colorAttachmentRefs.data();
     subpass.pResolveAttachments = nullptr;
     subpass.pDepthStencilAttachment = &depthAttachmentRef;

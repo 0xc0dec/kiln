@@ -36,7 +36,9 @@ vk::PipelineBuilder::PipelineBuilder(VkDevice device, VkRenderPass renderPass, V
     device(device),
     renderPass(renderPass),
     vertexShader(vertexShader),
-    fragmentShader(fragmentShader)
+    fragmentShader(fragmentShader),
+    rasterState{},
+    depthStencilState{}
 {
     vertexShaderStageInfo = createShaderStageInfo(true, vertexShader, "main");
     fragmentShaderStageInfo = createShaderStageInfo(false, fragmentShader, "main");
@@ -54,6 +56,14 @@ vk::PipelineBuilder::PipelineBuilder(VkDevice device, VkRenderPass renderPass, V
     rasterState.depthBiasConstantFactor = 0;
     rasterState.depthBiasSlopeFactor = 0;
     rasterState.lineWidth = 1;
+
+	depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depthStencilState.flags = 0;
+	depthStencilState.depthTestEnable = true;
+	depthStencilState.depthWriteEnable = true;
+	depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+	depthStencilState.back.compareOp = VK_COMPARE_OP_ALWAYS;
+    depthStencilState.front = depthStencilState.back;
 }
 
 auto vk::PipelineBuilder::withVertexAttribute(uint32_t location, uint32_t binding, VkFormat format, uint32_t offset) -> PipelineBuilder&
@@ -92,6 +102,13 @@ auto vk::PipelineBuilder::withFrontFace(VkFrontFace frontFace) -> PipelineBuilde
 auto vk::PipelineBuilder::withCullMode(VkCullModeFlags cullFlags) -> PipelineBuilder&
 {
     rasterState.cullMode = cullFlags;
+    return *this;
+}
+
+auto vk::PipelineBuilder::withDepthTest(bool write, bool test) -> PipelineBuilder &
+{
+    depthStencilState.depthWriteEnable = write;
+    depthStencilState.depthTestEnable = test;
     return *this;
 }
 
@@ -142,14 +159,6 @@ auto vk::PipelineBuilder::build() -> Pipeline
     colorBlendState.blendConstants[1] = 0;
     colorBlendState.blendConstants[2] = 0;
     colorBlendState.blendConstants[3] = 0;
-
-    VkPipelineDepthStencilStateCreateInfo depthStencilState{};
-	depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencilState.depthTestEnable = true;
-	depthStencilState.depthWriteEnable = true;
-	depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-	depthStencilState.back.compareOp = VK_COMPARE_OP_ALWAYS;
-    depthStencilState.front = depthStencilState.back;
 
     std::vector<VkPipelineShaderStageCreateInfo> shaderStageStates{vertexShaderStageInfo, fragmentShaderStageInfo};
 

@@ -293,7 +293,7 @@ int main()
             .withDescriptorSetLayout(scene.globalDescSetLayout)
             .withDescriptorSetLayout(scene.box.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
-            .withCullMode(VK_CULL_MODE_BACK_BIT)
+            .withCullMode(VK_CULL_MODE_NONE)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
@@ -334,6 +334,7 @@ int main()
             .build();
 
         scene.skybox.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
+            .withDepthTest(false, false)
             .withDescriptorSetLayout(scene.globalDescSetLayout)
             .withDescriptorSetLayout(scene.skybox.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
@@ -442,7 +443,7 @@ int main()
 
         renderPass.begin(buf, swapchain.getFramebuffer(i), CanvasWidth, CanvasHeight);
 
-        auto vp = VkViewport{0, 0, CanvasWidth, CanvasHeight, 1, 100};
+        auto vp = VkViewport{0, 0, CanvasWidth, CanvasHeight, 0, 1};
 
         vkCmdSetViewport(buf, 0, 1, &vp);
 
