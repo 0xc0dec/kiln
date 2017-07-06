@@ -119,7 +119,7 @@
     <OutDir>$(ProjectDir)..\build\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)..\build\$(Configuration)\temp\Kiln\</IntDir>
     <LibraryPath>$(ProjectDir)..\build\$(Configuration)\;$(ProjectDir)..\vendor\vulkan\lib\;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(ProjectDir)..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\vendor\vulkan\include\;$(ProjectDir)..\vendor\png\1.6.16\include\;$(ProjectDir)..\vendor\glm\0.9.8.4\;$(ProjectDir)..\vendor\gli\0.8.2.0\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\vendor\stb_image\2.15\;$(ProjectDir)..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\vendor\vulkan\include\;$(ProjectDir)..\vendor\png\1.6.16\include\;$(ProjectDir)..\vendor\glm\0.9.8.4\;$(ProjectDir)..\vendor\gli\0.8.2.0\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -129,7 +129,7 @@
     <OutDir>$(ProjectDir)..\build\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)..\build\$(Configuration)\temp\Kiln\</IntDir>
     <LibraryPath>$(ProjectDir)..\build\$(Configuration)\;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(ProjectDir)..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\vendor\glew\1.13\include\;$(ProjectDir)..\vendor\png\1.6.16\include\;$(ProjectDir)..\vendor\glm\0.9.8.4\;$(ProjectDir)..\vendor\gli\0.8.2.0\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\vendor\stb_image\2.15\;$(ProjectDir)..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\vendor\glew\1.13\include\;$(ProjectDir)..\vendor\png\1.6.16\include\;$(ProjectDir)..\vendor\glm\0.9.8.4\;$(ProjectDir)..\vendor\gli\0.8.2.0\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

@@ -29,6 +29,9 @@
 #include <gli/gli.hpp>
 #include <vector>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 static const std::vector<float> xAxisVertexData = 
 {
     0, 0, 0,
@@ -300,8 +303,13 @@ int main()
 
         scene.box.descriptorSet = scene.descriptorPool.allocateSet(scene.box.descSetLayout);
 
-        gli::texture2d textureData(gli::load("../../assets/MetalPlate_rgba.ktx"));
-        scene.box.texture = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
+        int texWidth, texHeight, texChannels;
+        auto pixels = stbi_load("../../assets/Cobblestone.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+
+        scene.box.texture = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, pixels, texWidth * texHeight * texChannels,
+            texWidth, texHeight, commandPool, queue);
+
+        stbi_image_free(pixels);
 
         vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, scene.box.descriptorSet, scene.box.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))

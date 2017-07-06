@@ -121,6 +121,62 @@ auto vk::Texture::create2D(VkDevice device, const PhysicalDevice &physicalDevice
     return Texture{std::move(image), std::move(memory), std::move(view), std::move(sampler), imageLayout};
 }
 
+auto vk::Texture::create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
+    const void *data, uint32_t size, uint32_t width, uint32_t height, VkCommandPool cmdPool, VkQueue queue) -> Texture
+{
+    auto image = vk::createImage(device, format, width, height, 1, 1, 0, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+    auto memory = vk::allocateImageMemory(device, image, physicalDevice);
+
+    VkBufferImageCopy copyRegion{};
+    copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    copyRegion.imageSubresource.mipLevel = 0;
+    copyRegion.imageSubresource.baseArrayLayer = 0;
+    copyRegion.imageSubresource.layerCount = 1;
+    copyRegion.imageExtent.width = static_cast<uint32_t>(width);
+    copyRegion.imageExtent.height = static_cast<uint32_t>(height);
+    copyRegion.imageExtent.depth = 1;
+    copyRegion.bufferOffset = 0;
+
+    auto stagingBuf = vk::Buffer::createStaging(device, size, physicalDevice, data);
+
+    VkImageSubresourceRange subresourceRange{};
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = 1;
+    subresourceRange.layerCount = 1;
+
+    auto copyCmdBuf = vk::createCommandBuffer(device, cmdPool);
+    vk::beginCommandBuffer(copyCmdBuf, true);
+
+    vk::setImageLayout(copyCmdBuf, image,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        subresourceRange,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+
+    vkCmdCopyBufferToImage(copyCmdBuf, stagingBuf.getHandle(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+    auto imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    vk::setImageLayout(copyCmdBuf, image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        imageLayout, subresourceRange,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+
+    vkEndCommandBuffer(copyCmdBuf);
+
+    vk::queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &copyCmdBuf);
+    KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
+    
+    vkFreeCommandBuffers(device, cmdPool, 1, &copyCmdBuf);
+
+    auto sampler = createSampler(device, physicalDevice, 1);
+    auto view = vk::createImageView(device, format, VK_IMAGE_VIEW_TYPE_2D, 1, 1, image, VK_IMAGE_ASPECT_COLOR_BIT);
+
+    return Texture{std::move(image), std::move(memory), std::move(view), std::move(sampler), imageLayout};
+}
+
 auto vk::Texture::createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
     const gli::texture_cube &data, VkCommandPool cmdPool, VkQueue queue) -> Texture
 {

@@ -18,6 +18,8 @@ namespace vk
     public:
         static auto create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
             const gli::texture2d &data, VkCommandPool cmdPool, VkQueue queue) -> Texture;
+        static auto create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
+            const void *data, uint32_t size, uint32_t width, uint32_t height, VkCommandPool cmdPool, VkQueue queue) -> Texture;
         static auto createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
             const gli::texture_cube &data, VkCommandPool cmdPool, VkQueue queue) -> Texture;
 
