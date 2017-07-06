@@ -16,8 +16,8 @@ namespace vk
             const void *initialData = nullptr) -> vk::Buffer;
 
         Buffer() {}
-        Buffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memPropertyFlags,
-            VkPhysicalDeviceMemoryProperties memProps);
+        Buffer(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size, VkBufferUsageFlags usageFlags,
+            VkMemoryPropertyFlags memPropertyFlags);
         Buffer(Buffer &&other) noexcept;
         Buffer(const Buffer &other) = delete;
 

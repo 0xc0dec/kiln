@@ -60,23 +60,6 @@ static auto createSampler(VkDevice device, vk::PhysicalDevice physicalDevice, ui
     return sampler;
 }
 
-static auto allocateImageMemory(VkDevice device, VkImage image, vk::PhysicalDevice physicalDevice) -> vk::Resource<VkDeviceMemory>
-{
-    VkMemoryRequirements memReqs{};
-    vkGetImageMemoryRequirements(device, image, &memReqs);
-
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memReqs.size;
-    allocInfo.memoryTypeIndex = vk::findMemoryType(physicalDevice.memoryProperties, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-    vk::Resource<VkDeviceMemory> memory{device, vkFreeMemory};
-    KL_VK_CHECK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, memory.cleanRef()));
-    KL_VK_CHECK_RESULT(vkBindImageMemory(device, image, memory, 0));
-
-    return memory;
-}
-
 auto vk::Texture::create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
     const gli::texture2d &data, VkCommandPool cmdPool, VkQueue queue) -> Texture
 {
@@ -85,7 +68,7 @@ auto vk::Texture::create2D(VkDevice device, const PhysicalDevice &physicalDevice
     const auto height = data[0].extent().y;
 
     auto image = vk::createImage(device, format, width, height, mipLevels, 1, 0, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-    auto memory = allocateImageMemory(device, image, physicalDevice);
+    auto memory = vk::allocateImageMemory(device, image, physicalDevice);
 
     std::vector<VkBufferImageCopy> copyRegions;
     uint32_t offset = 0;

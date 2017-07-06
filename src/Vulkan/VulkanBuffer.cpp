@@ -7,10 +7,9 @@
 
 auto vk::Buffer::createStaging(VkDevice device, uint32_t size, const vk::PhysicalDevice &physicalDevice, const void *initialData) -> vk::Buffer
 {
-    auto buffer = vk::Buffer(device, size,
+    auto buffer = vk::Buffer(device, physicalDevice, size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        physicalDevice.memoryProperties);
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     if (initialData)
         buffer.update(initialData);
@@ -18,8 +17,8 @@ auto vk::Buffer::createStaging(VkDevice device, uint32_t size, const vk::Physica
     return buffer;
 }
 
-vk::Buffer::Buffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memPropertyFlags,
-    VkPhysicalDeviceMemoryProperties memProps):
+vk::Buffer::Buffer(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size, VkBufferUsageFlags usageFlags,
+    VkMemoryPropertyFlags memPropertyFlags):
     device(device),
     size(size)
 {
@@ -41,7 +40,7 @@ vk::Buffer::Buffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usageF
     VkMemoryAllocateInfo allocInfo {};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memReqs.size;
-    allocInfo.memoryTypeIndex = findMemoryType(memProps, memReqs.memoryTypeBits, memPropertyFlags);
+    allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memReqs.memoryTypeBits, memPropertyFlags);
 
     memory = Resource<VkDeviceMemory>{device, vkFreeMemory};
     KL_VK_CHECK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, memory.cleanRef()));

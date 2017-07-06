@@ -45,10 +45,9 @@ namespace vk
     auto getQueueIndex(VkPhysicalDevice device, VkSurfaceKHR surface) -> uint32_t;
     auto getDepthFormat(VkPhysicalDevice device) -> VkFormat;
     auto createCommandPool(VkDevice device, uint32_t queueIndex) -> Resource<VkCommandPool>;
-    auto createDepthStencil(VkDevice device, VkPhysicalDeviceMemoryProperties physicalDeviceMemProps,
+    auto createDepthStencil(VkDevice device, const PhysicalDevice &physicalDevice,
         VkFormat depthFormat, uint32_t canvasWidth, uint32_t canvasHeight) -> DepthStencil;
-    auto findMemoryType(VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties, uint32_t typeBits,
-        VkMemoryPropertyFlags properties) -> int32_t;
+    auto findMemoryType(const PhysicalDevice &physicalDevice, uint32_t typeBits, VkMemoryPropertyFlags properties) -> int32_t;
     auto createFrameBuffer(VkDevice device, VkImageView colorAttachment, VkImageView depthAttachment,
         VkRenderPass renderPass, uint32_t width, uint32_t height) -> Resource<VkFramebuffer>;
     auto createSemaphore(VkDevice device) -> Resource<VkSemaphore>;
@@ -67,4 +66,5 @@ namespace vk
     void beginCommandBuffer(VkCommandBuffer buffer, bool oneTime);
     auto createImage(VkDevice device, VkFormat format, uint32_t width, uint32_t height, uint32_t mipLevels,
         uint32_t arrayLayers, VkImageCreateFlags createFlags, VkImageUsageFlags usageFlags) -> vk::Resource<VkImage>;
+    auto allocateImageMemory(VkDevice device, VkImage image, vk::PhysicalDevice physicalDevice) -> vk::Resource<VkDeviceMemory>;
 }

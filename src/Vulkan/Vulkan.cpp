@@ -120,28 +120,12 @@ auto vk::createCommandPool(VkDevice device, uint32_t queueIndex) -> Resource<VkC
     return commandPool;
 }
 
-auto vk::createDepthStencil(VkDevice device, VkPhysicalDeviceMemoryProperties physicalDeviceMemProps, VkFormat depthFormat,
+auto vk::createDepthStencil(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat depthFormat,
     uint32_t canvasWidth, uint32_t canvasHeight) -> DepthStencil
 {
     auto image = createImage(device, depthFormat, canvasWidth, canvasHeight, 1, 1, 0,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-    
-    VkMemoryRequirements memReqs;
-    vkGetImageMemoryRequirements(device, image, &memReqs);
-    auto memTypeIndex = findMemoryType(physicalDeviceMemProps, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    KL_PANIC_IF(memTypeIndex < 0);
-
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.pNext = nullptr;
-    allocInfo.allocationSize = 0;
-    allocInfo.memoryTypeIndex = 0;
-    allocInfo.allocationSize = memReqs.size;
-    allocInfo.memoryTypeIndex = memTypeIndex;
-
-    Resource<VkDeviceMemory> mem{device, vkFreeMemory};
-    KL_VK_CHECK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, mem.cleanRef()));
-    KL_VK_CHECK_RESULT(vkBindImageMemory(device, image, mem, 0));
+    auto mem = allocateImageMemory(device, image, physicalDevice);
 
     VkImageViewCreateInfo viewInfo{};
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -167,13 +151,13 @@ auto vk::createDepthStencil(VkDevice device, VkPhysicalDeviceMemoryProperties ph
     return result;
 }
 
-auto vk::findMemoryType(VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties, uint32_t typeBits, VkMemoryPropertyFlags properties) -> int32_t
+auto vk::findMemoryType(const PhysicalDevice &physicalDevice, uint32_t typeBits, VkMemoryPropertyFlags properties) -> int32_t
 {
-    for (uint32_t i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++)
+    for (uint32_t i = 0; i < physicalDevice.memoryProperties.memoryTypeCount; i++)
     {
         if ((typeBits & 1) == 1)
         {
-            if ((physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
+            if ((physicalDevice.memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
                 return i;
         }
         typeBits >>= 1;
@@ -271,6 +255,23 @@ auto vk::createImage(VkDevice device, VkFormat format, uint32_t width, uint32_t 
     KL_VK_CHECK_RESULT(vkCreateImage(device, &imageCreateInfo, nullptr, image.cleanRef()));
 
     return image;
+}
+
+auto vk::allocateImageMemory(VkDevice device, VkImage image, vk::PhysicalDevice physicalDevice) -> vk::Resource<VkDeviceMemory>
+{
+    VkMemoryRequirements memReqs{};
+    vkGetImageMemoryRequirements(device, image, &memReqs);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memReqs.size;
+    allocInfo.memoryTypeIndex = vk::findMemoryType(physicalDevice, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    vk::Resource<VkDeviceMemory> memory{device, vkFreeMemory};
+    KL_VK_CHECK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, memory.cleanRef()));
+    KL_VK_CHECK_RESULT(vkBindImageMemory(device, image, memory, 0));
+
+    return memory;
 }
 
 auto vk::createShader(VkDevice device, const void *data, uint32_t size) -> Resource<VkShaderModule>
