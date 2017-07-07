@@ -1,5 +1,3 @@
-// TODO Refactor image loading
-
 /*
     Copyright (c) Aleksey Fedotov
     MIT license
@@ -304,10 +302,20 @@ int main()
         int texWidth, texHeight, texChannels;
         auto pixels = stbi_load("../../assets/Cobblestone.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
-        scene.box.texture = vk::Texture::create2D(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, pixels, texWidth * texHeight * texChannels,
-            texWidth, texHeight, commandPool, queue);
+        /*const auto texSize = texWidth * texHeight * texChannels;
+        scene.box.texture = vk::Texture::create2D(device, physicalDevice, commandPool, queue, VK_FORMAT_R8G8B8A8_UNORM,
+            1, pixels, texSize,
+            [=](uint32_t) { return texWidth; },
+            [=](uint32_t) { return texHeight; },
+            [=](uint32_t) { return texSize; });
+        stbi_image_free(pixels);*/
 
-        stbi_image_free(pixels);
+        gli::texture2d textureData(gli::load("../../assets/MetalPlate_rgba.ktx"));
+        scene.box.texture = vk::Texture::create2D(device, physicalDevice, commandPool, queue, VK_FORMAT_R8G8B8A8_UNORM,
+            textureData.levels(), textureData.data(), textureData.size(),
+            [&](uint32_t level) { return textureData[level].extent().x; },
+            [&](uint32_t level) { return textureData[level].extent().x; },
+            [&](uint32_t level) { return textureData[level].size(); });
 
         vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, scene.box.descriptorSet, scene.box.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))

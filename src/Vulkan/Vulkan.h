@@ -70,4 +70,5 @@ namespace vk
         VkImage image, VkImageAspectFlags aspectMask) -> vk::Resource<VkImageView>;
     auto createSampler(VkDevice device, const PhysicalDevice &physicalDevice, uint32_t mipLevels) -> Resource<VkSampler>;
     auto allocateImageMemory(VkDevice device, VkImage image, vk::PhysicalDevice physicalDevice) -> vk::Resource<VkDeviceMemory>;
+    auto getFormatSize(VkFormat format) -> uint32_t;
 }

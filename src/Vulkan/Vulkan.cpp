@@ -280,6 +280,16 @@ auto vk::allocateImageMemory(VkDevice device, VkImage image, vk::PhysicalDevice 
     return memory;
 }
 
+auto vk::getFormatSize(VkFormat format) -> uint32_t
+{
+    switch (format)
+    {
+        case VK_FORMAT_R8G8B8A8_UNORM: return 4;
+        default:
+            KL_PANIC("Format size is unknown");
+    }
+}
+
 auto vk::createShader(VkDevice device, const void *data, uint32_t size) -> Resource<VkShaderModule>
 {
     VkShaderModuleCreateInfo shaderModuleInfo{};
