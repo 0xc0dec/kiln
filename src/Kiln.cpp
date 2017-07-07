@@ -21,8 +21,6 @@
 #include "vulkan/VulkanDescriptorSetUpdater.h"
 
 #undef max // gli does not compile otherwise, probably because of Windows.h included earlier
-#include <SDL.h>
-#include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.inl>
 #include <glm/gtc/matrix_transform.inl>
