@@ -7,39 +7,6 @@
 #include "VulkanBuffer.h"
 #include <vector>
 
-static auto createSampler(VkDevice device, vk::PhysicalDevice physicalDevice, uint32_t mipLevels) -> vk::Resource<VkSampler>
-{
-    VkSamplerCreateInfo samplerInfo{};
-    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.maxAnisotropy = 1.0f;
-    samplerInfo.magFilter = VK_FILTER_LINEAR;
-    samplerInfo.minFilter = VK_FILTER_LINEAR;
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.mipLodBias = 0.0f;
-    samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
-    samplerInfo.minLod = 0.0f;
-    samplerInfo.maxLod = static_cast<float>(mipLevels);
-    if (physicalDevice.features.samplerAnisotropy)
-    {
-        samplerInfo.maxAnisotropy = physicalDevice.properties.limits.maxSamplerAnisotropy;
-        samplerInfo.anisotropyEnable = VK_TRUE;
-    }
-    else
-    {
-        samplerInfo.maxAnisotropy = 1.0;
-        samplerInfo.anisotropyEnable = VK_FALSE;
-    }
-    samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-
-    vk::Resource<VkSampler> sampler{device, vkDestroySampler};
-    KL_VK_CHECK_RESULT(vkCreateSampler(device, &samplerInfo, nullptr, sampler.cleanRef()));
-
-    return sampler;
-}
-
 auto vk::Texture::create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
     const gli::texture2d &data, VkCommandPool cmdPool, VkQueue queue) -> Texture
 {
