@@ -14,24 +14,24 @@ namespace vk
 {
     class VulkanBuffer;
 
-    class Texture
+    class Image
     {
     public:
         static auto create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue,
             VkFormat format, uint32_t mipLevels, const void *data, uint32_t size,
             std::function<uint32_t(uint32_t mipLevel)> getLevelWidth,
             std::function<uint32_t(uint32_t mipLevel)> getLevelHeight,
-            std::function<uint32_t(uint32_t mipLevel)> getLevelSize) -> Texture;
+            std::function<uint32_t(uint32_t mipLevel)> getLevelSize) -> Image;
         static auto createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
-            const gli::texture_cube &data, VkCommandPool cmdPool, VkQueue queue) -> Texture;
+            const gli::texture_cube &data, VkCommandPool cmdPool, VkQueue queue) -> Image;
 
-        Texture() {}
-        Texture(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view,
+        Image() {}
+        Image(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view,
             Resource<VkSampler> sampler, VkImageLayout layout);
-        Texture(const Texture &other) = delete;
-        Texture(Texture &&other) noexcept;
+        Image(const Image &other) = delete;
+        Image(Image &&other) noexcept;
 
-        auto operator=(Texture other) noexcept -> Texture&;
+        auto operator=(Image other) noexcept -> Image&;
 
         auto getLayout() -> VkImageLayout;
         auto getSampler() -> VkSampler;
@@ -44,20 +44,20 @@ namespace vk
         Resource<VkSampler> sampler;
         VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-        void swap(Texture &other) noexcept;
+        void swap(Image &other) noexcept;
     };
 
-    inline auto Texture::getLayout() -> VkImageLayout
+    inline auto Image::getLayout() -> VkImageLayout
     {
         return layout;
     }
 
-    inline auto Texture::getSampler() -> VkSampler
+    inline auto Image::getSampler() -> VkSampler
     {
         return sampler;
     }
 
-    inline auto Texture::getView() -> VkImageView
+    inline auto Image::getView() -> VkImageView
     {
         return view;
     }

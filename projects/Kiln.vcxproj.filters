@@ -33,10 +33,10 @@
       <Filter>vulkan</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Window.cpp" />
-    <ClCompile Include="..\src\Vulkan\VulkanTexture.cpp">
+    <ClCompile Include="..\src\Vulkan\VulkanDescriptorSetUpdater.cpp">
       <Filter>vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Vulkan\VulkanDescriptorSetUpdater.cpp">
+    <ClCompile Include="..\src\Vulkan\VulkanImage.cpp">
       <Filter>vulkan</Filter>
     </ClCompile>
   </ItemGroup>
@@ -76,10 +76,10 @@
       <Filter>vulkan</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Window.h" />
-    <ClInclude Include="..\src\Vulkan\VulkanTexture.h">
+    <ClInclude Include="..\src\Vulkan\VulkanDescriptorSetUpdater.h">
       <Filter>vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\Vulkan\VulkanDescriptorSetUpdater.h">
+    <ClInclude Include="..\src\Vulkan\VulkanImage.h">
       <Filter>vulkan</Filter>
     </ClInclude>
   </ItemGroup>

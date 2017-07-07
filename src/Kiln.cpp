@@ -15,7 +15,7 @@
 #include "vulkan/VulkanBuffer.h"
 #include "vulkan/VulkanPipeline.h"
 #include "vulkan/VulkanDescriptorSetLayoutBuilder.h"
-#include "vulkan/VulkanTexture.h"
+#include "vulkan/VulkanImage.h"
 #include "vulkan/VulkanDescriptorSetUpdater.h"
 
 #undef max // gli does not compile otherwise, probably because of Windows.h included earlier
@@ -196,7 +196,7 @@ int main()
         {
             vk::Resource<VkDescriptorSetLayout> descSetLayout;
             vk::Pipeline pipeline;
-            vk::Texture texture;
+            vk::Image texture;
             vk::Buffer modelMatrixBuffer;
             vk::Buffer vertexBuffer;
             vk::Buffer indexBuffer;
@@ -207,7 +207,7 @@ int main()
         {
             vk::Resource<VkDescriptorSetLayout> descSetLayout;
             vk::Pipeline pipeline;
-            vk::Texture texture;
+            vk::Image texture;
             vk::Buffer modelMatrixBuffer;
             vk::Buffer vertexBuffer;
             VkDescriptorSet descriptorSet;
@@ -311,7 +311,7 @@ int main()
         stbi_image_free(pixels);*/
 
         gli::texture2d textureData(gli::load("../../assets/MetalPlate_rgba.ktx"));
-        scene.box.texture = vk::Texture::create2D(device, physicalDevice, commandPool, queue, VK_FORMAT_R8G8B8A8_UNORM,
+        scene.box.texture = vk::Image::create2D(device, physicalDevice, commandPool, queue, VK_FORMAT_R8G8B8A8_UNORM,
             textureData.levels(), textureData.data(), textureData.size(),
             [&](uint32_t level) { return textureData[level].extent().x; },
             [&](uint32_t level) { return textureData[level].extent().x; },
@@ -359,7 +359,7 @@ int main()
         scene.skybox.descriptorSet = scene.descriptorPool.allocateSet(scene.skybox.descSetLayout);
 
         gli::texture_cube textureData(gli::load("../../assets/Cubemap_space.ktx"));
-        scene.skybox.texture = vk::Texture::createCube(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
+        scene.skybox.texture = vk::Image::createCube(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
 
         vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, scene.skybox.descriptorSet, scene.skybox.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))

@@ -3,15 +3,15 @@
     MIT license
 */
 
-#include "VulkanTexture.h"
+#include "VulkanImage.h"
 #include "VulkanBuffer.h"
 #include <vector>
 
-auto vk::Texture::create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue,
+auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue,
     VkFormat format, uint32_t mipLevels, const void *data, uint32_t size,
     std::function<uint32_t(uint32_t mipLevel)> getLevelWidth,
     std::function<uint32_t(uint32_t mipLevel)> getLevelHeight,
-    std::function<uint32_t(uint32_t mipLevel)> getLevelSize) -> Texture
+    std::function<uint32_t(uint32_t mipLevel)> getLevelSize) -> Image
 {
     const auto width = getLevelWidth(0);
     const auto height = getLevelHeight(0);
@@ -91,11 +91,11 @@ auto vk::Texture::create2D(VkDevice device, const PhysicalDevice &physicalDevice
     auto sampler = createSampler(device, physicalDevice, mipLevels);
     auto view = vk::createImageView(device, format, VK_IMAGE_VIEW_TYPE_2D, mipLevels, 1, image, VK_IMAGE_ASPECT_COLOR_BIT);
 
-    return Texture{std::move(image), std::move(memory), std::move(view), std::move(sampler), finalLayout};
+    return Image{std::move(image), std::move(memory), std::move(view), std::move(sampler), finalLayout};
 }
 
-auto vk::Texture::createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
-    const gli::texture_cube &data, VkCommandPool cmdPool, VkQueue queue) -> Texture
+auto vk::Image::createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
+    const gli::texture_cube &data, VkCommandPool cmdPool, VkQueue queue) -> Image
 {
     const auto mipLevels = data.levels();
     const auto width = data.extent().x;
@@ -176,10 +176,10 @@ auto vk::Texture::createCube(VkDevice device, const PhysicalDevice &physicalDevi
     auto sampler = createSampler(device, physicalDevice, mipLevels);
     auto view = vk::createImageView(device, format, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, 6, image, VK_IMAGE_ASPECT_COLOR_BIT);
 
-    return Texture{std::move(image), std::move(memory), std::move(view), std::move(sampler), imageLayout};
+    return Image{std::move(image), std::move(memory), std::move(view), std::move(sampler), imageLayout};
 }
 
-vk::Texture::Texture(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view, Resource<VkSampler> sampler,
+vk::Image::Image(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view, Resource<VkSampler> sampler,
     VkImageLayout layout):
     image(std::move(image)),
     memory(std::move(memory)),
@@ -189,19 +189,19 @@ vk::Texture::Texture(Resource<VkImage> image, Resource<VkDeviceMemory> memory, R
 {
 }
 
-vk::Texture::Texture(Texture &&other) noexcept
+vk::Image::Image(Image &&other) noexcept
 {
     swap(other);
 }
 
-auto vk::Texture::operator=(Texture other) noexcept -> Texture&
+auto vk::Image::operator=(Image other) noexcept -> Image&
 
 {
     swap(other);
     return *this;
 }
 
-void vk::Texture::swap(Texture &other) noexcept
+void vk::Image::swap(Image &other) noexcept
 {
     std::swap(image, other.image);
     std::swap(memory, other.memory);
