@@ -57,7 +57,7 @@ Window::Window(uint32_t canvasWidth, uint32_t canvasHeight, const char *title)
 
     if (!enabledExtensions.empty())
     {
-        instanceInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
+        instanceInfo.enabledExtensionCount = enabledExtensions.size();
         instanceInfo.ppEnabledExtensionNames = enabledExtensions.data();
     }
 

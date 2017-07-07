@@ -5,7 +5,7 @@
 
 #include "VulkanBuffer.h"
 
-auto vk::Buffer::createStaging(VkDevice device, uint32_t size, const vk::PhysicalDevice &physicalDevice, const void *initialData) -> vk::Buffer
+auto vk::Buffer::createStaging(VkDevice device, VkDeviceSize size, const vk::PhysicalDevice &physicalDevice, const void *initialData) -> vk::Buffer
 {
     auto buffer = vk::Buffer(device, physicalDevice, size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,

@@ -166,9 +166,9 @@ auto vk::PipelineBuilder::build() -> Pipeline
     vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputState.pNext = nullptr;
     vertexInputState.flags = 0;
-    vertexInputState.vertexBindingDescriptionCount = static_cast<uint32_t>(vertexBindings.size());
+    vertexInputState.vertexBindingDescriptionCount = vertexBindings.size();
     vertexInputState.pVertexBindingDescriptions = vertexBindings.data();
-    vertexInputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttrs.size());
+    vertexInputState.vertexAttributeDescriptionCount = vertexAttrs.size();
     vertexInputState.pVertexAttributeDescriptions = vertexAttrs.data();
 
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyState{};
@@ -192,7 +192,7 @@ auto vk::PipelineBuilder::build() -> Pipeline
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     dynamicState.pNext = nullptr;
     dynamicState.flags = 0;
-    dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+    dynamicState.dynamicStateCount = dynamicStates.size();
     dynamicState.pDynamicStates = dynamicStates.data();
 
     VkGraphicsPipelineCreateInfo pipelineInfo{};

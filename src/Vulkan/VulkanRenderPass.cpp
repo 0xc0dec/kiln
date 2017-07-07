@@ -72,7 +72,7 @@ auto vk::RenderPassBuilder::withColorAttachment(VkFormat colorFormat) -> RenderP
     attachments.push_back(desc);
 
     VkAttachmentReference reference{};
-    reference.attachment = static_cast<uint32_t>(attachments.size() - 1);
+    reference.attachment = attachments.size() - 1;
     reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     colorAttachmentRefs.push_back(reference);
 
@@ -93,7 +93,7 @@ auto vk::RenderPassBuilder::withDepthAttachment(VkFormat depthFormat) -> RenderP
     desc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     attachments.push_back(desc);
 
-    depthAttachmentRef.attachment = static_cast<uint32_t>(attachments.size() - 1);
+    depthAttachmentRef.attachment = attachments.size() - 1;
     depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     return *this;
@@ -138,11 +138,11 @@ auto vk::RenderPassBuilder::build() -> RenderPass
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     renderPassInfo.flags = 0;
     renderPassInfo.pNext = nullptr;
-    renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+    renderPassInfo.attachmentCount = attachments.size();
     renderPassInfo.pAttachments = attachments.data();
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+    renderPassInfo.dependencyCount = dependencies.size();
     renderPassInfo.pDependencies = dependencies.data();
 
     vk::Resource<VkRenderPass> pass{device, vkDestroyRenderPass};

@@ -51,7 +51,7 @@ namespace vk
 
     inline auto Swapchain::getStepCount() const -> uint32_t
     {
-        return static_cast<uint32_t>(steps.size());
+        return steps.size();
     }
 
     inline auto Swapchain::getFramebuffer(uint32_t idx) const -> VkFramebuffer

@@ -33,14 +33,14 @@ auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, 
         bufferCopyRegion.imageSubresource.mipLevel = i;
         bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
         bufferCopyRegion.imageSubresource.layerCount = 1;
-        bufferCopyRegion.imageExtent.width = static_cast<uint32_t>(levelWidth);
-        bufferCopyRegion.imageExtent.height = static_cast<uint32_t>(levelHeight);
+        bufferCopyRegion.imageExtent.width = levelWidth;
+        bufferCopyRegion.imageExtent.height = levelHeight;
         bufferCopyRegion.imageExtent.depth = 1;
         bufferCopyRegion.bufferOffset = offset;
 
         copyRegions.push_back(bufferCopyRegion);
 
-        offset += static_cast<uint32_t>(levelSize);
+        offset += levelSize;
     }
 
     auto stagingBuf = vk::Buffer::createStaging(device, size, physicalDevice, data);
@@ -68,7 +68,7 @@ auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, 
         stagingBuf.getHandle(),
         image,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        static_cast<uint32_t>(copyRegions.size()),
+        copyRegions.size(),
         copyRegions.data());
 
     auto finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -153,7 +153,7 @@ auto vk::Image::createCube(VkDevice device, const PhysicalDevice &physicalDevice
         stagingBuf.getHandle(),
         image,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        static_cast<uint32_t>(copyRegions.size()),
+        copyRegions.size(),
         copyRegions.data());
 
     auto imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;

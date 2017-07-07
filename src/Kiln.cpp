@@ -124,7 +124,7 @@ static const std::vector<uint32_t> boxIndexData =
 };
 
 static auto createDeviceLocalBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, const vk::PhysicalDevice &physicalDevice,
-    const void *data, uint32_t size, VkBufferUsageFlags usageFlags) -> vk::Buffer
+    const void *data, VkDeviceSize size, VkBufferUsageFlags usageFlags) -> vk::Buffer
 {
     auto stagingBuffer = vk::Buffer::createStaging(device, size, physicalDevice, data);
 
@@ -294,15 +294,15 @@ int main()
             .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
             .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3)
-            .withVertexSize(sizeof(float) * 5)
             .build();
 
         scene.box.descriptorSet = scene.descriptorPool.allocateSet(scene.box.descSetLayout);
 
+        /*
         int texWidth, texHeight, texChannels;
         auto pixels = stbi_load("../../assets/Cobblestone.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
-        /*const auto texSize = texWidth * texHeight * texChannels;
+        const auto texSize = texWidth * texHeight * texChannels;
         scene.box.texture = vk::Texture::create2D(device, physicalDevice, commandPool, queue, VK_FORMAT_R8G8B8A8_UNORM,
             1, pixels, texSize,
             [=](uint32_t) { return texWidth; },
@@ -353,7 +353,6 @@ int main()
             .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
             .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3)
-            .withVertexSize(sizeof(float) * 5)
             .build();
 
         scene.skybox.descriptorSet = scene.descriptorPool.allocateSet(scene.skybox.descSetLayout);
@@ -419,7 +418,6 @@ int main()
             .withTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
             .withVertexBinding(0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX)
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
-            .withVertexSize(sizeof(float) * 3)
             .build();
 
         scene.axes.redDescSet = scene.descriptorPool.allocateSet(scene.axes.descSetLayout);
@@ -442,7 +440,7 @@ int main()
             .updateSets();
     }
 
-    for (size_t i = 0; i < renderCmdBuffers.size(); i++)
+    for (uint32_t i = 0; i < renderCmdBuffers.size(); i++)
     {
         auto buf = renderCmdBuffers[i];
         vk::beginCommandBuffer(buf, false);

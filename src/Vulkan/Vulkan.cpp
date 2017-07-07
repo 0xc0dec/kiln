@@ -38,7 +38,7 @@ auto vk::createDevice(VkPhysicalDevice physicalDevice, uint32_t queueIndex) -> R
     deviceCreateInfo.queueCreateInfoCount = 1;
     deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
     deviceCreateInfo.pEnabledFeatures = enabledFeatures.data();
-    deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+    deviceCreateInfo.enabledExtensionCount = deviceExtensions.size();
     deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
     Resource<VkDevice> result{vkDestroyDevice};
@@ -290,7 +290,7 @@ auto vk::getFormatSize(VkFormat format) -> uint32_t
     }
 }
 
-auto vk::createShader(VkDevice device, const void *data, uint32_t size) -> Resource<VkShaderModule>
+auto vk::createShader(VkDevice device, const void *data, size_t size) -> Resource<VkShaderModule>
 {
     VkShaderModuleCreateInfo shaderModuleInfo{};
     shaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -491,7 +491,7 @@ auto vk::createSampler(VkDevice device, const PhysicalDevice &physicalDevice, ui
     samplerInfo.mipLodBias = 0.0f;
     samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
     samplerInfo.minLod = 0.0f;
-    samplerInfo.maxLod = static_cast<float>(mipLevels);
+    samplerInfo.maxLod = mipLevels;
     samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
     if (physicalDevice.features.samplerAnisotropy)

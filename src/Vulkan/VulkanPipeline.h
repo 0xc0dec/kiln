@@ -46,7 +46,6 @@ namespace vk
         ~PipelineBuilder() {}
 
         auto withTopology(VkPrimitiveTopology topology) -> PipelineBuilder&;
-        auto withVertexSize(uint32_t size) -> PipelineBuilder&;
 
         auto withVertexAttribute(uint32_t location, uint32_t binding, VkFormat format, uint32_t offset) -> PipelineBuilder&;
         auto withVertexBinding(uint32_t binding, uint32_t stride, VkVertexInputRate inputRate) -> PipelineBuilder&;
@@ -75,7 +74,6 @@ namespace vk
         std::vector<VkVertexInputBindingDescription> vertexBindings;
         std::vector<VkDescriptorSetLayout> descSetLayouts;
 
-        uint32_t vertexSize = 0;
         VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     };
     
@@ -92,12 +90,6 @@ namespace vk
     inline auto PipelineBuilder::withTopology(VkPrimitiveTopology topology) -> PipelineBuilder&
     {
         this->topology = topology;
-        return *this;
-    }
-
-    inline auto PipelineBuilder::withVertexSize(uint32_t size) -> PipelineBuilder&
-    {
-        vertexSize = size;
         return *this;
     }
 }

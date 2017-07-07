@@ -183,7 +183,7 @@ inline auto Transform::getLocalBack() const -> glm::vec3
 
 inline auto Transform::getChildrenCount() const -> uint32_t
 {
-    return static_cast<uint32_t>(children.size());
+    return children.size();
 }
 
 inline auto Transform::getLocalScale() const -> glm::vec3

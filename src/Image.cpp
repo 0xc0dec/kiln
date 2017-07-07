@@ -60,8 +60,8 @@ auto img::loadPNG(const std::vector<uint8_t> &bytes) -> Image
     auto stride = png_get_rowbytes(png, info);
 
     Image image;
-    image.width = static_cast<uint32_t>(width);
-    image.height = static_cast<uint32_t>(height);
+    image.width = width;
+    image.height = height;
     image.format = format;
     image.data.resize(stride * height);
 

@@ -136,7 +136,7 @@ bool Input::isKeyReleased(SDL_Keycode code) const
 
 auto Input::getMouseMotion() const -> glm::vec2
 {
-    return {static_cast<float>(mouseDeltaX), static_cast<float>(mouseDeltaY)};
+    return {mouseDeltaX, mouseDeltaY};
 }
 
 bool Input::isMouseButtonDown(uint8_t button, bool firstTime) const

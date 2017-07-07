@@ -53,7 +53,7 @@ namespace vk
     auto createSemaphore(VkDevice device) -> Resource<VkSemaphore>;
     void createCommandBuffers(VkDevice device, VkCommandPool commandPool, uint32_t count, VkCommandBuffer *result);
     auto createCommandBuffer(VkDevice device, VkCommandPool commandPool) -> VkCommandBuffer;
-    auto createShader(VkDevice device, const void *data, uint32_t size) -> Resource<VkShaderModule>;
+    auto createShader(VkDevice device, const void *data, size_t size) -> Resource<VkShaderModule>;
     auto createShaderStageInfo(bool vertex, VkShaderModule shader, const char *entryPoint) -> VkPipelineShaderStageCreateInfo;
     void queueSubmit(VkQueue queue, uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores,
         uint32_t signalSemaphoreCount, const VkSemaphore *signalSemaphores,
