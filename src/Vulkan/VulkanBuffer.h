@@ -12,8 +12,9 @@ namespace vk
     class Buffer
     {
     public:
-        static auto createStaging(VkDevice device, VkDeviceSize size, const vk::PhysicalDevice &physicalDevice,
-            const void *initialData = nullptr) -> vk::Buffer;
+        static auto createStaging(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size,
+            const void *initialData = nullptr) -> Buffer;
+        static auto createUniformHostVisible(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size) -> Buffer;
 
         Buffer() {}
         Buffer(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size, VkBufferUsageFlags usageFlags,

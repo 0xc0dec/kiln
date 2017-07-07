@@ -5,9 +5,9 @@
 
 #include "VulkanBuffer.h"
 
-auto vk::Buffer::createStaging(VkDevice device, VkDeviceSize size, const vk::PhysicalDevice &physicalDevice, const void *initialData) -> vk::Buffer
+auto vk::Buffer::createStaging(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size, const void *initialData) -> Buffer
 {
-    auto buffer = vk::Buffer(device, physicalDevice, size,
+    auto buffer = Buffer(device, physicalDevice, size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
@@ -17,7 +17,14 @@ auto vk::Buffer::createStaging(VkDevice device, VkDeviceSize size, const vk::Phy
     return buffer;
 }
 
-vk::Buffer::Buffer(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size, VkBufferUsageFlags usageFlags,
+auto vk::Buffer::createUniformHostVisible(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size) -> Buffer
+{
+    return Buffer(device, physicalDevice, size,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+}
+
+vk::Buffer::Buffer(VkDevice device, const PhysicalDevice &physicalDevice, VkDeviceSize size, VkBufferUsageFlags usageFlags,
     VkMemoryPropertyFlags memPropertyFlags):
     device(device),
     size(size)

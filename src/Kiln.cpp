@@ -126,7 +126,7 @@ static const std::vector<uint32_t> boxIndexData =
 static auto createDeviceLocalBuffer(VkDevice device, VkQueue queue, VkCommandPool cmdPool, const vk::PhysicalDevice &physicalDevice,
     const void *data, VkDeviceSize size, VkBufferUsageFlags usageFlags) -> vk::Buffer
 {
-    auto stagingBuffer = vk::Buffer::createStaging(device, size, physicalDevice, data);
+    auto stagingBuffer = vk::Buffer::createStaging(device, physicalDevice, size, data);
 
     auto buffer = vk::Buffer(device, physicalDevice, size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | usageFlags,
@@ -244,9 +244,7 @@ int main()
     viewMatrices.projectionMatrix = cam.getProjectionMatrix();
     viewMatrices.viewMatrix = glm::mat4();
 
-    auto viewMatricesBuffer = vk::Buffer(device, physicalDevice, sizeof(viewMatrices),
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    auto viewMatricesBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(viewMatrices));
     viewMatricesBuffer.update(&viewMatrices);
 
     scene.descriptorPool = vk::DescriptorPoolBuilder(device)
@@ -270,9 +268,7 @@ int main()
         auto fs = vk::createShader(device, fsSrc.data(), fsSrc.size());
 
         glm::mat4 modelMatrix{};
-        scene.box.modelMatrixBuffer = vk::Buffer(device, physicalDevice, sizeof(glm::mat4),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        scene.box.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::mat4));
         scene.box.modelMatrixBuffer.update(&modelMatrix);
 
         scene.box.vertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, boxVertexData.data(),
@@ -330,9 +326,7 @@ int main()
         auto fs = vk::createShader(device, fsSrc.data(), fsSrc.size());
 
         glm::mat4 modelMatrix{};
-        scene.skybox.modelMatrixBuffer = vk::Buffer(device, physicalDevice, sizeof(glm::mat4),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        scene.skybox.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::mat4));
         scene.skybox.modelMatrixBuffer.update(&modelMatrix);
 
         scene.skybox.vertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, quadVertexData.data(),
@@ -370,27 +364,19 @@ int main()
         Transform t;
         t.setLocalPosition({3, 0, 3});
         glm::mat4 modelMatrix = t.getWorldMatrix();
-        scene.axes.modelMatrixBuffer = vk::Buffer(device, physicalDevice, sizeof(glm::mat4),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        scene.axes.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::mat4));
         scene.axes.modelMatrixBuffer.update(&modelMatrix);
 
         glm::vec3 red{1.0f, 0, 0};
-        scene.axes.redColorUniformBuffer = vk::Buffer(device, physicalDevice, sizeof(glm::vec3),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        scene.axes.redColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::vec3));
         scene.axes.redColorUniformBuffer.update(&red);
 
         glm::vec3 green{0, 1.0f, 0};
-        scene.axes.greenColorUniformBuffer = vk::Buffer(device, physicalDevice, sizeof(glm::vec3),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        scene.axes.greenColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::vec3));
         scene.axes.greenColorUniformBuffer.update(&green);
 
         glm::vec3 blue{0, 0, 1.0f};
-        scene.axes.blueColorUniformBuffer = vk::Buffer(device, physicalDevice, sizeof(glm::vec3),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        scene.axes.blueColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::vec3));
         scene.axes.blueColorUniformBuffer.update(&blue);
 
         auto vsSrc = fs::readBytes("../../assets/Axis.vert.spv");

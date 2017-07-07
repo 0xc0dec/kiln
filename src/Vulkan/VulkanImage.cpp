@@ -43,7 +43,7 @@ auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, 
         offset += levelSize;
     }
 
-    auto stagingBuf = vk::Buffer::createStaging(device, size, physicalDevice, data);
+    auto stagingBuf = vk::Buffer::createStaging(device, physicalDevice, size, data);
 
     VkImageSubresourceRange subresourceRange{};
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -128,7 +128,7 @@ auto vk::Image::createCube(VkDevice device, const PhysicalDevice &physicalDevice
         }
     }
 
-    auto stagingBuf = vk::Buffer::createStaging(device, data.size(), physicalDevice, data.data());
+    auto stagingBuf = vk::Buffer::createStaging(device, physicalDevice, data.size(), data.data());
 
     VkImageSubresourceRange subresourceRange{};
 	subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
