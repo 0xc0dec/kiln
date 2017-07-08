@@ -75,7 +75,7 @@ auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, 
 
     vkCmdCopyBufferToImage(
         copyCmdBuf,
-        stagingBuf.getHandle(),
+        stagingBuf,
         image,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         copyRegions.size(),
@@ -160,7 +160,7 @@ auto vk::Image::createCube(VkDevice device, const PhysicalDevice &physicalDevice
 
     vkCmdCopyBufferToImage(
         copyCmdBuf,
-        stagingBuf.getHandle(),
+        stagingBuf,
         image,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         copyRegions.size(),

@@ -12,12 +12,12 @@ namespace vk
     class Buffer
     {
     public:
-        static auto createStaging(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size,
+        static auto createStaging(VkDevice device, const PhysicalDevice &physicalDevice, VkDeviceSize size,
             const void *initialData = nullptr) -> Buffer;
-        static auto createUniformHostVisible(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size) -> Buffer;
+        static auto createUniformHostVisible(VkDevice device, const PhysicalDevice &physicalDevice, VkDeviceSize size) -> Buffer;
 
         Buffer() {}
-        Buffer(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size, VkBufferUsageFlags usageFlags,
+        Buffer(VkDevice device, const PhysicalDevice &physicalDevice, VkDeviceSize size, VkBufferUsageFlags usageFlags,
             VkMemoryPropertyFlags memPropertyFlags);
         Buffer(Buffer &&other) = default;
         Buffer(const Buffer &other) = delete;
@@ -25,6 +25,8 @@ namespace vk
 
         auto operator=(const Buffer &other) -> Buffer& = delete;
         auto operator=(Buffer &&other) -> Buffer& = default;
+
+        operator VkBuffer() { return buffer; }
 
         auto getHandle() const -> VkBuffer;
 

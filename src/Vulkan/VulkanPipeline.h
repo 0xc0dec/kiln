@@ -23,10 +23,7 @@ namespace vk
         auto operator=(const Pipeline &other) -> Pipeline& = delete;
         auto operator=(Pipeline &&other) -> Pipeline& = default;
 
-        operator VkPipeline()
-        {
-            return pipeline;
-        }
+        operator VkPipeline() { return pipeline; }
 
         VkPipeline getHandle() const;
         VkPipelineLayout getLayout() const;

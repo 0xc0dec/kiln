@@ -220,7 +220,7 @@ void vk::beginCommandBuffer(VkCommandBuffer buffer, bool oneTime)
 }
 
 auto vk::createImage(VkDevice device, VkFormat format, uint32_t width, uint32_t height, uint32_t mipLevels,
-    uint32_t arrayLayers, VkImageCreateFlags createFlags, VkImageUsageFlags usageFlags) -> vk::Resource<VkImage>
+    uint32_t arrayLayers, VkImageCreateFlags createFlags, VkImageUsageFlags usageFlags) -> Resource<VkImage>
 {
     VkImageCreateInfo imageCreateInfo{};
     imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -236,14 +236,14 @@ auto vk::createImage(VkDevice device, VkFormat format, uint32_t width, uint32_t 
     imageCreateInfo.usage = usageFlags;
     imageCreateInfo.flags = createFlags;
 
-    vk::Resource<VkImage> image{device, vkDestroyImage};
+    Resource<VkImage> image{device, vkDestroyImage};
     KL_VK_CHECK_RESULT(vkCreateImage(device, &imageCreateInfo, nullptr, image.cleanRef()));
 
     return image;
 }
 
 auto vk::createImageView(VkDevice device, VkFormat format, VkImageViewType type, uint32_t mipLevels, uint32_t layers,
-    VkImage image, VkImageAspectFlags aspectMask) -> vk::Resource<VkImageView>
+    VkImage image, VkImageAspectFlags aspectMask) -> Resource<VkImageView>
 {
     VkImageViewCreateInfo viewInfo{};
     viewInfo.viewType = type;
@@ -257,13 +257,13 @@ auto vk::createImageView(VkDevice device, VkFormat format, VkImageViewType type,
     viewInfo.subresourceRange.levelCount = mipLevels;
     viewInfo.image = image;
 
-    vk::Resource<VkImageView> view{device, vkDestroyImageView};
+    Resource<VkImageView> view{device, vkDestroyImageView};
     KL_VK_CHECK_RESULT(vkCreateImageView(device, &viewInfo, nullptr, view.cleanRef()));
 
     return view;
 }
 
-auto vk::allocateImageMemory(VkDevice device, VkImage image, vk::PhysicalDevice physicalDevice) -> vk::Resource<VkDeviceMemory>
+auto vk::allocateImageMemory(VkDevice device, VkImage image, PhysicalDevice physicalDevice) -> Resource<VkDeviceMemory>
 {
     VkMemoryRequirements memReqs{};
     vkGetImageMemoryRequirements(device, image, &memReqs);
@@ -271,9 +271,9 @@ auto vk::allocateImageMemory(VkDevice device, VkImage image, vk::PhysicalDevice 
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memReqs.size;
-    allocInfo.memoryTypeIndex = vk::findMemoryType(physicalDevice, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    vk::Resource<VkDeviceMemory> memory{device, vkFreeMemory};
+    Resource<VkDeviceMemory> memory{device, vkFreeMemory};
     KL_VK_CHECK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, memory.cleanRef()));
     KL_VK_CHECK_RESULT(vkBindImageMemory(device, image, memory, 0));
 
@@ -336,10 +336,10 @@ void vk::queueSubmit(VkQueue queue, uint32_t waitSemaphoreCount, const VkSemapho
     KL_VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
 }
 
-void vk::queuePresent(VkQueue queue, const vk::Swapchain &swapchain, uint32_t swapchainStep,
+void vk::queuePresent(VkQueue queue, const Swapchain &swapchain, uint32_t swapchainStep,
     uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores)
 {
-    auto swapchainHandle = swapchain.getHandle();
+    VkSwapchainKHR swapchainHandle = swapchain;
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.pNext = nullptr;
@@ -476,7 +476,7 @@ auto vk::createDebugCallback(VkInstance instance, PFN_vkDebugReportCallbackEXT c
     return result;
 }
 
-auto vk::createSampler(VkDevice device, const PhysicalDevice &physicalDevice, uint32_t mipLevels) -> vk::Resource<VkSampler>
+auto vk::createSampler(VkDevice device, const PhysicalDevice &physicalDevice, uint32_t mipLevels) -> Resource<VkSampler>
 {
     VkSamplerCreateInfo samplerInfo{};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -500,7 +500,7 @@ auto vk::createSampler(VkDevice device, const PhysicalDevice &physicalDevice, ui
         samplerInfo.anisotropyEnable = VK_TRUE;
     }
 
-    vk::Resource<VkSampler> sampler{device, vkDestroySampler};
+    Resource<VkSampler> sampler{device, vkDestroySampler};
     KL_VK_CHECK_RESULT(vkCreateSampler(device, &samplerInfo, nullptr, sampler.cleanRef()));
 
     return sampler;

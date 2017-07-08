@@ -23,12 +23,15 @@ namespace vk
         auto operator=(const Swapchain &other) -> Swapchain& = delete;
         auto operator=(Swapchain &&other) -> Swapchain& = default;
 
+        operator VkSwapchainKHR() { return swapchain; }
+        operator VkSwapchainKHR() const { return swapchain; }
+
+        auto getHandle() const -> VkSwapchainKHR;
+
         auto getNextStep(VkSemaphore semaphore) const -> uint32_t;
         auto getStepCount() const -> uint32_t;
         auto getFramebuffer(uint32_t idx) const -> VkFramebuffer;
         auto getImageView(uint32_t idx) -> VkImageView;
-
-        auto getHandle() const -> VkSwapchainKHR;
 
     private:
         struct Step
