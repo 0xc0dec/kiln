@@ -10,6 +10,7 @@
 #include "Window.h"
 #include "ImageData.h"
 #include "vulkan/Vulkan.h"
+#include "vulkan/VulkanDevice.h"
 #include "vulkan/VulkanRenderPass.h"
 #include "vulkan/VulkanSwapchain.h"
 #include "vulkan/VulkanDescriptorPool.h"
@@ -137,35 +138,17 @@ int main()
     const uint32_t CanvasHeight = 768;
 
     Window window{CanvasWidth, CanvasHeight, "Demo"};
+    auto device = vk::Device::create(window.getPlatformHandle());
 
-    vk::PhysicalDevice physicalDevice;
-
-    physicalDevice.device = vk::getPhysicalDevice(window.getInstance());
-    vkGetPhysicalDeviceProperties(physicalDevice.device, &physicalDevice.properties);
-    vkGetPhysicalDeviceFeatures(physicalDevice.device, &physicalDevice.features);
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice.device, &physicalDevice.memoryProperties);
-
-    auto surfaceFormats = vk::getSurfaceFormats(physicalDevice.device, window.getSurface());
-    auto colorFormat = std::get<0>(surfaceFormats);
-    auto colorSpace = std::get<1>(surfaceFormats);
-
-    auto queueIndex = vk::getQueueIndex(physicalDevice.device, window.getSurface());
-    auto device = vk::createDevice(physicalDevice.device, queueIndex);
-
-    VkQueue queue;
-    vkGetDeviceQueue(device, queueIndex, 0, &queue);
-
-    auto depthFormat = vk::getDepthFormat(physicalDevice.device);
-    auto commandPool = createCommandPool(device, queueIndex);
-    auto depthStencil = createDepthStencil(device, physicalDevice, depthFormat, CanvasWidth, CanvasHeight);
+    auto depthStencil = createDepthStencil(device, device.getPhysicalDevice(), device.getDepthFormat(), CanvasWidth, CanvasHeight);
     auto renderPass = vk::RenderPassBuilder(device)
-        .withColorAttachment(colorFormat)
-        .withDepthAttachment(depthFormat)
+        .withColorAttachment(device.getColorFormat())
+        .withDepthAttachment(device.getDepthFormat())
         .build();
     renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
 
-    auto swapchain = vk::Swapchain(device, physicalDevice.device, window.getSurface(), renderPass, depthStencil.view,
-        CanvasWidth, CanvasHeight, false, colorFormat, colorSpace);
+    auto swapchain = vk::Swapchain(device, device.getPhysicalDevice().device, device.getSurface(), renderPass, depthStencil.view,
+        CanvasWidth, CanvasHeight, false, device.getColorFormat(), device.getColorSpace());
 
     struct
     {
@@ -177,7 +160,7 @@ int main()
 
     std::vector<VkCommandBuffer> renderCmdBuffers;
     renderCmdBuffers.resize(swapchain.getStepCount());
-    createCommandBuffers(device, commandPool, swapchain.getStepCount(), renderCmdBuffers.data());
+    createCommandBuffers(device, device.getCommandPool(), swapchain.getStepCount(), renderCmdBuffers.data());
 
     // Random test code below
 
@@ -239,7 +222,7 @@ int main()
     viewMatrices.projectionMatrix = cam.getProjectionMatrix();
     viewMatrices.viewMatrix = glm::mat4();
 
-    auto viewMatricesBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(viewMatrices));
+    auto viewMatricesBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(viewMatrices));
     viewMatricesBuffer.update(&viewMatrices);
 
     scene.descriptorPool = vk::DescriptorPoolBuilder(device)
@@ -263,12 +246,12 @@ int main()
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
         glm::mat4 modelMatrix{};
-        scene.box.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::mat4));
+        scene.box.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(glm::mat4));
         scene.box.modelMatrixBuffer.update(&modelMatrix);
 
-        scene.box.vertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, boxVertexData.data(),
+        scene.box.vertexBuffer = createDeviceLocalBuffer(device, device.getQueue(), device.getCommandPool(), device.getPhysicalDevice(), boxVertexData.data(),
             sizeof(float) * boxVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        scene.box.indexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice,
+        scene.box.indexBuffer = createDeviceLocalBuffer(device, device.getQueue(), device.getCommandPool(), device.getPhysicalDevice(),
             boxIndexData.data(), sizeof(uint32_t) * boxIndexData.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
         scene.box.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
@@ -290,7 +273,7 @@ int main()
         scene.box.descriptorSet = scene.descriptorPool.allocateSet(scene.box.descSetLayout);
 
         auto textureData = ImageData::load2D("../../assets/Cobblestone.png");
-        scene.box.texture = vk::Image::create2D(device, physicalDevice, commandPool, queue, textureData);
+        scene.box.texture = vk::Image::create2D(device, device.getPhysicalDevice(), device.getCommandPool(), device.getQueue(), textureData);
 
         vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, scene.box.descriptorSet, scene.box.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
@@ -305,10 +288,10 @@ int main()
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
         glm::mat4 modelMatrix{};
-        scene.skybox.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::mat4));
+        scene.skybox.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(glm::mat4));
         scene.skybox.modelMatrixBuffer.update(&modelMatrix);
 
-        scene.skybox.vertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, quadVertexData.data(),
+        scene.skybox.vertexBuffer = createDeviceLocalBuffer(device, device.getQueue(), device.getCommandPool(), device.getPhysicalDevice(), quadVertexData.data(),
             sizeof(float) * quadVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
         scene.skybox.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
@@ -331,7 +314,7 @@ int main()
         scene.skybox.descriptorSet = scene.descriptorPool.allocateSet(scene.skybox.descSetLayout);
 
         auto data = ImageData::loadCube("../../assets/Cubemap_space.ktx");
-        scene.skybox.texture = vk::Image::createCube(device, physicalDevice, commandPool, queue, data);
+        scene.skybox.texture = vk::Image::createCube(device, device.getPhysicalDevice(), device.getCommandPool(), device.getQueue(), data);
 
         vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, scene.skybox.descriptorSet, scene.skybox.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
@@ -343,19 +326,19 @@ int main()
         Transform t;
         t.setLocalPosition({3, 0, 3});
         glm::mat4 modelMatrix = t.getWorldMatrix();
-        scene.axes.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::mat4));
+        scene.axes.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(glm::mat4));
         scene.axes.modelMatrixBuffer.update(&modelMatrix);
 
         glm::vec3 red{1.0f, 0, 0};
-        scene.axes.redColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::vec3));
+        scene.axes.redColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(glm::vec3));
         scene.axes.redColorUniformBuffer.update(&red);
 
         glm::vec3 green{0, 1.0f, 0};
-        scene.axes.greenColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::vec3));
+        scene.axes.greenColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(glm::vec3));
         scene.axes.greenColorUniformBuffer.update(&green);
 
         glm::vec3 blue{0, 0, 1.0f};
-        scene.axes.blueColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::vec3));
+        scene.axes.blueColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(glm::vec3));
         scene.axes.blueColorUniformBuffer.update(&blue);
 
         auto vsSrc = fs::readBytes("../../assets/Axis.vert.spv");
@@ -363,11 +346,11 @@ int main()
         auto vs = createShader(device, vsSrc.data(), vsSrc.size());
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
-        scene.axes.xAxisVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, xAxisVertexData.data(),
+        scene.axes.xAxisVertexBuffer = createDeviceLocalBuffer(device, device.getQueue(), device.getCommandPool(), device.getPhysicalDevice(), xAxisVertexData.data(),
             sizeof(float) * xAxisVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        scene.axes.yAxisVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, yAxisVertexData.data(),
+        scene.axes.yAxisVertexBuffer = createDeviceLocalBuffer(device, device.getQueue(), device.getCommandPool(), device.getPhysicalDevice(), yAxisVertexData.data(),
             sizeof(float) * yAxisVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        scene.axes.zAxisVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, zAxisVertexData.data(),
+        scene.axes.zAxisVertexBuffer = createDeviceLocalBuffer(device, device.getQueue(), device.getCommandPool(), device.getPhysicalDevice(), zAxisVertexData.data(),
             sizeof(float) * zAxisVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
         scene.axes.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
@@ -487,14 +470,14 @@ int main()
 
         auto swapchainStep = swapchain.getNextStep(semaphores.presentComplete);
 
-        vk::queueSubmit(queue, 1, &semaphores.presentComplete, 1, &semaphores.renderComplete, 1, &renderCmdBuffers[swapchainStep]);
-        queuePresent(queue, swapchain, swapchainStep, 1, &semaphores.renderComplete);
-        KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
+        vk::queueSubmit(device.getQueue(), 1, &semaphores.presentComplete, 1, &semaphores.renderComplete, 1, &renderCmdBuffers[swapchainStep]);
+        queuePresent(device.getQueue(), swapchain, swapchainStep, 1, &semaphores.renderComplete);
+        KL_VK_CHECK_RESULT(vkQueueWaitIdle(device.getQueue()));
 
         window.endUpdate();
     }
 
-    vkFreeCommandBuffers(device, commandPool, renderCmdBuffers.size(), renderCmdBuffers.data());
+    vkFreeCommandBuffers(device, device.getCommandPool(), renderCmdBuffers.size(), renderCmdBuffers.data());
 
     return 0;
 }

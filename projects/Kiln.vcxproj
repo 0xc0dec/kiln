@@ -31,6 +31,7 @@
     <ClCompile Include="..\src\Vulkan\VulkanDescriptorPool.cpp" />
     <ClCompile Include="..\src\Vulkan\VulkanDescriptorSetLayoutBuilder.cpp" />
     <ClCompile Include="..\src\Vulkan\VulkanDescriptorSetUpdater.cpp" />
+    <ClCompile Include="..\src\Vulkan\VulkanDevice.cpp" />
     <ClCompile Include="..\src\Vulkan\VulkanEffect.cpp" />
     <ClCompile Include="..\src\Vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="..\src\Vulkan\VulkanRenderPass.cpp" />
@@ -51,6 +52,7 @@
     <ClInclude Include="..\src\Vulkan\VulkanDescriptorPool.h" />
     <ClInclude Include="..\src\Vulkan\VulkanDescriptorSetLayoutBuilder.h" />
     <ClInclude Include="..\src\Vulkan\VulkanDescriptorSetUpdater.h" />
+    <ClInclude Include="..\src\Vulkan\VulkanDevice.h" />
     <ClInclude Include="..\src\Vulkan\VulkanEffect.h" />
     <ClInclude Include="..\src\Vulkan\VulkanPipeline.h" />
     <ClInclude Include="..\src\Vulkan\VulkanRenderPass.h" />
