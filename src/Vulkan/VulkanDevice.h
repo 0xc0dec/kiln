@@ -28,7 +28,9 @@ namespace vk
         auto getQueue() const -> VkQueue;
 
         operator VkDevice() { return device; }
+        operator VkDevice() const { return device; }
         operator PhysicalDevice() { return physicalDevice; }
+        operator PhysicalDevice() const { return physicalDevice; }
 
     private:
         Resource<VkInstance> instance;
