@@ -16,10 +16,11 @@ namespace vk
         RenderPass() {}
         RenderPass(VkDevice device, Resource<VkRenderPass> pass);
         RenderPass(const RenderPass &other) = delete;
-        RenderPass(RenderPass &&other) noexcept;
+        RenderPass(RenderPass &&other) = default;
         ~RenderPass() {}
 
-        auto operator=(RenderPass other) noexcept -> RenderPass&;
+        auto operator=(const RenderPass &other) -> RenderPass& = delete;
+        auto operator=(RenderPass &&other) -> RenderPass& = default;
 
         void setClear(bool clearColor, bool clearDepthStencil, VkClearColorValue color, VkClearDepthStencilValue depthStencil);
 
@@ -35,8 +36,6 @@ namespace vk
         VkDevice device = nullptr;
         Resource<VkRenderPass> pass;
         std::vector<VkClearValue> clearValues;
-
-        void swap(RenderPass &other) noexcept;
     };
 
     class RenderPassBuilder

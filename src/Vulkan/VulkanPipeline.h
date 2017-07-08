@@ -16,11 +16,12 @@ namespace vk
         Pipeline() {}
         // TODO why not pass pipeline/layout as const refs?
         Pipeline(VkDevice device, VkRenderPass renderPass, Resource<VkPipeline> pipeline, Resource<VkPipelineLayout> layout);
-        Pipeline(Pipeline &&other) noexcept;
         Pipeline(const Pipeline &other) = delete;
+        Pipeline(Pipeline &&other) = default;
         ~Pipeline() {}
 
-        auto operator=(Pipeline other) noexcept -> Pipeline&;
+        auto operator=(const Pipeline &other) -> Pipeline& = delete;
+        auto operator=(Pipeline &&other) -> Pipeline& = default;
 
         operator VkPipeline()
         {
@@ -35,8 +36,6 @@ namespace vk
         VkRenderPass renderPass = nullptr;
         Resource<VkPipeline> pipeline;
         Resource<VkPipelineLayout> layout;
-
-        void swap(Pipeline &other) noexcept;
     };
 
     class PipelineBuilder

@@ -11,17 +11,6 @@ vk::DescriptorPool::DescriptorPool(VkDevice device, Resource<VkDescriptorPool> p
 {
 }
 
-vk::DescriptorPool::DescriptorPool(DescriptorPool &&other) noexcept
-{
-    swap(other);
-}
-
-auto vk::DescriptorPool::operator=(DescriptorPool other) noexcept -> DescriptorPool&
-{
-    swap(other);
-    return *this;
-}
-
 auto vk::DescriptorPool::allocateSet(VkDescriptorSetLayout layout) const -> VkDescriptorSet
 {
     VkDescriptorSetAllocateInfo allocInfo{};
@@ -34,12 +23,6 @@ auto vk::DescriptorPool::allocateSet(VkDescriptorSetLayout layout) const -> VkDe
     KL_VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &set));
 
     return set;
-}
-
-void vk::DescriptorPool::swap(DescriptorPool &other) noexcept
-{
-    std::swap(device, other.device);
-    std::swap(pool, other.pool);
 }
 
 vk::DescriptorPoolBuilder::DescriptorPoolBuilder(VkDevice device):

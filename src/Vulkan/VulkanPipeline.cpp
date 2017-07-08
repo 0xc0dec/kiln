@@ -13,25 +13,6 @@ vk::Pipeline::Pipeline(VkDevice device, VkRenderPass renderPass, Resource<VkPipe
 {
 }
 
-vk::Pipeline::Pipeline(Pipeline &&other) noexcept
-{
-    swap(other);
-}
-
-auto vk::Pipeline::operator=(Pipeline other) noexcept -> Pipeline&
-{
-    swap(other);
-    return *this;
-}
-
-void vk::Pipeline::swap(Pipeline &other) noexcept
-{
-    std::swap(device, other.device);
-    std::swap(renderPass, other.renderPass);
-    std::swap(pipeline, other.pipeline);
-    std::swap(layout, other.layout);
-}
-
 vk::PipelineBuilder::PipelineBuilder(VkDevice device, VkRenderPass renderPass, VkShaderModule vertexShader, VkShaderModule fragmentShader):
     device(device),
     renderPass(renderPass),

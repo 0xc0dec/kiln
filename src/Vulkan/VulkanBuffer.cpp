@@ -54,17 +54,6 @@ vk::Buffer::Buffer(VkDevice device, const PhysicalDevice &physicalDevice, VkDevi
     KL_VK_CHECK_RESULT(vkBindBufferMemory(device, buffer, memory, 0));
 }
 
-vk::Buffer::Buffer(Buffer &&other) noexcept
-{
-    swap(other);
-}
-
-auto vk::Buffer::operator=(Buffer other) noexcept -> Buffer&
-{
-    swap(other);
-    return *this;
-}
-
 void vk::Buffer::update(const void *newData) const
 {
     void *ptr = nullptr;
@@ -88,12 +77,4 @@ void vk::Buffer::transferTo(const Buffer &dst, VkQueue queue, VkCommandPool cmdP
     KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
 
     vkFreeCommandBuffers(device, cmdPool, 1, &cmdBuf);
-}
-
-void vk::Buffer::swap(Buffer &other) noexcept
-{
-    std::swap(device, other.device);
-    std::swap(memory, other.memory);
-    std::swap(buffer, other.buffer);
-    std::swap(size, other.size);
 }

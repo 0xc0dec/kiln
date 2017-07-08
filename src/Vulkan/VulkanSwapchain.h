@@ -15,12 +15,13 @@ namespace vk
     public:
         Swapchain() {}
         Swapchain(const Swapchain &other) = delete;
-        Swapchain(Swapchain &&other) noexcept;
+        Swapchain(Swapchain &&other) = default;
         Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkRenderPass renderPass,
             VkImageView depthStencilView, uint32_t width, uint32_t height, bool vsync, VkFormat colorFormat, VkColorSpaceKHR colorSpace);
         ~Swapchain() {}
 
-        auto operator=(Swapchain other) noexcept -> Swapchain&;
+        auto operator=(const Swapchain &other) -> Swapchain& = delete;
+        auto operator=(Swapchain &&other) -> Swapchain& = default;
 
         auto getNextStep(VkSemaphore semaphore) const -> uint32_t;
         auto getStepCount() const -> uint32_t;
@@ -40,8 +41,6 @@ namespace vk
         VkDevice device = nullptr;
         Resource<VkSwapchainKHR> swapchain;
         std::vector<Step> steps;
-
-        void swap(Swapchain &other) noexcept;
     };
 
     inline auto Swapchain::getHandle() const -> VkSwapchainKHR

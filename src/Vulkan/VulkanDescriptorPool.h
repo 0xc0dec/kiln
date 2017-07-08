@@ -16,19 +16,17 @@ namespace vk
         DescriptorPool() {}
         DescriptorPool(VkDevice device, Resource<VkDescriptorPool> pool);
         DescriptorPool(const DescriptorPool &other) = delete;
-        DescriptorPool(DescriptorPool &&other) noexcept;
-
+        DescriptorPool(DescriptorPool &&other) = default;
         ~DescriptorPool() {}
 
-        auto operator=(DescriptorPool other) noexcept -> DescriptorPool&;
+        auto operator=(const DescriptorPool &other) -> DescriptorPool& = delete;
+        auto operator=(DescriptorPool &&other) -> DescriptorPool& = default;
 
         auto allocateSet(VkDescriptorSetLayout layout) const -> VkDescriptorSet;
 
     private:
         VkDevice device = nullptr;
         Resource<VkDescriptorPool> pool;
-
-        void swap(DescriptorPool &other) noexcept;
     };
 
     class DescriptorPoolBuilder

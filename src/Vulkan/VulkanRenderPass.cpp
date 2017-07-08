@@ -12,17 +12,6 @@ vk::RenderPass::RenderPass(VkDevice device, Resource<VkRenderPass> pass):
 {
 }
 
-vk::RenderPass::RenderPass(RenderPass &&other) noexcept
-{
-    swap(other);
-}
-
-auto vk::RenderPass::operator=(RenderPass other) noexcept -> RenderPass&
-{
-    swap(other);
-    return *this;
-}
-
 void vk::RenderPass::begin(VkCommandBuffer cmdBuf, VkFramebuffer framebuffer, uint32_t canvasWidth, uint32_t canvasHeight)
 {
     VkRenderPassBeginInfo info{};
@@ -43,12 +32,6 @@ void vk::RenderPass::begin(VkCommandBuffer cmdBuf, VkFramebuffer framebuffer, ui
 void vk::RenderPass::end(VkCommandBuffer cmdBuf)
 {
     vkCmdEndRenderPass(cmdBuf);
-}
-
-void vk::RenderPass::swap(RenderPass &other) noexcept
-{
-    std::swap(device, other.device);
-    std::swap(pass, other.pass);
 }
 
 vk::RenderPassBuilder::RenderPassBuilder(VkDevice device):

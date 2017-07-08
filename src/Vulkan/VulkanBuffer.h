@@ -19,12 +19,12 @@ namespace vk
         Buffer() {}
         Buffer(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size, VkBufferUsageFlags usageFlags,
             VkMemoryPropertyFlags memPropertyFlags);
-        Buffer(Buffer &&other) noexcept; // TODO make default and in other places too
+        Buffer(Buffer &&other) = default;
         Buffer(const Buffer &other) = delete;
-
         ~Buffer() {}
 
-        auto operator=(Buffer other) noexcept -> Buffer&;
+        auto operator=(const Buffer &other) -> Buffer& = delete;
+        auto operator=(Buffer &&other) -> Buffer& = default;
 
         auto getHandle() const -> VkBuffer;
 
@@ -36,8 +36,6 @@ namespace vk
         Resource<VkDeviceMemory> memory;
         Resource<VkBuffer> buffer;
         VkDeviceSize size = 0;
-
-        void swap(Buffer &other) noexcept;
     };
 
     inline auto Buffer::getHandle() const -> VkBuffer

@@ -5,11 +5,6 @@
 
 #include "VulkanSwapchain.h"
 
-vk::Swapchain::Swapchain(Swapchain &&other) noexcept
-{
-    swap(other);
-}
-
 vk::Swapchain::Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
     VkRenderPass renderPass, VkImageView depthStencilView, uint32_t width, uint32_t height, bool vsync,
     VkFormat colorFormat, VkColorSpaceKHR colorSpace):
@@ -98,22 +93,9 @@ vk::Swapchain::Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSur
     this->swapchain = std::move(swapchain);
 }
 
-auto vk::Swapchain::operator=(Swapchain other) noexcept -> Swapchain&
-{
-    swap(other);
-    return *this;
-}
-
 auto vk::Swapchain::getNextStep(VkSemaphore semaphore) const -> uint32_t
 {
     uint32_t result;
     KL_VK_CHECK_RESULT(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, semaphore, nullptr, &result));
     return result;
-}
-
-void vk::Swapchain::swap(Swapchain &other) noexcept
-{
-    std::swap(device, other.device);
-    std::swap(swapchain, other.swapchain);
-    std::swap(steps, other.steps);
 }
