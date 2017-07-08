@@ -1,3 +1,6 @@
+// TODO Test offscreen rendering
+// TODO refactor swapchain + depth/stencil creation
+
 /*
     Copyright (c) Aleksey Fedotov
     MIT license
