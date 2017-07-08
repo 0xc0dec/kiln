@@ -18,16 +18,15 @@ namespace vk
         static auto createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, ImageData *data) -> Image;
 
         Image() {}
-        Image(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view,
-            Resource<VkSampler> sampler, VkImageLayout layout);
         Image(const Image &other) = delete;
-        Image(Image &&other) noexcept;
+        Image(Image &&other) = default;
 
-        auto operator=(Image other) noexcept -> Image&;
+        auto operator=(const Image &other) -> Image& = delete;
+        auto operator=(Image &&other) -> Image& = default;
 
-        auto getLayout() -> VkImageLayout;
-        auto getSampler() -> VkSampler;
-        auto getView() -> VkImageView;
+        auto getLayout() const -> VkImageLayout;
+        auto getSampler() const -> VkSampler;
+        auto getView() const -> VkImageView;
 
     private:
         Resource<VkImage> image;
@@ -36,20 +35,21 @@ namespace vk
         Resource<VkSampler> sampler;
         VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-        void swap(Image &other) noexcept;
+        Image(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view,
+            Resource<VkSampler> sampler, VkImageLayout layout);
     };
 
-    inline auto Image::getLayout() -> VkImageLayout
+    inline auto Image::getLayout() const -> VkImageLayout
     {
         return layout;
     }
 
-    inline auto Image::getSampler() -> VkSampler
+    inline auto Image::getSampler() const -> VkSampler
     {
         return sampler;
     }
 
-    inline auto Image::getView() -> VkImageView
+    inline auto Image::getView() const -> VkImageView
     {
         return view;
     }

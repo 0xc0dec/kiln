@@ -198,24 +198,3 @@ vk::Image::Image(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resou
     layout(layout)
 {
 }
-
-vk::Image::Image(Image &&other) noexcept
-{
-    swap(other);
-}
-
-auto vk::Image::operator=(Image other) noexcept -> Image&
-
-{
-    swap(other);
-    return *this;
-}
-
-void vk::Image::swap(Image &other) noexcept
-{
-    std::swap(image, other.image);
-    std::swap(memory, other.memory);
-    std::swap(view, other.view);
-    std::swap(sampler, other.sampler);
-    std::swap(layout, other.layout);
-}
