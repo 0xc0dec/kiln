@@ -19,7 +19,7 @@ namespace vk
         Buffer() {}
         Buffer(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size, VkBufferUsageFlags usageFlags,
             VkMemoryPropertyFlags memPropertyFlags);
-        Buffer(Buffer &&other) noexcept;
+        Buffer(Buffer &&other) noexcept; // TODO make default and in other places too
         Buffer(const Buffer &other) = delete;
 
         ~Buffer() {}

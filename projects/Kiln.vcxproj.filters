@@ -38,6 +38,7 @@
     <ClCompile Include="..\src\Vulkan\VulkanImage.cpp">
       <Filter>vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ImageData.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Camera.h" />
@@ -80,6 +81,7 @@
     <ClInclude Include="..\src\Vulkan\VulkanImage.h">
       <Filter>vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\ImageData.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="vulkan">

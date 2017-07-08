@@ -6,24 +6,16 @@
 #pragma once
 
 #include "Vulkan.h"
-#include <functional>
-#undef max // gli does not compile otherwise, probably because of Windows.h included earlier
-#include <gli/gli.hpp>
+
+class ImageData;
 
 namespace vk
 {
-    class VulkanBuffer;
-
     class Image
     {
     public:
-        static auto create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue,
-            VkFormat format, uint32_t mipLevels, const void *data, uint32_t size,
-            std::function<uint32_t(uint32_t mipLevel)> getLevelWidth,
-            std::function<uint32_t(uint32_t mipLevel)> getLevelHeight,
-            std::function<uint32_t(uint32_t mipLevel)> getLevelSize) -> Image;
-        static auto createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
-            const gli::texture_cube &data, VkCommandPool cmdPool, VkQueue queue) -> Image;
+        static auto create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, ImageData *data) -> Image;
+        static auto createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, ImageData *data) -> Image;
 
         Image() {}
         Image(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view,

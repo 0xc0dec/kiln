@@ -6,6 +6,7 @@
 #pragma once
 
 #include <exception>
+#include <memory>
 
 #if defined(WIN32) || defined(_WIN32) || defined(_WIN64) || defined(_WINDOWS)
 #   define KL_WINDOWS
@@ -31,3 +32,6 @@
     type(type &&other) = delete; \
     type &operator=(const type &other) = delete; \
     type &operator=(type &&other) = delete;
+
+template <typename T> using sptr = std::shared_ptr<T>;
+template <typename T> using uptr = std::unique_ptr<T>;

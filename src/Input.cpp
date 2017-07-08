@@ -1,3 +1,8 @@
+/*
+    Copyright (c) Aleksey Fedotov
+    MIT license
+*/
+
 #include "Input.h"
 
 void Input::processEvent(const SDL_Event &evt)

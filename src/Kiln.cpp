@@ -8,6 +8,7 @@
 #include "Spectator.h"
 #include "Camera.h"
 #include "Window.h"
+#include "ImageData.h"
 #include "vulkan/Vulkan.h"
 #include "vulkan/VulkanRenderPass.h"
 #include "vulkan/VulkanSwapchain.h"
@@ -17,16 +18,10 @@
 #include "vulkan/VulkanDescriptorSetLayoutBuilder.h"
 #include "vulkan/VulkanImage.h"
 #include "vulkan/VulkanDescriptorSetUpdater.h"
-
-#undef max // gli does not compile otherwise, probably because of Windows.h included earlier
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.inl>
 #include <glm/gtc/matrix_transform.inl>
-#include <gli/gli.hpp>
 #include <vector>
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 
 static const std::vector<float> xAxisVertexData = 
 {
@@ -294,24 +289,8 @@ int main()
 
         scene.box.descriptorSet = scene.descriptorPool.allocateSet(scene.box.descSetLayout);
 
-        /*
-        int texWidth, texHeight, texChannels;
-        auto pixels = stbi_load("../../assets/Cobblestone.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-
-        const auto texSize = texWidth * texHeight * texChannels;
-        scene.box.texture = vk::Texture::create2D(device, physicalDevice, commandPool, queue, VK_FORMAT_R8G8B8A8_UNORM,
-            1, pixels, texSize,
-            [=](uint32_t) { return texWidth; },
-            [=](uint32_t) { return texHeight; },
-            [=](uint32_t) { return texSize; });
-        stbi_image_free(pixels);*/
-
-        gli::texture2d textureData(gli::load("../../assets/MetalPlate_rgba.ktx"));
-        scene.box.texture = vk::Image::create2D(device, physicalDevice, commandPool, queue, VK_FORMAT_R8G8B8A8_UNORM,
-            textureData.levels(), textureData.data(), textureData.size(),
-            [&](uint32_t level) { return textureData[level].extent().x; },
-            [&](uint32_t level) { return textureData[level].extent().x; },
-            [&](uint32_t level) { return textureData[level].size(); });
+        auto textureData = ImageData::load2D("../../assets/Cobblestone.png");
+        scene.box.texture = vk::Image::create2D(device, physicalDevice, commandPool, queue, textureData.get());
 
         vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, scene.box.descriptorSet, scene.box.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
@@ -351,8 +330,8 @@ int main()
 
         scene.skybox.descriptorSet = scene.descriptorPool.allocateSet(scene.skybox.descSetLayout);
 
-        gli::texture_cube textureData(gli::load("../../assets/Cubemap_space.ktx"));
-        scene.skybox.texture = vk::Image::createCube(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, textureData, commandPool, queue);
+        auto data = ImageData::loadCube("../../assets/Cubemap_space.ktx");
+        scene.skybox.texture = vk::Image::createCube(device, physicalDevice, commandPool, queue, data.get());
 
         vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, scene.skybox.descriptorSet, scene.skybox.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))

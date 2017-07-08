@@ -1,3 +1,8 @@
+/*
+    Copyright (c) Aleksey Fedotov
+    MIT license
+*/
+
 #pragma once
 
 #include <glm/vec2.hpp>

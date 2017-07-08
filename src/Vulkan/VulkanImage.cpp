@@ -5,28 +5,38 @@
 
 #include "VulkanImage.h"
 #include "VulkanBuffer.h"
+#include "../ImageData.h"
 #include <vector>
 
-auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue,
-    VkFormat format, uint32_t mipLevels, const void *data, uint32_t size,
-    std::function<uint32_t(uint32_t mipLevel)> getLevelWidth,
-    std::function<uint32_t(uint32_t mipLevel)> getLevelHeight,
-    std::function<uint32_t(uint32_t mipLevel)> getLevelSize) -> Image
+auto toVulkanFormat(ImageData::Format format) -> VkFormat
 {
-    const auto width = getLevelWidth(0);
-    const auto height = getLevelHeight(0);
+    switch (format)
+    {
+        case ImageData::Format::R8G8B8A8_UNORM: return VK_FORMAT_R8G8B8A8_UNORM;
+        default:
+            KL_PANIC("Unsupported texture format");
+            return VK_FORMAT_UNDEFINED;
+    }
+}
 
-    auto image = vk::createImage(device, format, width, height, mipLevels, 1, 0, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-    auto memory = vk::allocateImageMemory(device, image, physicalDevice);
+auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, ImageData *data) -> Image
+{
+    const auto mipLevels = data->getMipLevelCount();
+    const auto width = data->getWidth(0);
+    const auto height = data->getHeight(0);
+    const auto format = toVulkanFormat(data->getFormat());
+
+    auto image = createImage(device, format, width, height, mipLevels, 1, 0, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+    auto memory = allocateImageMemory(device, image, physicalDevice);
 
     std::vector<VkBufferImageCopy> copyRegions;
     uint32_t offset = 0;
 
     for (uint32_t i = 0; i < mipLevels; i++)
     {
-        const auto levelWidth = getLevelWidth(i);
-        const auto levelHeight = getLevelHeight(i);
-        const auto levelSize = getLevelSize(i);
+        const auto levelWidth = data->getWidth(i);
+        const auto levelHeight = data->getHeight(i);
+        const auto levelSize = data->getSize(i);
 
         VkBufferImageCopy bufferCopyRegion{};
         bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -43,7 +53,7 @@ auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, 
         offset += levelSize;
     }
 
-    auto stagingBuf = vk::Buffer::createStaging(device, physicalDevice, size, data);
+    auto stagingBuf = Buffer::createStaging(device, physicalDevice, data->getSize(), data->getData());
 
     VkImageSubresourceRange subresourceRange{};
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -51,10 +61,10 @@ auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, 
     subresourceRange.levelCount = mipLevels;
     subresourceRange.layerCount = 1;
 
-    auto copyCmdBuf = vk::createCommandBuffer(device, cmdPool);
-    vk::beginCommandBuffer(copyCmdBuf, true);
+    auto copyCmdBuf = createCommandBuffer(device, cmdPool);
+    beginCommandBuffer(copyCmdBuf, true);
 
-    vk::setImageLayout(
+    setImageLayout(
         copyCmdBuf,
         image,
         VK_IMAGE_LAYOUT_UNDEFINED,
@@ -72,7 +82,7 @@ auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, 
         copyRegions.data());
 
     auto finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    vk::setImageLayout(
+    setImageLayout(
         copyCmdBuf,
         image,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -83,25 +93,25 @@ auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, 
 
     vkEndCommandBuffer(copyCmdBuf);
 
-    vk::queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &copyCmdBuf);
+    queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &copyCmdBuf);
     KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
     
     vkFreeCommandBuffers(device, cmdPool, 1, &copyCmdBuf);
 
     auto sampler = createSampler(device, physicalDevice, mipLevels);
-    auto view = vk::createImageView(device, format, VK_IMAGE_VIEW_TYPE_2D, mipLevels, 1, image, VK_IMAGE_ASPECT_COLOR_BIT);
+    auto view = createImageView(device, format, VK_IMAGE_VIEW_TYPE_2D, mipLevels, 1, image, VK_IMAGE_ASPECT_COLOR_BIT);
 
     return Image{std::move(image), std::move(memory), std::move(view), std::move(sampler), finalLayout};
 }
 
-auto vk::Image::createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat format,
-    const gli::texture_cube &data, VkCommandPool cmdPool, VkQueue queue) -> Image
+auto vk::Image::createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, ImageData *data) -> Image
 {
-    const auto mipLevels = data.levels();
-    const auto width = data.extent().x;
-    const auto height = data.extent().y;
+    const auto mipLevels = data->getMipLevelCount();
+    const auto width = data->getWidth(0, 0);
+    const auto height = data->getHeight(0, 0);
+    const auto format = toVulkanFormat(data->getFormat());
 
-    auto image = vk::createImage(device, format, width, height, mipLevels, 6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
+    auto image = createImage(device, format, width, height, mipLevels, 6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
     auto memory = allocateImageMemory(device, image, physicalDevice);
 
@@ -117,18 +127,18 @@ auto vk::Image::createCube(VkDevice device, const PhysicalDevice &physicalDevice
             bufferCopyRegion.imageSubresource.mipLevel = level;
             bufferCopyRegion.imageSubresource.baseArrayLayer = face;
             bufferCopyRegion.imageSubresource.layerCount = 1;
-            bufferCopyRegion.imageExtent.width = data[face][level].extent().x;
-            bufferCopyRegion.imageExtent.height = data[face][level].extent().y;
+            bufferCopyRegion.imageExtent.width = data->getWidth(face, level);
+            bufferCopyRegion.imageExtent.height = data->getHeight(face, level);
             bufferCopyRegion.imageExtent.depth = 1;
             bufferCopyRegion.bufferOffset = offset;
 
             copyRegions.push_back(bufferCopyRegion);
 
-            offset += data[face][level].size();
+            offset += data->getSize(face, level);
         }
     }
 
-    auto stagingBuf = vk::Buffer::createStaging(device, physicalDevice, data.size(), data.data());
+    auto stagingBuf = Buffer::createStaging(device, physicalDevice, data->getSize(), data->getData());
 
     VkImageSubresourceRange subresourceRange{};
 	subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -136,10 +146,10 @@ auto vk::Image::createCube(VkDevice device, const PhysicalDevice &physicalDevice
 	subresourceRange.levelCount = mipLevels;
 	subresourceRange.layerCount = 6;
 
-    auto copyCmdBuf = vk::createCommandBuffer(device, cmdPool);
-    vk::beginCommandBuffer(copyCmdBuf, true);
+    auto copyCmdBuf = createCommandBuffer(device, cmdPool);
+    beginCommandBuffer(copyCmdBuf, true);
 
-    vk::setImageLayout(
+    setImageLayout(
         copyCmdBuf,
         image,
         VK_IMAGE_LAYOUT_UNDEFINED,
@@ -157,7 +167,7 @@ auto vk::Image::createCube(VkDevice device, const PhysicalDevice &physicalDevice
         copyRegions.data());
 
     auto imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    vk::setImageLayout(
+    setImageLayout(
         copyCmdBuf,
         image,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -168,13 +178,13 @@ auto vk::Image::createCube(VkDevice device, const PhysicalDevice &physicalDevice
 
     vkEndCommandBuffer(copyCmdBuf);
 
-    vk::queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &copyCmdBuf);
+    queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &copyCmdBuf);
     KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
 
     vkFreeCommandBuffers(device, cmdPool, 1, &copyCmdBuf);
 
     auto sampler = createSampler(device, physicalDevice, mipLevels);
-    auto view = vk::createImageView(device, format, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, 6, image, VK_IMAGE_ASPECT_COLOR_BIT);
+    auto view = createImageView(device, format, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, 6, image, VK_IMAGE_ASPECT_COLOR_BIT);
 
     return Image{std::move(image), std::move(memory), std::move(view), std::move(sampler), imageLayout};
 }
