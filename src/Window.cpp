@@ -82,7 +82,7 @@ Window::Window(uint32_t canvasWidth, uint32_t canvasHeight, const char *title)
 #endif
 
 #ifdef KL_DEBUG
-    debugCallback = vk::createDebugCallback(instance, debugCallbackFunc);
+    debugCallback = createDebugCallback(instance, debugCallbackFunc);
 #endif
 }
 

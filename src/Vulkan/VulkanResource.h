@@ -53,15 +53,6 @@ namespace vk
             return *this;
         }
 
-        void operator=(T other)
-        {
-            if (other != handle)
-            {
-                cleanup();
-                handle = other;
-            }
-        }
-
         auto operator&() const -> const T*
         {
             return &handle;
