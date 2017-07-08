@@ -156,8 +156,8 @@ int main()
     vkGetDeviceQueue(device, queueIndex, 0, &queue);
 
     auto depthFormat = vk::getDepthFormat(physicalDevice.device);
-    auto commandPool = vk::createCommandPool(device, queueIndex);
-    auto depthStencil = vk::createDepthStencil(device, physicalDevice, depthFormat, CanvasWidth, CanvasHeight);
+    auto commandPool = createCommandPool(device, queueIndex);
+    auto depthStencil = createDepthStencil(device, physicalDevice, depthFormat, CanvasWidth, CanvasHeight);
     auto renderPass = vk::RenderPassBuilder(device)
         .withColorAttachment(colorFormat)
         .withDepthAttachment(depthFormat)
@@ -172,12 +172,12 @@ int main()
         vk::Resource<VkSemaphore> presentComplete;
         vk::Resource<VkSemaphore> renderComplete;
     } semaphores;
-    semaphores.presentComplete = vk::createSemaphore(device);
-    semaphores.renderComplete = vk::createSemaphore(device);
+    semaphores.presentComplete = createSemaphore(device);
+    semaphores.renderComplete = createSemaphore(device);
 
     std::vector<VkCommandBuffer> renderCmdBuffers;
     renderCmdBuffers.resize(swapchain.getStepCount());
-    vk::createCommandBuffers(device, commandPool, swapchain.getStepCount(), renderCmdBuffers.data());
+    createCommandBuffers(device, commandPool, swapchain.getStepCount(), renderCmdBuffers.data());
 
     // Random test code below
 
@@ -259,8 +259,8 @@ int main()
     {
         auto vsSrc = fs::readBytes("../../assets/Textured.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/Textured.frag.spv");
-        auto vs = vk::createShader(device, vsSrc.data(), vsSrc.size());
-        auto fs = vk::createShader(device, fsSrc.data(), fsSrc.size());
+        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
+        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
         glm::mat4 modelMatrix{};
         scene.box.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::mat4));
@@ -301,8 +301,8 @@ int main()
     {
         auto vsSrc = fs::readBytes("../../assets/Skybox.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/Skybox.frag.spv");
-        auto vs = vk::createShader(device, vsSrc.data(), vsSrc.size());
-        auto fs = vk::createShader(device, fsSrc.data(), fsSrc.size());
+        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
+        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
         glm::mat4 modelMatrix{};
         scene.skybox.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, physicalDevice, sizeof(glm::mat4));
@@ -360,8 +360,8 @@ int main()
 
         auto vsSrc = fs::readBytes("../../assets/Axis.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/Axis.frag.spv");
-        auto vs = vk::createShader(device, vsSrc.data(), vsSrc.size());
-        auto fs = vk::createShader(device, fsSrc.data(), fsSrc.size());
+        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
+        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
         scene.axes.xAxisVertexBuffer = createDeviceLocalBuffer(device, queue, commandPool, physicalDevice, xAxisVertexData.data(),
             sizeof(float) * xAxisVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
@@ -472,13 +472,15 @@ int main()
         KL_VK_CHECK_RESULT(vkEndCommandBuffer(buf));
     }
 
+    Input input;
+
     while (!window.closeRequested())
     {
-        window.beginUpdate();
+        window.beginUpdate(input);
 
         auto dt = window.getTimeDelta();
 
-        applySpectator(cam.getTransform(), window.getInput(), dt, 1, 5);
+        applySpectator(cam.getTransform(), input, dt, 1, 5);
 
         viewMatrices.viewMatrix = cam.getViewMatrix();
         viewMatricesBuffer.update(&viewMatrices);
@@ -486,7 +488,7 @@ int main()
         auto swapchainStep = swapchain.getNextStep(semaphores.presentComplete);
 
         vk::queueSubmit(queue, 1, &semaphores.presentComplete, 1, &semaphores.renderComplete, 1, &renderCmdBuffers[swapchainStep]);
-        vk::queuePresent(queue, swapchain, swapchainStep, 1, &semaphores.renderComplete);
+        queuePresent(queue, swapchain, swapchainStep, 1, &semaphores.renderComplete);
         KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
 
         window.endUpdate();

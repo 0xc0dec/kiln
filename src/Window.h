@@ -5,33 +5,33 @@
 
 #pragma once
 
-#include "Common.h"
-#include "Input.h"
 #include "vulkan/Vulkan.h"
 
 struct SDL_Window;
+class Input;
 
 class Window
 {
 public:
-    KL_DISABLE_COPY_AND_MOVE(Window)
-
     Window(uint32_t canvasWidth, uint32_t canvasHeight, const char *title);
+    Window(const Window &other) = delete;
+    Window(Window &&other) = delete;
     ~Window();
 
-    void beginUpdate();
+    auto operator=(const Window &other) -> Window& = delete;
+    auto operator=(Window &&other) -> Window& = delete;
+
+    void beginUpdate(Input &input);
     void endUpdate();
 
     bool closeRequested() const;
 
     auto getTimeDelta() const -> float;
 
-    auto getInput() -> Input&;
     auto getInstance() const -> VkInstance;
     auto getSurface() const -> VkSurfaceKHR;
 
 private:
-    Input input;
     SDL_Window *window = nullptr;
     vk::Resource<VkInstance> instance;
     vk::Resource<VkSurfaceKHR> surface;
@@ -49,11 +49,6 @@ inline auto Window::getTimeDelta() const -> float
 inline bool Window::closeRequested() const
 {
     return _closeRequested;
-}
-
-inline auto Window::getInput() -> Input&
-{
-    return input;
 }
 
 inline auto Window::getInstance() const -> VkInstance

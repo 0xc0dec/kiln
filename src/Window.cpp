@@ -4,6 +4,7 @@
 */
 
 #include "Window.h"
+#include "Input.h"
 #include <SDL.h>
 #include <SDL_syswm.h>
 #ifdef KL_WINDOWS
@@ -92,7 +93,7 @@ Window::~Window()
     SDL_Quit();
 }
 
-void Window::beginUpdate()
+void Window::beginUpdate(Input &input)
 {
     static auto lastTicks = SDL_GetTicks();
 

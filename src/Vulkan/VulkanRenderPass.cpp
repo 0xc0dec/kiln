@@ -128,10 +128,10 @@ auto vk::RenderPassBuilder::build() -> RenderPass
     renderPassInfo.dependencyCount = dependencies.size();
     renderPassInfo.pDependencies = dependencies.data();
 
-    vk::Resource<VkRenderPass> pass{device, vkDestroyRenderPass};
+    Resource<VkRenderPass> pass{device, vkDestroyRenderPass};
     KL_VK_CHECK_RESULT(vkCreateRenderPass(device, &renderPassInfo, nullptr, pass.cleanRef()));
 
-    return vk::RenderPass(device, std::move(pass));
+    return RenderPass(device, std::move(pass));
 }
 
 void vk::RenderPass::setClear(bool clearColor, bool clearDepthStencil, VkClearColorValue color, VkClearDepthStencilValue depthStencil)
