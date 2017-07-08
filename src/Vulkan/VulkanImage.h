@@ -14,8 +14,8 @@ namespace vk
     class Image
     {
     public:
-        static auto create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, ImageData *data) -> Image;
-        static auto createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, ImageData *data) -> Image;
+        static auto create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, const ImageData &data) -> Image;
+        static auto createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, const ImageData &data) -> Image;
 
         Image() {}
         Image(const Image &other) = delete;

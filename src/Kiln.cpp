@@ -290,7 +290,7 @@ int main()
         scene.box.descriptorSet = scene.descriptorPool.allocateSet(scene.box.descSetLayout);
 
         auto textureData = ImageData::load2D("../../assets/Cobblestone.png");
-        scene.box.texture = vk::Image::create2D(device, physicalDevice, commandPool, queue, textureData.get());
+        scene.box.texture = vk::Image::create2D(device, physicalDevice, commandPool, queue, textureData);
 
         vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, scene.box.descriptorSet, scene.box.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))
@@ -331,7 +331,7 @@ int main()
         scene.skybox.descriptorSet = scene.descriptorPool.allocateSet(scene.skybox.descSetLayout);
 
         auto data = ImageData::loadCube("../../assets/Cubemap_space.ktx");
-        scene.skybox.texture = vk::Image::createCube(device, physicalDevice, commandPool, queue, data.get());
+        scene.skybox.texture = vk::Image::createCube(device, physicalDevice, commandPool, queue, data);
 
         vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, scene.skybox.descriptorSet, scene.skybox.modelMatrixBuffer.getHandle(), 0, sizeof(modelMatrix))

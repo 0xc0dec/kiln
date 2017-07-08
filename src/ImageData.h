@@ -24,26 +24,29 @@ public:
     auto operator=(const ImageData &other) -> ImageData& = delete;
     auto operator=(ImageData &&other) -> ImageData& = default;
 
-    static auto load2D(const std::string &path) -> uptr<ImageData>;
-    static auto loadCube(const std::string &path) -> uptr<ImageData>;
+    static auto load2D(const std::string &path) -> ImageData;
+    static auto loadCube(const std::string &path) -> ImageData;
 
-    virtual auto getMipLevelCount() -> uint32_t const = 0;
-    virtual auto getFaceCount() -> uint32_t const = 0;
+    virtual auto getMipLevelCount() const -> uint32_t;
+    virtual auto getFaceCount() const -> uint32_t;
 
-    virtual auto getSize() -> uint32_t const = 0;
-    virtual auto getSize(uint32_t mipLevel) -> uint32_t const = 0;
-    virtual auto getSize(uint32_t face, uint32_t mipLevel) -> uint32_t const = 0;
+    virtual auto getSize() const -> uint32_t;
+    virtual auto getSize(uint32_t mipLevel) const -> uint32_t;
+    virtual auto getSize(uint32_t face, uint32_t mipLevel) const -> uint32_t;
 
-    virtual auto getWidth(uint32_t mipLevel) -> uint32_t const = 0;
-    virtual auto getWidth(uint32_t face, uint32_t mipLevel) -> uint32_t const = 0;
+    virtual auto getWidth(uint32_t mipLevel) const -> uint32_t;
+    virtual auto getWidth(uint32_t face, uint32_t mipLevel) const -> uint32_t;
 
-    virtual auto getHeight(uint32_t mipLevel) -> uint32_t const = 0;
-    virtual auto getHeight(uint32_t face, uint32_t mipLevel) -> uint32_t const = 0;
+    virtual auto getHeight(uint32_t mipLevel) const -> uint32_t;
+    virtual auto getHeight(uint32_t face, uint32_t mipLevel) const -> uint32_t;
 
-    virtual auto getData() -> void* = 0;
+    virtual auto getData() const -> void*;
 
-    virtual auto getFormat() -> Format = 0;
+    virtual auto getFormat() const -> Format;
 
 protected:
     ImageData() {}
+
+private:
+    uptr<ImageData> impl = nullptr;
 };

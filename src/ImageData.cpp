@@ -36,57 +36,57 @@ public:
         return std::unique_ptr<GliImageData>(new GliImageData(std::move(data)));
     }
 
-    auto getMipLevelCount() -> uint32_t const override
+    auto getMipLevelCount() const -> uint32_t override
     {
         return getGenericHandle().levels();
     }
 
-    auto getFaceCount() -> uint32_t const override
+    auto getFaceCount() const -> uint32_t override
     {
         return getGenericHandle().faces();
     }
 
-    auto getSize() -> uint32_t const override
+    auto getSize() const -> uint32_t override
     {
         return getGenericHandle().size();
     }
 
-    auto getSize(uint32_t mipLevel) -> uint32_t const override
+    auto getSize(uint32_t mipLevel) const -> uint32_t override
     {
         return getGenericHandle().size(mipLevel);
     }
 
-    auto getSize(uint32_t face, uint32_t mipLevel) -> uint32_t const override
+    auto getSize(uint32_t face, uint32_t mipLevel) const -> uint32_t override
     {
         return texCube[face][mipLevel].size();
     }
 
-    auto getWidth(uint32_t mipLevel) -> uint32_t const override
+    auto getWidth(uint32_t mipLevel) const -> uint32_t override
     {
         return getGenericHandle().extent(mipLevel).x;
     }
 
-    auto getWidth(uint32_t face, uint32_t mipLevel) -> uint32_t const override
+    auto getWidth(uint32_t face, uint32_t mipLevel) const -> uint32_t override
     {
         return texCube[face][mipLevel].extent().x;
     }
 
-    auto getHeight(uint32_t mipLevel) -> uint32_t const override
+    auto getHeight(uint32_t mipLevel) const -> uint32_t override
     {
         return getGenericHandle().extent(mipLevel).y;
     }
 
-    auto getHeight(uint32_t face, uint32_t mipLevel) -> uint32_t const override
+    auto getHeight(uint32_t face, uint32_t mipLevel) const -> uint32_t override
     {
         return texCube[face][mipLevel].extent().y;
     }
 
-    auto getData() -> void* override
+    auto getData() const -> void* override
     {
         return getGenericHandle().data();
     }
 
-    auto getFormat() -> Format override
+    auto getFormat() const -> Format override
     {
         switch (getGenericHandle().format())
         {
@@ -101,8 +101,8 @@ public:
 private:
     static const std::vector<std::string> supportedFormats;
 
-    gli::texture2d tex2d;
-    gli::texture_cube texCube;
+    mutable gli::texture2d tex2d;
+    mutable gli::texture_cube texCube;
 
     static bool isLoadable(const std::string &path)
     {
@@ -122,7 +122,7 @@ private:
     {
     }
 
-    auto getGenericHandle() -> gli::texture&
+    auto getGenericHandle() const -> gli::texture&
     {
         if (!tex2d.empty())
             return tex2d;
@@ -166,60 +166,61 @@ public:
 
     ~StbiImageData()
     {
-        stbi_image_free(data);
+        if (data)
+            stbi_image_free(data);
     }
 
-    auto getMipLevelCount() -> uint32_t const override
+    auto getMipLevelCount() const -> uint32_t override
     {
         return 1;
     }
 
-    auto getFaceCount() -> uint32_t const override
+    auto getFaceCount() const -> uint32_t override
     {
         return 1;
     }
 
-    auto getSize() -> uint32_t const override
+    auto getSize() const -> uint32_t override
     {
         return width * height * channels;
     }
 
-    auto getSize(uint32_t mipLevel) -> uint32_t const override
+    auto getSize(uint32_t mipLevel) const -> uint32_t override
     {
         return getSize();
     }
 
-    auto getSize(uint32_t face, uint32_t mipLevel) -> uint32_t const override
+    auto getSize(uint32_t face, uint32_t mipLevel) const -> uint32_t override
     {
         return getSize();
     }
 
-    auto getWidth(uint32_t mipLevel) -> uint32_t const override
+    auto getWidth(uint32_t mipLevel) const -> uint32_t override
     {
         return width;
     }
 
-    auto getWidth(uint32_t face, uint32_t mipLevel) -> uint32_t const override
+    auto getWidth(uint32_t face, uint32_t mipLevel) const -> uint32_t override
     {
         return width;
     }
 
-    auto getHeight(uint32_t mipLevel) -> uint32_t const override
+    auto getHeight(uint32_t mipLevel) const -> uint32_t override
     {
         return height;
     }
 
-    auto getHeight(uint32_t face, uint32_t mipLevel) -> uint32_t const override
+    auto getHeight(uint32_t face, uint32_t mipLevel) const -> uint32_t override
     {
         return height;
     }
 
-    auto getData() -> void* override
+    auto getData() const -> void* override
     {
         return data;
     }
 
-    auto getFormat() -> Format override
+    auto getFormat() const -> Format override
     {
         return Format::R8G8B8A8_UNORM;
     }
@@ -240,22 +241,81 @@ private:
 
 decltype(StbiImageData::supportedFormats) StbiImageData::supportedFormats = {".bmp", ".jpg", ".jpeg", ".png"};
 
-auto ImageData::load2D(const std::string &path) -> uptr<ImageData>
+auto ImageData::load2D(const std::string &path) -> ImageData
 {
+    ImageData data{};
     if (GliImageData::isLoadable2D(path))
-        return GliImageData::load2D(path);
-    if (StbiImageData::isLoadable2D(path))
-        return StbiImageData::load2D(path);
-    KL_PANIC("Unsupported texture format");
-    return nullptr;
+        data.impl = GliImageData::load2D(path);
+    else if (StbiImageData::isLoadable2D(path))
+        data.impl = StbiImageData::load2D(path);
+    else
+        KL_PANIC("Unsupported texture format");
+    return data;
 }
 
-auto ImageData::loadCube(const std::string &path) -> uptr<ImageData>
+auto ImageData::loadCube(const std::string &path) -> ImageData
 {
+    ImageData data{};
     if (GliImageData::isLoadableCube(path))
-        return GliImageData::loadCube(path);
-    if (StbiImageData::isLoadableCube(path))
-        return StbiImageData::loadCube(path);
-    KL_PANIC("Unsupported texture format");
-    return nullptr;
+        data.impl = GliImageData::loadCube(path);
+    else if (StbiImageData::isLoadableCube(path))
+        data.impl = StbiImageData::loadCube(path);
+    else
+        KL_PANIC("Unsupported texture format");
+    return data;
+}
+
+auto ImageData::getMipLevelCount() const -> uint32_t
+{
+    return impl->getMipLevelCount();
+}
+
+auto ImageData::getFaceCount() const -> uint32_t
+{
+    return impl->getFaceCount();
+}
+
+auto ImageData::getSize() const -> uint32_t
+{
+    return impl->getSize();
+}
+
+auto ImageData::getSize(uint32_t mipLevel) const -> uint32_t
+{
+    return impl->getSize(mipLevel);
+}
+
+auto ImageData::getSize(uint32_t face, uint32_t mipLevel) const -> uint32_t
+{
+    return impl->getSize(face, mipLevel);
+}
+
+auto ImageData::getWidth(uint32_t mipLevel) const -> uint32_t
+{
+    return impl->getWidth(mipLevel);
+}
+
+auto ImageData::getWidth(uint32_t face, uint32_t mipLevel) const -> uint32_t
+{
+    return impl->getWidth(face, mipLevel);
+}
+
+auto ImageData::getHeight(uint32_t mipLevel) const -> uint32_t
+{
+    return impl->getHeight(mipLevel);
+}
+
+auto ImageData::getHeight(uint32_t face, uint32_t mipLevel) const -> uint32_t
+{
+    return impl->getHeight(face, mipLevel);
+}
+
+auto ImageData::getData() const -> void*
+{
+    return impl->getData();
+}
+
+auto ImageData::getFormat() const -> Format
+{
+    return impl->getFormat();
 }

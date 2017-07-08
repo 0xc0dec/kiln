@@ -19,12 +19,12 @@ auto toVulkanFormat(ImageData::Format format) -> VkFormat
     }
 }
 
-auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, ImageData *data) -> Image
+auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, const ImageData &data) -> Image
 {
-    const auto mipLevels = data->getMipLevelCount();
-    const auto width = data->getWidth(0);
-    const auto height = data->getHeight(0);
-    const auto format = toVulkanFormat(data->getFormat());
+    const auto mipLevels = data.getMipLevelCount();
+    const auto width = data.getWidth(0);
+    const auto height = data.getHeight(0);
+    const auto format = toVulkanFormat(data.getFormat());
 
     auto image = createImage(device, format, width, height, mipLevels, 1, 0, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
     auto memory = allocateImageMemory(device, image, physicalDevice);
@@ -34,9 +34,9 @@ auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, 
 
     for (uint32_t i = 0; i < mipLevels; i++)
     {
-        const auto levelWidth = data->getWidth(i);
-        const auto levelHeight = data->getHeight(i);
-        const auto levelSize = data->getSize(i);
+        const auto levelWidth = data.getWidth(i);
+        const auto levelHeight = data.getHeight(i);
+        const auto levelSize = data.getSize(i);
 
         VkBufferImageCopy bufferCopyRegion{};
         bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -53,7 +53,7 @@ auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, 
         offset += levelSize;
     }
 
-    auto stagingBuf = Buffer::createStaging(device, physicalDevice, data->getSize(), data->getData());
+    auto stagingBuf = Buffer::createStaging(device, physicalDevice, data.getSize(), data.getData());
 
     VkImageSubresourceRange subresourceRange{};
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -104,12 +104,12 @@ auto vk::Image::create2D(VkDevice device, const PhysicalDevice &physicalDevice, 
     return Image{std::move(image), std::move(memory), std::move(view), std::move(sampler), finalLayout};
 }
 
-auto vk::Image::createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, ImageData *data) -> Image
+auto vk::Image::createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, const ImageData &data) -> Image
 {
-    const auto mipLevels = data->getMipLevelCount();
-    const auto width = data->getWidth(0, 0);
-    const auto height = data->getHeight(0, 0);
-    const auto format = toVulkanFormat(data->getFormat());
+    const auto mipLevels = data.getMipLevelCount();
+    const auto width = data.getWidth(0, 0);
+    const auto height = data.getHeight(0, 0);
+    const auto format = toVulkanFormat(data.getFormat());
 
     auto image = createImage(device, format, width, height, mipLevels, 6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -127,18 +127,18 @@ auto vk::Image::createCube(VkDevice device, const PhysicalDevice &physicalDevice
             bufferCopyRegion.imageSubresource.mipLevel = level;
             bufferCopyRegion.imageSubresource.baseArrayLayer = face;
             bufferCopyRegion.imageSubresource.layerCount = 1;
-            bufferCopyRegion.imageExtent.width = data->getWidth(face, level);
-            bufferCopyRegion.imageExtent.height = data->getHeight(face, level);
+            bufferCopyRegion.imageExtent.width = data.getWidth(face, level);
+            bufferCopyRegion.imageExtent.height = data.getHeight(face, level);
             bufferCopyRegion.imageExtent.depth = 1;
             bufferCopyRegion.bufferOffset = offset;
 
             copyRegions.push_back(bufferCopyRegion);
 
-            offset += data->getSize(face, level);
+            offset += data.getSize(face, level);
         }
     }
 
-    auto stagingBuf = Buffer::createStaging(device, physicalDevice, data->getSize(), data->getData());
+    auto stagingBuf = Buffer::createStaging(device, physicalDevice, data.getSize(), data.getData());
 
     VkImageSubresourceRange subresourceRange{};
 	subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
