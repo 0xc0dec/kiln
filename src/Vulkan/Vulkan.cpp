@@ -5,127 +5,16 @@
 
 #include "Vulkan.h"
 #include "VulkanSwapchain.h"
-#include <vector>
 #include <array>
 
 using namespace vk;
 
-auto vk::getPhysicalDevice(VkInstance instance) -> VkPhysicalDevice
-{
-    uint32_t gpuCount = 0;
-    KL_VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, nullptr));
-
-    std::vector<VkPhysicalDevice> devices(gpuCount);
-    KL_VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, devices.data()));
-
-    return devices[0]; // TODO at least for now
-}
-
-auto vk::createDevice(VkPhysicalDevice physicalDevice, uint32_t queueIndex) -> Resource<VkDevice>
-{
-    std::vector<float> queuePriorities = {0.0f};
-    VkDeviceQueueCreateInfo queueCreateInfo{};
-    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queueCreateInfo.queueFamilyIndex = queueIndex;
-    queueCreateInfo.queueCount = 1;
-    queueCreateInfo.pQueuePriorities = queuePriorities.data();
-
-    std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-    VkDeviceCreateInfo deviceCreateInfo{};
-    std::vector<VkPhysicalDeviceFeatures> enabledFeatures{};
-    deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceCreateInfo.queueCreateInfoCount = 1;
-    deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
-    deviceCreateInfo.pEnabledFeatures = enabledFeatures.data();
-    deviceCreateInfo.enabledExtensionCount = deviceExtensions.size();
-    deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
-
-    Resource<VkDevice> result{vkDestroyDevice};
-    KL_VK_CHECK_RESULT(vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, result.cleanRef()));
-
-    return result;
-}
-
-auto vk::getSurfaceFormats(VkPhysicalDevice device, VkSurfaceKHR surface) -> std::tuple<VkFormat, VkColorSpaceKHR>
-{
-    uint32_t count;
-    KL_VK_CHECK_RESULT(vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &count, nullptr));
-
-    std::vector<VkSurfaceFormatKHR> formats(count);
-    KL_VK_CHECK_RESULT(vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &count, formats.data()));
-
-    if (count == 1 && formats[0].format == VK_FORMAT_UNDEFINED)
-        return std::make_tuple(VK_FORMAT_B8G8R8A8_UNORM, formats[0].colorSpace);
-    return std::make_tuple(formats[0].format, formats[0].colorSpace);
-}
-
-auto vk::getQueueIndex(VkPhysicalDevice device, VkSurfaceKHR surface) -> uint32_t
-{
-    uint32_t count;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &count, nullptr);
-
-    std::vector<VkQueueFamilyProperties> queueProps;
-    queueProps.resize(count);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &count, queueProps.data());
-
-    std::vector<VkBool32> presentSupported(count);
-    for (uint32_t i = 0; i < count; i++)
-    KL_VK_CHECK_RESULT(vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupported[i]));
-
-    // TODO support for separate rendering and presenting queues
-    for (uint32_t i = 0; i < count; i++)
-    {
-        if (queueProps[i].queueFlags & VK_QUEUE_GRAPHICS_BIT && presentSupported[i] == VK_TRUE)
-            return i;
-    }
-
-    KL_PANIC("Could not find queue index");
-    return 0;
-}
-
-auto vk::getDepthFormat(VkPhysicalDevice device) -> VkFormat
-{
-    std::vector<VkFormat> depthFormats =
-    {
-        VK_FORMAT_D32_SFLOAT_S8_UINT,
-        VK_FORMAT_D32_SFLOAT,
-        VK_FORMAT_D24_UNORM_S8_UINT,
-        VK_FORMAT_D16_UNORM_S8_UINT,
-        VK_FORMAT_D16_UNORM
-    };
-
-    for (auto &format : depthFormats)
-    {
-        VkFormatProperties formatProps;
-        vkGetPhysicalDeviceFormatProperties(device, format, &formatProps);
-        // Format must support depth stencil attachment for optimal tiling
-        if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
-            return format;
-    }
-
-    return VK_FORMAT_UNDEFINED;
-}
-
-auto vk::createCommandPool(VkDevice device, uint32_t queueIndex) -> Resource<VkCommandPool>
-{
-    VkCommandPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.queueFamilyIndex = queueIndex;
-    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-
-    Resource<VkCommandPool> commandPool{device, vkDestroyCommandPool};
-    KL_VK_CHECK_RESULT(vkCreateCommandPool(device, &poolInfo, nullptr, commandPool.cleanRef()));
-
-    return commandPool;
-}
-
-auto vk::createDepthStencil(VkDevice device, const PhysicalDevice &physicalDevice, VkFormat depthFormat,
+auto vk::createDepthStencil(VkDevice device, VkPhysicalDeviceMemoryProperties memProps, VkFormat depthFormat,
     uint32_t canvasWidth, uint32_t canvasHeight) -> DepthStencil
 {
     auto image = createImage(device, depthFormat, canvasWidth, canvasHeight, 1, 1, 0,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-    auto mem = allocateImageMemory(device, image, physicalDevice);
+    auto mem = allocateImageMemory(device, memProps, image);
     auto view = createImageView(device, depthFormat, VK_IMAGE_VIEW_TYPE_2D, 1, 1, image, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
 
     DepthStencil result;
@@ -136,13 +25,13 @@ auto vk::createDepthStencil(VkDevice device, const PhysicalDevice &physicalDevic
     return result;
 }
 
-auto vk::findMemoryType(const PhysicalDevice &physicalDevice, uint32_t typeBits, VkMemoryPropertyFlags properties) -> int32_t
+auto vk::findMemoryType(VkPhysicalDeviceMemoryProperties memProps, uint32_t typeBits, VkMemoryPropertyFlags properties) -> int32_t
 {
-    for (uint32_t i = 0; i < physicalDevice.memoryProperties.memoryTypeCount; i++)
+    for (uint32_t i = 0; i < memProps.memoryTypeCount; i++)
     {
         if ((typeBits & 1) == 1)
         {
-            if ((physicalDevice.memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
+            if ((memProps.memoryTypes[i].propertyFlags & properties) == properties)
                 return i;
         }
         typeBits >>= 1;
@@ -263,7 +152,7 @@ auto vk::createImageView(VkDevice device, VkFormat format, VkImageViewType type,
     return view;
 }
 
-auto vk::allocateImageMemory(VkDevice device, VkImage image, PhysicalDevice physicalDevice) -> Resource<VkDeviceMemory>
+auto vk::allocateImageMemory(VkDevice device, VkPhysicalDeviceMemoryProperties memProps, VkImage image) -> Resource<VkDeviceMemory>
 {
     VkMemoryRequirements memReqs{};
     vkGetImageMemoryRequirements(device, image, &memReqs);
@@ -271,23 +160,13 @@ auto vk::allocateImageMemory(VkDevice device, VkImage image, PhysicalDevice phys
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memReqs.size;
-    allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    allocInfo.memoryTypeIndex = findMemoryType(memProps, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     Resource<VkDeviceMemory> memory{device, vkFreeMemory};
     KL_VK_CHECK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, memory.cleanRef()));
     KL_VK_CHECK_RESULT(vkBindImageMemory(device, image, memory, 0));
 
     return memory;
-}
-
-auto vk::getFormatSize(VkFormat format) -> uint32_t
-{
-    switch (format)
-    {
-        case VK_FORMAT_R8G8B8A8_UNORM: return 4;
-        default:
-            KL_PANIC("Format size is unknown");
-    }
 }
 
 auto vk::createShader(VkDevice device, const void *data, size_t size) -> Resource<VkShaderModule>
@@ -476,7 +355,8 @@ auto vk::createDebugCallback(VkInstance instance, PFN_vkDebugReportCallbackEXT c
     return result;
 }
 
-auto vk::createSampler(VkDevice device, const PhysicalDevice &physicalDevice, uint32_t mipLevels) -> Resource<VkSampler>
+auto vk::createSampler(VkDevice device, VkPhysicalDeviceFeatures physicalFeatures, VkPhysicalDeviceProperties physicalProps,
+    uint32_t mipLevels) -> Resource<VkSampler>
 {
     VkSamplerCreateInfo samplerInfo{};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -494,9 +374,9 @@ auto vk::createSampler(VkDevice device, const PhysicalDevice &physicalDevice, ui
     samplerInfo.maxLod = mipLevels;
     samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
-    if (physicalDevice.features.samplerAnisotropy)
+    if (physicalFeatures.samplerAnisotropy)
     {
-        samplerInfo.maxAnisotropy = physicalDevice.properties.limits.maxSamplerAnisotropy;
+        samplerInfo.maxAnisotropy = physicalProps.limits.maxSamplerAnisotropy;
         samplerInfo.anisotropyEnable = VK_TRUE;
     }
 

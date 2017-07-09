@@ -20,7 +20,10 @@ namespace vk
 
         auto getInstance() const -> VkInstance;
         auto getSurface() const -> VkSurfaceKHR;
-        auto getPhysicalDevice() const -> PhysicalDevice;
+        auto getPhysicalDevice() const -> VkPhysicalDevice;
+        auto getPhysicalFeatures() const -> VkPhysicalDeviceFeatures;
+        auto getPhysicalProperties() const -> VkPhysicalDeviceProperties;
+        auto getPhysicalMemoryFeatures() const -> VkPhysicalDeviceMemoryProperties;
         auto getColorFormat() const -> VkFormat;
         auto getDepthFormat() const -> VkFormat;
         auto getColorSpace() const -> VkColorSpaceKHR;
@@ -29,8 +32,6 @@ namespace vk
 
         operator VkDevice() { return device; }
         operator VkDevice() const { return device; }
-        operator PhysicalDevice() { return physicalDevice; }
-        operator PhysicalDevice() const { return physicalDevice; }
 
     private:
         Resource<VkInstance> instance;
@@ -38,7 +39,10 @@ namespace vk
         Resource<VkDebugReportCallbackEXT> debugCallback;
         Resource<VkDevice> device;
         Resource<VkCommandPool> commandPool;
-        PhysicalDevice physicalDevice;
+        VkPhysicalDevice physicalDevice = nullptr;
+        VkPhysicalDeviceFeatures physicalFeatures{};
+        VkPhysicalDeviceProperties physicalProperties{};
+        VkPhysicalDeviceMemoryProperties physicalMemoryFeatures{};
         VkFormat colorFormat = VK_FORMAT_UNDEFINED;
         VkFormat depthFormat = VK_FORMAT_UNDEFINED;
         VkColorSpaceKHR colorSpace = VK_COLOR_SPACE_MAX_ENUM_KHR;
@@ -57,7 +61,7 @@ namespace vk
         return surface;
     }
 
-    inline auto Device::getPhysicalDevice() const -> PhysicalDevice
+    inline auto Device::getPhysicalDevice() const -> VkPhysicalDevice
     {
         return physicalDevice;
     }
@@ -85,5 +89,20 @@ namespace vk
     inline auto Device::getQueue() const -> VkQueue
     {
         return queue;
+    }
+
+    inline auto Device::getPhysicalFeatures() const -> VkPhysicalDeviceFeatures
+    {
+        return physicalFeatures;
+    }
+
+    inline auto Device::getPhysicalProperties() const -> VkPhysicalDeviceProperties
+    {
+        return physicalProperties;
+    }
+
+    inline auto Device::getPhysicalMemoryFeatures() const -> VkPhysicalDeviceMemoryProperties
+    {
+        return physicalMemoryFeatures;
     }
 }

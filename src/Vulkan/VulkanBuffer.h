@@ -9,16 +9,16 @@
 
 namespace vk
 {
+    class Device;
+
     class Buffer
     {
     public:
-        static auto createStaging(VkDevice device, const PhysicalDevice &physicalDevice, VkDeviceSize size,
-            const void *initialData = nullptr) -> Buffer;
-        static auto createUniformHostVisible(VkDevice device, const PhysicalDevice &physicalDevice, VkDeviceSize size) -> Buffer;
+        static auto createStaging(const Device &device, VkDeviceSize size, const void *initialData = nullptr) -> Buffer;
+        static auto createUniformHostVisible(const Device &device, VkDeviceSize size) -> Buffer;
 
         Buffer() {}
-        Buffer(VkDevice device, const PhysicalDevice &physicalDevice, VkDeviceSize size, VkBufferUsageFlags usageFlags,
-            VkMemoryPropertyFlags memPropertyFlags);
+        Buffer(const Device &device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memPropertyFlags);
         Buffer(Buffer &&other) = default;
         Buffer(const Buffer &other) = delete;
         ~Buffer() {}

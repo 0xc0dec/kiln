@@ -11,11 +11,13 @@ class ImageData;
 
 namespace vk
 {
+    class Device;
+
     class Image
     {
     public:
-        static auto create2D(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, const ImageData &data) -> Image;
-        static auto createCube(VkDevice device, const PhysicalDevice &physicalDevice, VkCommandPool cmdPool, VkQueue queue, const ImageData &data) -> Image;
+        static auto create2D(const Device &device, const ImageData &data) -> Image;
+        static auto createCube(const Device &device, const ImageData &data) -> Image;
 
         Image() {}
         Image(const Image &other) = delete;

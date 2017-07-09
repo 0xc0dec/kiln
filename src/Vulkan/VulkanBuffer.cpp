@@ -4,10 +4,11 @@
 */
 
 #include "VulkanBuffer.h"
+#include "VulkanDevice.h"
 
-auto vk::Buffer::createStaging(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size, const void *initialData) -> Buffer
+auto vk::Buffer::createStaging(const Device &device, VkDeviceSize size, const void *initialData) -> Buffer
 {
-    auto buffer = Buffer(device, physicalDevice, size,
+    auto buffer = Buffer(device, size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
@@ -17,14 +18,14 @@ auto vk::Buffer::createStaging(VkDevice device, const vk::PhysicalDevice &physic
     return buffer;
 }
 
-auto vk::Buffer::createUniformHostVisible(VkDevice device, const vk::PhysicalDevice &physicalDevice, VkDeviceSize size) -> Buffer
+auto vk::Buffer::createUniformHostVisible(const Device &device, VkDeviceSize size) -> Buffer
 {
-    return Buffer(device, physicalDevice, size,
+    return Buffer(device, size,
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
-vk::Buffer::Buffer(VkDevice device, const PhysicalDevice &physicalDevice, VkDeviceSize size, VkBufferUsageFlags usageFlags,
+vk::Buffer::Buffer(const Device &device, VkDeviceSize size, VkBufferUsageFlags usageFlags,
     VkMemoryPropertyFlags memPropertyFlags):
     device(device),
     size(size)
@@ -47,7 +48,7 @@ vk::Buffer::Buffer(VkDevice device, const PhysicalDevice &physicalDevice, VkDevi
     VkMemoryAllocateInfo allocInfo {};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memReqs.size;
-    allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memReqs.memoryTypeBits, memPropertyFlags);
+    allocInfo.memoryTypeIndex = findMemoryType(device.getPhysicalMemoryFeatures(), memReqs.memoryTypeBits, memPropertyFlags);
 
     memory = Resource<VkDeviceMemory>{device, vkFreeMemory};
     KL_VK_CHECK_RESULT(vkAllocateMemory(device, &allocInfo, nullptr, memory.cleanRef()));
@@ -64,8 +65,8 @@ void vk::Buffer::update(const void *newData) const
 
 void vk::Buffer::transferTo(const Buffer &dst, VkQueue queue, VkCommandPool cmdPool) const
 {
-    auto cmdBuf = vk::createCommandBuffer(device, cmdPool);
-    vk::beginCommandBuffer(cmdBuf, true);
+    auto cmdBuf = createCommandBuffer(device, cmdPool);
+    beginCommandBuffer(cmdBuf, true);
 
     VkBufferCopy copyRegion{};
     copyRegion.size = dst.size;
@@ -73,7 +74,7 @@ void vk::Buffer::transferTo(const Buffer &dst, VkQueue queue, VkCommandPool cmdP
 
     KL_VK_CHECK_RESULT(vkEndCommandBuffer(cmdBuf));
 
-    vk::queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &cmdBuf);
+    queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &cmdBuf);
     KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
 
     vkFreeCommandBuffers(device, cmdPool, 1, &cmdBuf);

@@ -124,9 +124,9 @@ static const std::vector<uint32_t> boxIndexData =
 
 static auto createDeviceLocalBuffer(const vk::Device &device, const void *data, VkDeviceSize size, VkBufferUsageFlags usageFlags) -> vk::Buffer
 {
-    auto stagingBuffer = vk::Buffer::createStaging(device, device, size, data);
+    auto stagingBuffer = vk::Buffer::createStaging(device, size, data);
 
-    auto buffer = vk::Buffer(device, device, size,
+    auto buffer = vk::Buffer(device, size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | usageFlags,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     stagingBuffer.transferTo(buffer, device.getQueue(), device.getCommandPool());
@@ -142,14 +142,14 @@ int main()
     Window window{CanvasWidth, CanvasHeight, "Demo"};
     auto device = vk::Device::create(window.getPlatformHandle());
 
-    auto depthStencil = createDepthStencil(device, device.getPhysicalDevice(), device.getDepthFormat(), CanvasWidth, CanvasHeight);
+    auto depthStencil = createDepthStencil(device, device.getPhysicalMemoryFeatures(), device.getDepthFormat(), CanvasWidth, CanvasHeight);
     auto renderPass = vk::RenderPassBuilder(device)
         .withColorAttachment(device.getColorFormat())
         .withDepthAttachment(device.getDepthFormat())
         .build();
     renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
 
-    auto swapchain = vk::Swapchain(device, device.getPhysicalDevice().device, device.getSurface(), renderPass, depthStencil.view,
+    auto swapchain = vk::Swapchain(device, device.getPhysicalDevice(), device.getSurface(), renderPass, depthStencil.view,
         CanvasWidth, CanvasHeight, false, device.getColorFormat(), device.getColorSpace());
 
     struct
@@ -163,8 +163,6 @@ int main()
     std::vector<VkCommandBuffer> renderCmdBuffers;
     renderCmdBuffers.resize(swapchain.getStepCount());
     createCommandBuffers(device, device.getCommandPool(), swapchain.getStepCount(), renderCmdBuffers.data());
-
-    // Random test code below
 
     struct
     {
@@ -224,7 +222,7 @@ int main()
     viewMatrices.projectionMatrix = cam.getProjectionMatrix();
     viewMatrices.viewMatrix = glm::mat4();
 
-    auto viewMatricesBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(viewMatrices));
+    auto viewMatricesBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(viewMatrices));
     viewMatricesBuffer.update(&viewMatrices);
 
     scene.descriptorPool = vk::DescriptorPoolBuilder(device)
@@ -248,7 +246,7 @@ int main()
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
         glm::mat4 modelMatrix{};
-        scene.box.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(glm::mat4));
+        scene.box.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
         scene.box.modelMatrixBuffer.update(&modelMatrix);
 
         scene.box.vertexBuffer = createDeviceLocalBuffer(device, boxVertexData.data(),
@@ -275,7 +273,7 @@ int main()
         scene.box.descriptorSet = scene.descriptorPool.allocateSet(scene.box.descSetLayout);
 
         auto textureData = ImageData::load2D("../../assets/Cobblestone.png");
-        scene.box.texture = vk::Image::create2D(device, device.getPhysicalDevice(), device.getCommandPool(), device.getQueue(), textureData);
+        scene.box.texture = vk::Image::create2D(device, textureData);
 
         vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, scene.box.descriptorSet, scene.box.modelMatrixBuffer, 0, sizeof(modelMatrix))
@@ -290,7 +288,7 @@ int main()
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
         glm::mat4 modelMatrix{};
-        scene.skybox.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(glm::mat4));
+        scene.skybox.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
         scene.skybox.modelMatrixBuffer.update(&modelMatrix);
 
         scene.skybox.vertexBuffer = createDeviceLocalBuffer(device, quadVertexData.data(),
@@ -316,7 +314,7 @@ int main()
         scene.skybox.descriptorSet = scene.descriptorPool.allocateSet(scene.skybox.descSetLayout);
 
         auto data = ImageData::loadCube("../../assets/Cubemap_space.ktx");
-        scene.skybox.texture = vk::Image::createCube(device, device.getPhysicalDevice(), device.getCommandPool(), device.getQueue(), data);
+        scene.skybox.texture = vk::Image::createCube(device, data);
 
         vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, scene.skybox.descriptorSet, scene.skybox.modelMatrixBuffer, 0, sizeof(modelMatrix))
@@ -328,19 +326,19 @@ int main()
         Transform t;
         t.setLocalPosition({3, 0, 3});
         glm::mat4 modelMatrix = t.getWorldMatrix();
-        scene.axes.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(glm::mat4));
+        scene.axes.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
         scene.axes.modelMatrixBuffer.update(&modelMatrix);
 
         glm::vec3 red{1.0f, 0, 0};
-        scene.axes.redColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(glm::vec3));
+        scene.axes.redColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::vec3));
         scene.axes.redColorUniformBuffer.update(&red);
 
         glm::vec3 green{0, 1.0f, 0};
-        scene.axes.greenColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(glm::vec3));
+        scene.axes.greenColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::vec3));
         scene.axes.greenColorUniformBuffer.update(&green);
 
         glm::vec3 blue{0, 0, 1.0f};
-        scene.axes.blueColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, device.getPhysicalDevice(), sizeof(glm::vec3));
+        scene.axes.blueColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::vec3));
         scene.axes.blueColorUniformBuffer.update(&blue);
 
         auto vsSrc = fs::readBytes("../../assets/Axis.vert.spv");
