@@ -40,7 +40,7 @@ namespace vk
     public:
         explicit RenderPassBuilder(VkDevice device);
 
-        auto withColorAttachment(VkFormat colorFormat) -> RenderPassBuilder&;
+        auto withColorAttachment(VkFormat colorFormat, VkImageLayout finalLayout) -> RenderPassBuilder&;
         auto withDepthAttachment(VkFormat depthFormat) -> RenderPassBuilder&;
 
         auto build() -> RenderPass;

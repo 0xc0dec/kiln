@@ -40,7 +40,7 @@ vk::RenderPassBuilder::RenderPassBuilder(VkDevice device):
 {
 }
 
-auto vk::RenderPassBuilder::withColorAttachment(VkFormat colorFormat) -> RenderPassBuilder&
+auto vk::RenderPassBuilder::withColorAttachment(VkFormat colorFormat, VkImageLayout finalLayout) -> RenderPassBuilder&
 {
     VkAttachmentDescription desc{};
     desc.format = colorFormat;
@@ -51,7 +51,7 @@ auto vk::RenderPassBuilder::withColorAttachment(VkFormat colorFormat) -> RenderP
     desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    desc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    desc.finalLayout = finalLayout;
     attachments.push_back(desc);
 
     VkAttachmentReference reference{};

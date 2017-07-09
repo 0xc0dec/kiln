@@ -131,9 +131,11 @@ int main()
     auto device = vk::Device::create(window.getPlatformHandle());
 
     auto primaryRenderPass = vk::RenderPassBuilder(device)
-        .withColorAttachment(device.getColorFormat())
+        .withColorAttachment(device.getColorFormat(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
         .withDepthAttachment(device.getDepthFormat())
         .build();
+    // TODO Take into account that clear values must correspond to attachments,
+    // so I guess N attachments means N clear values + 1 for depth
     primaryRenderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
 
     auto swapchain = vk::Swapchain(device, primaryRenderPass, CanvasWidth, CanvasHeight, false);
@@ -146,9 +148,9 @@ int main()
     semaphores.presentComplete = createSemaphore(device);
     semaphores.renderComplete = createSemaphore(device);
 
-    std::vector<VkCommandBuffer> renderCmdBuffers;
-    renderCmdBuffers.resize(swapchain.getStepCount());
-    createCommandBuffers(device, device.getCommandPool(), swapchain.getStepCount(), renderCmdBuffers.data());
+    std::vector<VkCommandBuffer> primaryRenderCmdBuffers;
+    primaryRenderCmdBuffers.resize(swapchain.getStepCount());
+    createCommandBuffers(device, device.getCommandPool(), swapchain.getStepCount(), primaryRenderCmdBuffers.data());
 
     struct
     {
@@ -167,6 +169,8 @@ int main()
             vk::Resource<VkDeviceMemory> depthStencilMemory;
             vk::Resource<VkFramebuffer> frameBuffer;
             vk::RenderPass renderPass;
+            vk::Resource<VkSemaphore> semaphore;
+            VkCommandBuffer commandBuffer;
         } offscreen;
 
         struct
@@ -194,6 +198,16 @@ int main()
         {
             vk::Resource<VkDescriptorSetLayout> descSetLayout;
             vk::Pipeline pipeline;
+            vk::Image texture;
+            vk::Buffer modelMatrixBuffer;
+            vk::Buffer vertexBuffer;
+            VkDescriptorSet descriptorSet;
+        } screenQuad;
+
+        struct
+        {
+            vk::Resource<VkDescriptorSetLayout> descSetLayout;
+            vk::Pipeline pipeline;
             vk::Buffer redColorUniformBuffer;
             vk::Buffer greenColorUniformBuffer;
             vk::Buffer blueColorUniformBuffer;
@@ -215,16 +229,19 @@ int main()
             scene.offscreen.image, VK_IMAGE_ASPECT_COLOR_BIT);
         scene.offscreen.sampler = createSampler(device, device.getPhysicalFeatures(), device.getPhysicalProperties(), 1);
         scene.offscreen.depthStencilImage = createImage(device, device.getDepthFormat(), CanvasWidth, CanvasHeight, 1, 1, 0,
-            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
         scene.offscreen.depthStencilMemory = allocateImageMemory(device, device.getPhysicalMemoryFeatures(), scene.offscreen.depthStencilImage);
         scene.offscreen.depthStencilImageView = createImageView(device, device.getDepthFormat(), VK_IMAGE_VIEW_TYPE_2D, 1, 1,
             scene.offscreen.depthStencilImage, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
         scene.offscreen.renderPass = vk::RenderPassBuilder(device)
-            .withColorAttachment(VK_FORMAT_R8G8B8A8_UNORM)
+            .withColorAttachment(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
             .withDepthAttachment(device.getDepthFormat())
             .build();
+        scene.offscreen.renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
         scene.offscreen.frameBuffer = createFrameBuffer(device, scene.offscreen.imageView,
             scene.offscreen.depthStencilImageView, scene.offscreen.renderPass, CanvasWidth, CanvasHeight);
+        scene.offscreen.semaphore = createSemaphore(device);
+        scene.offscreen.commandBuffer = createCommandBuffer(device, device.getCommandPool());
     }
 
     struct
@@ -278,7 +295,7 @@ int main()
             .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        scene.box.pipeline = vk::PipelineBuilder(device, primaryRenderPass, vs, fs)
+        scene.box.pipeline = vk::PipelineBuilder(device, scene.offscreen.renderPass, vs, fs)
             .withDescriptorSetLayout(scene.globalDescSetLayout)
             .withDescriptorSetLayout(scene.box.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
@@ -301,6 +318,37 @@ int main()
     }
 
     {
+        auto vsSrc = fs::readBytes("../../assets/ScreenQuad.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/ScreenQuad.frag.spv");
+        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
+        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
+
+        scene.screenQuad.vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * quadVertexData.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, quadVertexData.data());
+
+        scene.screenQuad.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
+            .withBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .build();
+
+        scene.screenQuad.pipeline = vk::PipelineBuilder(device, primaryRenderPass, vs, fs)
+            .withDepthTest(false, false)
+            .withDescriptorSetLayout(scene.screenQuad.descSetLayout)
+            .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
+            .withCullMode(VK_CULL_MODE_NONE)
+            .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+            .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
+            .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
+            .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3)
+            .build();
+
+        scene.screenQuad.descriptorSet = scene.descriptorPool.allocateSet(scene.screenQuad.descSetLayout);
+
+        vk::DescriptorSetUpdater(device)
+            .forTexture(0, scene.screenQuad.descriptorSet, scene.offscreen.imageView, scene.offscreen.sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+            .updateSets();
+    }
+
+    {
         auto vsSrc = fs::readBytes("../../assets/Skybox.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/Skybox.frag.spv");
         auto vs = createShader(device, vsSrc.data(), vsSrc.size());
@@ -318,7 +366,7 @@ int main()
             .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        scene.skybox.pipeline = vk::PipelineBuilder(device, primaryRenderPass, vs, fs)
+        scene.skybox.pipeline = vk::PipelineBuilder(device, scene.offscreen.renderPass, vs, fs)
             .withDepthTest(false, false)
             .withDescriptorSetLayout(scene.globalDescSetLayout)
             .withDescriptorSetLayout(scene.skybox.descSetLayout)
@@ -377,7 +425,7 @@ int main()
             .withBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
             .build();
 
-        scene.axes.pipeline = vk::PipelineBuilder(device, primaryRenderPass, vs, fs)
+        scene.axes.pipeline = vk::PipelineBuilder(device, scene.offscreen.renderPass, vs, fs)
             .withDescriptorSetLayout(scene.globalDescSetLayout)
             .withDescriptorSetLayout(scene.axes.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
@@ -407,12 +455,13 @@ int main()
             .updateSets();
     }
 
-    for (uint32_t i = 0; i < renderCmdBuffers.size(); i++)
+    // Record command buffers
+
     {
-        auto buf = renderCmdBuffers[i];
+        auto buf = scene.offscreen.commandBuffer;
         vk::beginCommandBuffer(buf, false);
 
-        primaryRenderPass.begin(buf, swapchain.getFramebuffer(i), CanvasWidth, CanvasHeight);
+        scene.offscreen.renderPass.begin(buf, scene.offscreen.frameBuffer, CanvasWidth, CanvasHeight);
 
         auto vp = VkViewport{0, 0, CanvasWidth, CanvasHeight, 0, 1};
 
@@ -469,10 +518,39 @@ int main()
             vkCmdDrawIndexed(buf, boxIndexData.size(), 1, 0, 0, 0);
         }
 
+        scene.offscreen.renderPass.end(buf);
+
+        KL_VK_CHECK_RESULT(vkEndCommandBuffer(buf));
+    }
+
+    for (uint32_t i = 0; i < primaryRenderCmdBuffers.size(); i++)
+    {
+        auto buf = primaryRenderCmdBuffers[i];
+        vk::beginCommandBuffer(buf, false);
+
+        primaryRenderPass.begin(buf, swapchain.getFramebuffer(i), CanvasWidth, CanvasHeight);
+
+        auto vp = VkViewport{0, 0, CanvasWidth, CanvasHeight, 0, 1};
+
+        vkCmdSetViewport(buf, 0, 1, &vp);
+
+        VkRect2D scissor{{0, 0}, {vp.width, vp.height}};
+        vkCmdSetScissor(buf, 0, 1, &scissor);
+
+        std::vector<VkBuffer> vertexBuffers = {scene.screenQuad.vertexBuffer};
+        std::vector<VkDeviceSize> vertexBufferOffsets = {0};
+        std::vector<VkDescriptorSet> descSets = {scene.screenQuad.descriptorSet};
+        vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.screenQuad.pipeline);
+        vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.screenQuad.pipeline.getLayout(), 0, 1, descSets.data(), 0, nullptr);
+        vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
+        vkCmdDraw(buf, 6, 1, 0, 0);
+
         primaryRenderPass.end(buf);
 
         KL_VK_CHECK_RESULT(vkEndCommandBuffer(buf));
     }
+
+    // Main loop
 
     Input input;
 
@@ -488,15 +566,15 @@ int main()
         viewMatricesBuffer.update(&viewMatrices);
 
         auto swapchainStep = swapchain.getNextStep(semaphores.presentComplete);
-
-        vk::queueSubmit(device.getQueue(), 1, &semaphores.presentComplete, 1, &semaphores.renderComplete, 1, &renderCmdBuffers[swapchainStep]);
+        vk::queueSubmit(device.getQueue(), 1, &semaphores.presentComplete, 1, &scene.offscreen.semaphore, 1, &scene.offscreen.commandBuffer);
+        vk::queueSubmit(device.getQueue(), 1, &scene.offscreen.semaphore, 1, &semaphores.renderComplete, 1, &primaryRenderCmdBuffers[swapchainStep]);
         queuePresent(device.getQueue(), swapchain, swapchainStep, 1, &semaphores.renderComplete);
         KL_VK_CHECK_RESULT(vkQueueWaitIdle(device.getQueue()));
 
         window.endUpdate();
     }
 
-    vkFreeCommandBuffers(device, device.getCommandPool(), renderCmdBuffers.size(), renderCmdBuffers.data());
+    vkFreeCommandBuffers(device, device.getCommandPool(), primaryRenderCmdBuffers.size(), primaryRenderCmdBuffers.data());
 
     return 0;
 }

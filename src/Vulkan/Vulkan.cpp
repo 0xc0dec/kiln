@@ -123,6 +123,7 @@ auto vk::createImageView(VkDevice device, VkFormat format, VkImageViewType type,
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.format = format;
     viewInfo.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
+    viewInfo.subresourceRange = {};
     viewInfo.subresourceRange.aspectMask = aspectMask;
     viewInfo.subresourceRange.baseMipLevel = 0;
     viewInfo.subresourceRange.baseArrayLayer = 0;
