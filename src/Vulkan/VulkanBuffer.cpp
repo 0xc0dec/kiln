@@ -25,6 +25,16 @@ auto vk::Buffer::createUniformHostVisible(const Device &device, VkDeviceSize siz
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
+auto vk::Buffer::createDeviceLocal(const Device &device, VkDeviceSize size, VkBufferUsageFlags usageFlags, const void *data) -> Buffer
+{
+    auto stagingBuffer = createStaging(device, size, data);
+
+    auto buffer = Buffer(device, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | usageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    stagingBuffer.transferTo(buffer, device.getQueue(), device.getCommandPool());
+
+    return std::move(buffer);
+}
+
 vk::Buffer::Buffer(const Device &device, VkDeviceSize size, VkBufferUsageFlags usageFlags,
     VkMemoryPropertyFlags memPropertyFlags):
     device(device),

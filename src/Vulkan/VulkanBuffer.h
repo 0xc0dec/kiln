@@ -16,6 +16,7 @@ namespace vk
     public:
         static auto createStaging(const Device &device, VkDeviceSize size, const void *initialData = nullptr) -> Buffer;
         static auto createUniformHostVisible(const Device &device, VkDeviceSize size) -> Buffer;
+        static auto createDeviceLocal(const Device &device, VkDeviceSize size, VkBufferUsageFlags usageFlags, const void *data) -> Buffer;
 
         Buffer() {}
         Buffer(const Device &device, VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memPropertyFlags);

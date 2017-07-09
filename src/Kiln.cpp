@@ -122,18 +122,6 @@ static const std::vector<uint32_t> boxIndexData =
     20, 23, 21
 };
 
-static auto createDeviceLocalBuffer(const vk::Device &device, const void *data, VkDeviceSize size, VkBufferUsageFlags usageFlags) -> vk::Buffer
-{
-    auto stagingBuffer = vk::Buffer::createStaging(device, size, data);
-
-    auto buffer = vk::Buffer(device, size,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | usageFlags,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    stagingBuffer.transferTo(buffer, device.getQueue(), device.getCommandPool());
-
-    return std::move(buffer);
-}
-
 int main()
 {
     const uint32_t CanvasWidth = 1366;
@@ -247,10 +235,10 @@ int main()
         scene.box.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
         scene.box.modelMatrixBuffer.update(&modelMatrix);
 
-        scene.box.vertexBuffer = createDeviceLocalBuffer(device, boxVertexData.data(),
-            sizeof(float) * boxVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        scene.box.indexBuffer = createDeviceLocalBuffer(device, boxIndexData.data(),
-            sizeof(uint32_t) * boxIndexData.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+        scene.box.vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * boxVertexData.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, boxVertexData.data());
+        scene.box.indexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(uint32_t) * boxIndexData.size(),
+            VK_BUFFER_USAGE_INDEX_BUFFER_BIT, boxIndexData.data());
 
         scene.box.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
@@ -289,8 +277,8 @@ int main()
         scene.skybox.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
         scene.skybox.modelMatrixBuffer.update(&modelMatrix);
 
-        scene.skybox.vertexBuffer = createDeviceLocalBuffer(device, quadVertexData.data(),
-            sizeof(float) * quadVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        scene.skybox.vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * quadVertexData.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, quadVertexData.data());
 
         scene.skybox.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
@@ -344,12 +332,12 @@ int main()
         auto vs = createShader(device, vsSrc.data(), vsSrc.size());
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
-        scene.axes.xAxisVertexBuffer = createDeviceLocalBuffer(device, xAxisVertexData.data(),
-            sizeof(float) * xAxisVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        scene.axes.yAxisVertexBuffer = createDeviceLocalBuffer(device, yAxisVertexData.data(),
-            sizeof(float) * yAxisVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        scene.axes.zAxisVertexBuffer = createDeviceLocalBuffer(device, zAxisVertexData.data(),
-            sizeof(float) * zAxisVertexData.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        scene.axes.xAxisVertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * xAxisVertexData.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, xAxisVertexData.data());
+        scene.axes.yAxisVertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * yAxisVertexData.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, yAxisVertexData.data());
+        scene.axes.zAxisVertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * zAxisVertexData.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, zAxisVertexData.data());
 
         scene.axes.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
