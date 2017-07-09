@@ -9,22 +9,6 @@
 
 using namespace vk;
 
-auto vk::createDepthStencil(VkDevice device, VkPhysicalDeviceMemoryProperties memProps, VkFormat depthFormat,
-    uint32_t canvasWidth, uint32_t canvasHeight) -> DepthStencil
-{
-    auto image = createImage(device, depthFormat, canvasWidth, canvasHeight, 1, 1, 0,
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-    auto mem = allocateImageMemory(device, memProps, image);
-    auto view = createImageView(device, depthFormat, VK_IMAGE_VIEW_TYPE_2D, 1, 1, image, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
-
-    DepthStencil result;
-    result.image = std::move(image);
-    result.mem = std::move(mem);
-    result.view = std::move(view);
-
-    return result;
-}
-
 auto vk::findMemoryType(VkPhysicalDeviceMemoryProperties memProps, uint32_t typeBits, VkMemoryPropertyFlags properties) -> int32_t
 {
     for (uint32_t i = 0; i < memProps.memoryTypeCount; i++)

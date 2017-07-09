@@ -27,10 +27,7 @@ namespace vk
         void begin(VkCommandBuffer cmdBuf, VkFramebuffer framebuffer, uint32_t canvasWidth, uint32_t canvasHeight);
         void end(VkCommandBuffer cmdBuf);
 
-        operator VkRenderPass()
-        {
-            return pass;
-        }
+        operator VkRenderPass() { return pass; }
 
     private:
         VkDevice device = nullptr;

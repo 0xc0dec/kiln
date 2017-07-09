@@ -24,15 +24,6 @@ namespace vk
 {
     class Swapchain;
 
-    struct DepthStencil
-    {
-        Resource<VkImage> image;
-        Resource<VkDeviceMemory> mem;
-        Resource<VkImageView> view;
-    };
-
-    auto createDepthStencil(VkDevice device, VkPhysicalDeviceMemoryProperties memProps,
-        VkFormat depthFormat, uint32_t canvasWidth, uint32_t canvasHeight) -> DepthStencil;
     auto findMemoryType(VkPhysicalDeviceMemoryProperties memProps, uint32_t typeBits, VkMemoryPropertyFlags properties) -> int32_t;
     auto createFrameBuffer(VkDevice device, VkImageView colorAttachment, VkImageView depthAttachment,
         VkRenderPass renderPass, uint32_t width, uint32_t height) -> Resource<VkFramebuffer>;

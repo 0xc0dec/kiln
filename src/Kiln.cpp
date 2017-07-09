@@ -142,15 +142,13 @@ int main()
     Window window{CanvasWidth, CanvasHeight, "Demo"};
     auto device = vk::Device::create(window.getPlatformHandle());
 
-    auto depthStencil = createDepthStencil(device, device.getPhysicalMemoryFeatures(), device.getDepthFormat(), CanvasWidth, CanvasHeight);
     auto renderPass = vk::RenderPassBuilder(device)
         .withColorAttachment(device.getColorFormat())
         .withDepthAttachment(device.getDepthFormat())
         .build();
     renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
 
-    auto swapchain = vk::Swapchain(device, device.getPhysicalDevice(), device.getSurface(), renderPass, depthStencil.view,
-        CanvasWidth, CanvasHeight, false, device.getColorFormat(), device.getColorSpace());
+    auto swapchain = vk::Swapchain(device, renderPass, CanvasWidth, CanvasHeight, false);
 
     struct
     {

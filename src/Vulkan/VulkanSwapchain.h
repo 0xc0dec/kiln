@@ -10,14 +10,15 @@
 
 namespace vk
 {
+    class Device;
+
     class Swapchain
     {
     public:
         Swapchain() {}
+        Swapchain(const Device &device, VkRenderPass renderPass, uint32_t width, uint32_t height, bool vsync);
         Swapchain(const Swapchain &other) = delete;
         Swapchain(Swapchain &&other) = default;
-        Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkRenderPass renderPass,
-            VkImageView depthStencilView, uint32_t width, uint32_t height, bool vsync, VkFormat colorFormat, VkColorSpaceKHR colorSpace);
         ~Swapchain() {}
 
         auto operator=(const Swapchain &other) -> Swapchain& = delete;
@@ -43,6 +44,9 @@ namespace vk
 
         VkDevice device = nullptr;
         Resource<VkSwapchainKHR> swapchain;
+        Resource<VkImage> depthStencilImage;
+        Resource<VkImageView> depthStencilImageView;
+        Resource<VkDeviceMemory> depthStencilMem;
         std::vector<Step> steps;
     };
 
