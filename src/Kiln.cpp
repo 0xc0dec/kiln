@@ -130,13 +130,13 @@ int main()
     Window window{CanvasWidth, CanvasHeight, "Demo"};
     auto device = vk::Device::create(window.getPlatformHandle());
 
-    auto renderPass = vk::RenderPassBuilder(device)
+    auto primaryRenderPass = vk::RenderPassBuilder(device)
         .withColorAttachment(device.getColorFormat())
         .withDepthAttachment(device.getDepthFormat())
         .build();
-    renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
+    primaryRenderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
 
-    auto swapchain = vk::Swapchain(device, renderPass, CanvasWidth, CanvasHeight, false);
+    auto swapchain = vk::Swapchain(device, primaryRenderPass, CanvasWidth, CanvasHeight, false);
 
     struct
     {
@@ -155,6 +155,19 @@ int main()
         vk::DescriptorPool descriptorPool;
         vk::Resource<VkDescriptorSetLayout> globalDescSetLayout;
         VkDescriptorSet globalDescriptorSet;
+
+        struct
+        {
+            vk::Resource<VkImage> image;
+            vk::Resource<VkImageView> imageView;
+            vk::Resource<VkDeviceMemory> imageMemory;
+            vk::Resource<VkSampler> sampler;
+            vk::Resource<VkImage> depthStencilImage;
+            vk::Resource<VkImageView> depthStencilImageView;
+            vk::Resource<VkDeviceMemory> depthStencilMemory;
+            vk::Resource<VkFramebuffer> frameBuffer;
+            vk::RenderPass renderPass;
+        } offscreen;
 
         struct
         {
@@ -193,6 +206,26 @@ int main()
             VkDescriptorSet blueDescSet;
         } axes;
     } scene;
+
+    {
+        scene.offscreen.image = createImage(device, VK_FORMAT_R8G8B8A8_UNORM, CanvasWidth, CanvasHeight, 1, 1, 0,
+            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+        scene.offscreen.imageMemory = allocateImageMemory(device, device.getPhysicalMemoryFeatures(), scene.offscreen.image);
+        scene.offscreen.imageView = createImageView(device, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_VIEW_TYPE_2D, 1, 1,
+            scene.offscreen.image, VK_IMAGE_ASPECT_COLOR_BIT);
+        scene.offscreen.sampler = createSampler(device, device.getPhysicalFeatures(), device.getPhysicalProperties(), 1);
+        scene.offscreen.depthStencilImage = createImage(device, device.getDepthFormat(), CanvasWidth, CanvasHeight, 1, 1, 0,
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+        scene.offscreen.depthStencilMemory = allocateImageMemory(device, device.getPhysicalMemoryFeatures(), scene.offscreen.depthStencilImage);
+        scene.offscreen.depthStencilImageView = createImageView(device, device.getDepthFormat(), VK_IMAGE_VIEW_TYPE_2D, 1, 1,
+            scene.offscreen.depthStencilImage, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
+        scene.offscreen.renderPass = vk::RenderPassBuilder(device)
+            .withColorAttachment(VK_FORMAT_R8G8B8A8_UNORM)
+            .withDepthAttachment(device.getDepthFormat())
+            .build();
+        scene.offscreen.frameBuffer = createFrameBuffer(device, scene.offscreen.imageView,
+            scene.offscreen.depthStencilImageView, scene.offscreen.renderPass, CanvasWidth, CanvasHeight);
+    }
 
     struct
     {
@@ -245,7 +278,7 @@ int main()
             .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        scene.box.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
+        scene.box.pipeline = vk::PipelineBuilder(device, primaryRenderPass, vs, fs)
             .withDescriptorSetLayout(scene.globalDescSetLayout)
             .withDescriptorSetLayout(scene.box.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
@@ -285,7 +318,7 @@ int main()
             .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        scene.skybox.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
+        scene.skybox.pipeline = vk::PipelineBuilder(device, primaryRenderPass, vs, fs)
             .withDepthTest(false, false)
             .withDescriptorSetLayout(scene.globalDescSetLayout)
             .withDescriptorSetLayout(scene.skybox.descSetLayout)
@@ -344,7 +377,7 @@ int main()
             .withBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
             .build();
 
-        scene.axes.pipeline = vk::PipelineBuilder(device, renderPass, vs, fs)
+        scene.axes.pipeline = vk::PipelineBuilder(device, primaryRenderPass, vs, fs)
             .withDescriptorSetLayout(scene.globalDescSetLayout)
             .withDescriptorSetLayout(scene.axes.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
@@ -379,7 +412,7 @@ int main()
         auto buf = renderCmdBuffers[i];
         vk::beginCommandBuffer(buf, false);
 
-        renderPass.begin(buf, swapchain.getFramebuffer(i), CanvasWidth, CanvasHeight);
+        primaryRenderPass.begin(buf, swapchain.getFramebuffer(i), CanvasWidth, CanvasHeight);
 
         auto vp = VkViewport{0, 0, CanvasWidth, CanvasHeight, 0, 1};
 
@@ -436,7 +469,7 @@ int main()
             vkCmdDrawIndexed(buf, boxIndexData.size(), 1, 0, 0, 0);
         }
 
-        renderPass.end(buf);
+        primaryRenderPass.end(buf);
 
         KL_VK_CHECK_RESULT(vkEndCommandBuffer(buf));
     }
