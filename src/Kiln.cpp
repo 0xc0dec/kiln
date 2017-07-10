@@ -163,10 +163,7 @@ int main()
 
         struct
         {
-            vk::Resource<VkImage> image;
-            vk::Resource<VkImageView> imageView;
-            vk::Resource<VkDeviceMemory> imageMemory;
-            vk::Resource<VkSampler> sampler;
+            vk::Image colorAttachment;
             vk::Resource<VkImage> depthStencilImage;
             vk::Resource<VkImageView> depthStencilImageView;
             vk::Resource<VkDeviceMemory> depthStencilMemory;
@@ -225,12 +222,12 @@ int main()
     } scene;
 
     {
-        scene.offscreen.image = createImage(device, VK_FORMAT_R8G8B8A8_UNORM, CanvasWidth / 2, CanvasHeight / 2, 1, 1, 0,
-            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-        scene.offscreen.imageMemory = allocateImageMemory(device, device.getPhysicalMemoryFeatures(), scene.offscreen.image);
-        scene.offscreen.imageView = createImageView(device, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_VIEW_TYPE_2D, 1, 1,
-            scene.offscreen.image, VK_IMAGE_ASPECT_COLOR_BIT);
-        scene.offscreen.sampler = createSampler(device, device.getPhysicalFeatures(), device.getPhysicalProperties(), 1);
+        scene.offscreen.colorAttachment = vk::Image(device, CanvasWidth / 2, CanvasHeight / 2, 1, 1,
+            VK_FORMAT_R8G8B8A8_UNORM,
+            0,
+            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            VK_IMAGE_VIEW_TYPE_2D,
+            VK_IMAGE_ASPECT_COLOR_BIT);
         scene.offscreen.depthStencilImage = createImage(device, device.getDepthFormat(), CanvasWidth / 2, CanvasHeight / 2, 1, 1, 0,
             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
         scene.offscreen.depthStencilMemory = allocateImageMemory(device, device.getPhysicalMemoryFeatures(), scene.offscreen.depthStencilImage);
@@ -240,7 +237,7 @@ int main()
             .withColorAttachment(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
             .withDepthAttachment(device.getDepthFormat()));
         scene.offscreen.renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
-        scene.offscreen.frameBuffer = createFrameBuffer(device, scene.offscreen.imageView,
+        scene.offscreen.frameBuffer = createFrameBuffer(device, scene.offscreen.colorAttachment.getView(),
             scene.offscreen.depthStencilImageView, scene.offscreen.renderPass, CanvasWidth / 2, CanvasHeight / 2);
         scene.offscreen.semaphore = createSemaphore(device);
         scene.offscreen.commandBuffer = createCommandBuffer(device, device.getCommandPool());
@@ -342,8 +339,9 @@ int main()
 
         scene.screenQuad.descriptorSet = scene.descriptorPool.allocateSet(scene.screenQuad.descSetLayout);
 
+        auto &colorAttachment = scene.offscreen.colorAttachment;
         vk::DescriptorSetUpdater(device)
-            .forTexture(0, scene.screenQuad.descriptorSet, scene.offscreen.imageView, scene.offscreen.sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+            .forTexture(0, scene.screenQuad.descriptorSet, colorAttachment.getView(), colorAttachment.getSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
             .updateSets();
     }
 

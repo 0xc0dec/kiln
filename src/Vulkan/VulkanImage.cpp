@@ -27,8 +27,11 @@ auto vk::Image::create2D(const Device &device, const ImageData &data) -> Image
     const auto height = data.getHeight(0);
     const auto format = toVulkanFormat(data.getFormat());
 
-    auto image = Image(device, width, height, mipLevels, 1, format, 0, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
+    auto image = Image(device, width, height, mipLevels, 1, format,
+        0,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_VIEW_TYPE_2D,
+        VK_IMAGE_ASPECT_COLOR_BIT);
     image.uploadData(device, data);
 
     return image;
@@ -41,8 +44,11 @@ auto vk::Image::createCube(const Device &device, const ImageData &data) -> Image
     const auto height = data.getHeight(0, 0);
     const auto format = toVulkanFormat(data.getFormat());
 
-    auto image = Image(device, width, height, mipLevels, 6, format, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_ASPECT_COLOR_BIT);
+    auto image = Image(device, width, height, mipLevels, 6, format,
+        VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_VIEW_TYPE_CUBE,
+        VK_IMAGE_ASPECT_COLOR_BIT);
     image.uploadData(device, data);
 
     return image;
