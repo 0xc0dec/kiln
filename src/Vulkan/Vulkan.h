@@ -35,15 +35,8 @@ namespace vk
         uint32_t commandBufferCount, const VkCommandBuffer *commandBuffers);
     void queuePresent(VkQueue queue, const Swapchain &swapchain, uint32_t swapchainStep,
         uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores);
-    void setImageLayout(VkCommandBuffer cmdbuffer, VkImage image, VkImageLayout oldImageLayout, VkImageLayout newImageLayout,
-        VkImageSubresourceRange subresourceRange, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask);
     auto createDebugCallback(VkInstance instance, PFN_vkDebugReportCallbackEXT callbackFunc) -> Resource<VkDebugReportCallbackEXT>;
     void beginCommandBuffer(VkCommandBuffer buffer, bool oneTime);
-    auto createImage(VkDevice device, VkFormat format, uint32_t width, uint32_t height, uint32_t mipLevels,
-        uint32_t arrayLayers, VkImageCreateFlags createFlags, VkImageUsageFlags usageFlags) -> Resource<VkImage>;
     auto createImageView(VkDevice device, VkFormat format, VkImageViewType type, uint32_t mipLevels, uint32_t layers,
         VkImage image, VkImageAspectFlags aspectMask) -> Resource<VkImageView>;
-    auto createSampler(VkDevice device, VkPhysicalDeviceFeatures physicalFeatures, VkPhysicalDeviceProperties physicalProps,
-        uint32_t mipLevels) -> Resource<VkSampler>;
-    auto allocateImageMemory(VkDevice device, VkPhysicalDeviceMemoryProperties memProps, VkImage image) -> Resource<VkDeviceMemory>;
 }
