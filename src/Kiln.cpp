@@ -1,5 +1,5 @@
-// TODO Test offscreen rendering
-// TODO refactor swapchain + depth/stencil creation
+// TODO Use Image class for offscreen color/depth targets
+// TODO Separate Image creation from copying data to it
 
 /*
     Copyright (c) Aleksey Fedotov
