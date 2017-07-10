@@ -1,5 +1,6 @@
 // TODO Use Image class for offscreen color/depth targets
 // TODO Separate Image creation from copying data to it
+// TODO Resource wrapper for command buffers
 
 /*
     Copyright (c) Aleksey Fedotov
