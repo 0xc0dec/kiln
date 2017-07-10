@@ -1,3 +1,6 @@
+// TODO RenderPlan
+// TODO Move primary cmd buffers into Swapchain
+
 /*
     Copyright (c) Aleksey Fedotov
     MIT license
