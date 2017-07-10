@@ -164,9 +164,7 @@ int main()
         struct
         {
             vk::Image colorAttachment;
-            vk::Resource<VkImage> depthStencilImage;
-            vk::Resource<VkImageView> depthStencilImageView;
-            vk::Resource<VkDeviceMemory> depthStencilMemory;
+            vk::Image depthAttachment;
             vk::Resource<VkFramebuffer> frameBuffer;
             vk::RenderPass renderPass;
             vk::Resource<VkSemaphore> semaphore;
@@ -228,18 +226,24 @@ int main()
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VK_IMAGE_VIEW_TYPE_2D,
             VK_IMAGE_ASPECT_COLOR_BIT);
-        scene.offscreen.depthStencilImage = createImage(device, device.getDepthFormat(), CanvasWidth / 2, CanvasHeight / 2, 1, 1, 0,
-            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
-        scene.offscreen.depthStencilMemory = allocateImageMemory(device, device.getPhysicalMemoryFeatures(), scene.offscreen.depthStencilImage);
-        scene.offscreen.depthStencilImageView = createImageView(device, device.getDepthFormat(), VK_IMAGE_VIEW_TYPE_2D, 1, 1,
-            scene.offscreen.depthStencilImage, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
+        scene.offscreen.depthAttachment = vk::Image(device, CanvasWidth / 2, CanvasHeight / 2, 1, 1,
+            device.getDepthFormat(),
+            0,
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            VK_IMAGE_VIEW_TYPE_2D,
+            VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
+
         scene.offscreen.renderPass = vk::RenderPass(device, vk::RenderPassConfig()
             .withColorAttachment(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
             .withDepthAttachment(device.getDepthFormat()));
+
         scene.offscreen.renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
+
         scene.offscreen.frameBuffer = createFrameBuffer(device, scene.offscreen.colorAttachment.getView(),
-            scene.offscreen.depthStencilImageView, scene.offscreen.renderPass, CanvasWidth / 2, CanvasHeight / 2);
+            scene.offscreen.depthAttachment.getView(), scene.offscreen.renderPass, CanvasWidth / 2, CanvasHeight / 2);
+
         scene.offscreen.semaphore = createSemaphore(device);
+
         scene.offscreen.commandBuffer = createCommandBuffer(device, device.getCommandPool());
     }
 
