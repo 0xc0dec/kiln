@@ -10,6 +10,7 @@
 #endif
 #include <vulkan.h>
 #include <functional>
+#include <cassert>
 
 namespace vk
 {
@@ -17,10 +18,7 @@ namespace vk
     class Resource
     {
     public:
-        Resource(): Resource([](T, VkAllocationCallbacks*) {})
-        {
-        }
-
+        Resource() {}
         Resource(const Resource<T> &other) = delete;
         Resource(Resource<T> &&other) noexcept
         {
@@ -70,6 +68,7 @@ namespace vk
 
         auto cleanRef() -> T*
         {
+            ensureInitialized();
             cleanup();
             return &handle;
         }
@@ -97,8 +96,16 @@ namespace vk
         void cleanup()
         {
             if (handle != VK_NULL_HANDLE)
+            {
+                ensureInitialized();
                 del(handle);
+            }
             handle = VK_NULL_HANDLE;
+        }
+
+        void ensureInitialized()
+        {
+            assert(del /* Calling cleanup() on a Resource with empty deleter */);
         }
 
         void swap(Resource<T> &other) noexcept
