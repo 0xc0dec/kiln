@@ -26,9 +26,9 @@ public:
     void beginUpdate(Input &input);
     void endUpdate();
 
-    bool closeRequested() const;
+    bool closeRequested() const { return _closeRequested; }
 
-    auto getTimeDelta() const -> float;
+    auto getTimeDelta() const -> float { return dt; }
 
 private:
     SDL_Window *window = nullptr;
@@ -37,12 +37,3 @@ private:
     bool _closeRequested = false;
 };
 
-inline auto Window::getTimeDelta() const -> float
-{
-    return dt;
-}
-
-inline bool Window::closeRequested() const
-{
-    return _closeRequested;
-}

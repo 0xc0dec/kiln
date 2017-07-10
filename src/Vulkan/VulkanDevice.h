@@ -18,17 +18,17 @@ namespace vk
         static auto create(const std::vector<uint8_t> &platformHandle) -> Device;
 #endif
 
-        auto getInstance() const -> VkInstance;
-        auto getSurface() const -> VkSurfaceKHR;
-        auto getPhysicalDevice() const -> VkPhysicalDevice;
-        auto getPhysicalFeatures() const -> VkPhysicalDeviceFeatures;
-        auto getPhysicalProperties() const -> VkPhysicalDeviceProperties;
-        auto getPhysicalMemoryFeatures() const -> VkPhysicalDeviceMemoryProperties;
-        auto getColorFormat() const -> VkFormat;
-        auto getDepthFormat() const -> VkFormat;
-        auto getColorSpace() const -> VkColorSpaceKHR;
-        auto getCommandPool() const -> VkCommandPool;
-        auto getQueue() const -> VkQueue;
+        auto getInstance() const -> VkInstance { return instance; }
+        auto getSurface() const -> VkSurfaceKHR { return surface; }
+        auto getPhysicalDevice() const -> VkPhysicalDevice { return physicalDevice; }
+        auto getPhysicalFeatures() const -> VkPhysicalDeviceFeatures { return physicalFeatures; }
+        auto getPhysicalProperties() const -> VkPhysicalDeviceProperties { return physicalProperties; }
+        auto getPhysicalMemoryFeatures() const -> VkPhysicalDeviceMemoryProperties { return physicalMemoryFeatures; }
+        auto getColorFormat() const -> VkFormat { return colorFormat; }
+        auto getDepthFormat() const -> VkFormat { return depthFormat; }
+        auto getColorSpace() const -> VkColorSpaceKHR { return colorSpace; }
+        auto getCommandPool() const -> VkCommandPool { return commandPool; }
+        auto getQueue() const -> VkQueue { return queue; }
 
         operator VkDevice() { return device; }
         operator VkDevice() const { return device; }
@@ -50,59 +50,4 @@ namespace vk
 
         Device() {}
     };
-
-    inline auto Device::getInstance() const -> VkInstance
-    {
-        return instance;
-    }
-
-    inline auto Device::getSurface() const -> VkSurfaceKHR
-    {
-        return surface;
-    }
-
-    inline auto Device::getPhysicalDevice() const -> VkPhysicalDevice
-    {
-        return physicalDevice;
-    }
-
-    inline auto Device::getColorFormat() const -> VkFormat
-    {
-        return colorFormat;
-    }
-
-    inline auto Device::getDepthFormat() const -> VkFormat
-    {
-        return depthFormat;
-    }
-
-    inline auto Device::getColorSpace() const -> VkColorSpaceKHR
-    {
-        return colorSpace;
-    }
-
-    inline auto Device::getCommandPool() const -> VkCommandPool
-    {
-        return commandPool;
-    }
-
-    inline auto Device::getQueue() const -> VkQueue
-    {
-        return queue;
-    }
-
-    inline auto Device::getPhysicalFeatures() const -> VkPhysicalDeviceFeatures
-    {
-        return physicalFeatures;
-    }
-
-    inline auto Device::getPhysicalProperties() const -> VkPhysicalDeviceProperties
-    {
-        return physicalProperties;
-    }
-
-    inline auto Device::getPhysicalMemoryFeatures() const -> VkPhysicalDeviceMemoryProperties
-    {
-        return physicalMemoryFeatures;
-    }
 }

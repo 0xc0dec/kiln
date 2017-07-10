@@ -15,21 +15,11 @@ namespace vk
         Effect(const std::string &vsSrc, const std::string &fsSrc);
         ~Effect();
 
-        auto getVertexShader() const -> VkShaderModule;
-        auto getFragmentShader() const -> VkShaderModule;
+        auto getVertexShader() const -> VkShaderModule { return vertexShader; }
+        auto getFragmentShader() const -> VkShaderModule { return fragmentShader; }
 
     private:
         Resource<VkShaderModule> vertexShader;
         Resource<VkShaderModule> fragmentShader;
     };
-
-    inline auto Effect::getVertexShader() const -> VkShaderModule
-    {
-        return vertexShader;
-    }
-
-    inline auto Effect::getFragmentShader() const -> VkShaderModule
-    {
-        return fragmentShader;
-    }
 }

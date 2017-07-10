@@ -29,7 +29,7 @@ namespace vk
 
         operator VkBuffer() { return buffer; }
 
-        auto getHandle() const -> VkBuffer;
+        auto getHandle() const -> VkBuffer { return buffer; }
 
         void update(const void *newData) const;
         void transferTo(const Buffer& other, VkQueue queue, VkCommandPool cmdPool) const;
@@ -40,9 +40,4 @@ namespace vk
         Resource<VkBuffer> buffer;
         VkDeviceSize size = 0;
     };
-
-    inline auto Buffer::getHandle() const -> VkBuffer
-    {
-        return buffer;
-    }
 }

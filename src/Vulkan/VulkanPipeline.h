@@ -16,8 +16,6 @@ namespace vk
         PipelineConfig(VkShaderModule vertexShader, VkShaderModule fragmentShader);
         ~PipelineConfig() {}
 
-        auto withTopology(VkPrimitiveTopology topology) -> PipelineConfig&;
-
         auto withVertexAttribute(uint32_t location, uint32_t binding, VkFormat format, uint32_t offset) -> PipelineConfig&;
         auto withVertexBinding(uint32_t binding, uint32_t stride, VkVertexInputRate inputRate) -> PipelineConfig&;
 
@@ -27,6 +25,12 @@ namespace vk
         auto withCullMode(VkCullModeFlags cullFlags) -> PipelineConfig&;
 
         auto withDepthTest(bool write, bool test) -> PipelineConfig&;
+
+        auto withTopology(VkPrimitiveTopology topology) -> PipelineConfig&
+        {
+            this->topology = topology;
+            return *this;
+        }
 
     private:
         friend class Pipeline;
@@ -57,27 +61,11 @@ namespace vk
 
         operator VkPipeline() { return pipeline; }
 
-        VkPipeline getHandle() const;
-        VkPipelineLayout getLayout() const;
+        auto getHandle() const -> VkPipeline { return pipeline; }
+        auto getLayout() const -> VkPipelineLayout { return layout; }
 
     private:
         Resource<VkPipeline> pipeline;
         Resource<VkPipelineLayout> layout;
     };
-
-    inline VkPipeline Pipeline::getHandle() const
-    {
-        return pipeline;
-    }
-
-    inline VkPipelineLayout Pipeline::getLayout() const
-    {
-        return layout;
-    }
-
-    inline auto PipelineConfig::withTopology(VkPrimitiveTopology topology) -> PipelineConfig&
-    {
-        this->topology = topology;
-        return *this;
-    }
 }

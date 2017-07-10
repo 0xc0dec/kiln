@@ -26,9 +26,9 @@ namespace vk
         auto operator=(const Image &other) -> Image& = delete;
         auto operator=(Image &&other) -> Image& = default;
 
-        auto getLayout() const -> VkImageLayout;
-        auto getSampler() const -> VkSampler;
-        auto getView() const -> VkImageView;
+        auto getLayout() const -> VkImageLayout { return layout; }
+        auto getSampler() const -> VkSampler { return sampler; }
+        auto getView() const -> VkImageView { return view; }
 
     private:
         Resource<VkImage> image;
@@ -40,19 +40,4 @@ namespace vk
         Image(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view,
             Resource<VkSampler> sampler, VkImageLayout layout);
     };
-
-    inline auto Image::getLayout() const -> VkImageLayout
-    {
-        return layout;
-    }
-
-    inline auto Image::getSampler() const -> VkSampler
-    {
-        return sampler;
-    }
-
-    inline auto Image::getView() const -> VkImageView
-    {
-        return view;
-    }
 }

@@ -216,3 +216,75 @@ void Transform::setChildrenDirty(uint32_t flags)
     for (auto child : children)
         child->setDirtyWithChildren(flags);
 }
+
+auto Transform::getWorldUp() const -> glm::vec3
+{
+    auto m = getWorldMatrix();
+    return {-m[1][0], -m[1][1], -m[1][2]};
+}
+
+auto Transform::getLocalUp() const -> glm::vec3
+{
+    auto m = getMatrix();
+    return {-m[1][0], -m[1][1], -m[1][2]};
+}
+
+auto Transform::getWorldDown() const -> glm::vec3
+{
+    auto m = getWorldMatrix();
+    return {m[1][0], m[1][1], m[1][2]};
+}
+
+auto Transform::getLocalDown() const -> glm::vec3
+{
+    auto m = getMatrix();
+    return {m[1][0], m[1][1], m[1][2]};
+}
+
+auto Transform::getWorldLeft() const -> glm::vec3
+{
+    auto m = getWorldMatrix();
+    return {-m[0][0], -m[0][1], -m[0][2]};
+}
+
+auto Transform::getLocalLeft() const -> glm::vec3
+{
+    auto m = getMatrix();
+    return {-m[0][0], -m[0][1], -m[0][2]};
+}
+
+auto Transform::getWorldRight() const -> glm::vec3
+{
+    auto m = getWorldMatrix();
+    return {m[0][0], m[0][1], m[0][2]};
+}
+
+auto Transform::getLocalRight() const -> glm::vec3
+{
+    auto m = getMatrix();
+    return {m[0][0], m[0][1], m[0][2]};
+}
+
+auto Transform::getWorldForward() const -> glm::vec3
+{
+    auto m = getWorldMatrix();
+    return {-m[2][0], -m[2][1], -m[2][2]};
+}
+
+auto Transform::getLocalForward() const -> glm::vec3
+{
+    auto m = getMatrix();
+    return {-m[2][0], -m[2][1], -m[2][2]};
+}
+
+auto Transform::getWorldBack() const -> glm::vec3
+{
+    auto m = getWorldMatrix();
+    return {m[2][0], m[2][1], m[2][2]};
+}
+
+auto Transform::getLocalBack() const -> glm::vec3
+{
+    auto m = getMatrix();
+    return {m[2][0], m[2][1], m[2][2]};
+}
