@@ -1,5 +1,6 @@
-// TODO RenderPlan
-// TODO Move primary cmd buffers into Swapchain
+// TODO RenderPlan/Job system/whatever for submitting to queue and dependency graph
+// TODO Return "jobs" from methods that transfer data (or make two versions - sync (using queueWaitIdle) and "async")
+// TODO Refactor swapchain a bit more - avoid external call for getNextStep
 
 /*
     Copyright (c) Aleksey Fedotov
@@ -26,7 +27,6 @@
 #include <glm/gtx/transform.inl>
 #include <glm/gtc/matrix_transform.inl>
 #include <vector>
-#include <algorithm>
 
 static const std::vector<float> xAxisVertexData = 
 {
@@ -139,19 +139,6 @@ int main()
     primaryRenderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
 
     auto swapchain = vk::Swapchain(device, primaryRenderPass, CanvasWidth, CanvasHeight, false);
-
-    struct
-    {
-        vk::Resource<VkSemaphore> presentComplete;
-        vk::Resource<VkSemaphore> renderComplete;
-    } semaphores;
-    semaphores.presentComplete = createSemaphore(device);
-    semaphores.renderComplete = createSemaphore(device);
-
-    std::vector<vk::Resource<VkCommandBuffer>> primaryRenderCmdBuffers;
-    primaryRenderCmdBuffers.resize(swapchain.getStepCount());
-    std::for_each(primaryRenderCmdBuffers.begin(), primaryRenderCmdBuffers.end(),
-        [&device](vk::Resource<VkCommandBuffer> &buf) { buf = vk::createCommandBuffer(device, device.getCommandPool()); });
 
     struct
     {
@@ -520,14 +507,13 @@ int main()
         KL_VK_CHECK_RESULT(vkEndCommandBuffer(buf));
     }
 
-    for (uint32_t i = 0; i < primaryRenderCmdBuffers.size(); i++)
+    swapchain.recordRenderCommands([&](uint32_t i, VkCommandBuffer buf)
     {
-        VkCommandBuffer buf = primaryRenderCmdBuffers[i];
         vk::beginCommandBuffer(buf, false);
 
         primaryRenderPass.begin(buf, swapchain.getFramebuffer(i), CanvasWidth, CanvasHeight);
 
-        auto vp = VkViewport{0, 0, CanvasWidth, CanvasHeight, 0, 1};
+        auto vp = VkViewport{0, 0, static_cast<float>(CanvasWidth), static_cast<float>(CanvasHeight), 0, 1};
 
         vkCmdSetViewport(buf, 0, 1, &vp);
 
@@ -545,7 +531,7 @@ int main()
         primaryRenderPass.end(buf);
 
         KL_VK_CHECK_RESULT(vkEndCommandBuffer(buf));
-    }
+    });
 
     // Main loop
 
@@ -562,10 +548,10 @@ int main()
         viewMatrices.viewMatrix = cam.getViewMatrix();
         viewMatricesBuffer.update(&viewMatrices);
 
-        auto swapchainStep = swapchain.getNextStep(semaphores.presentComplete);
-        vk::queueSubmit(device.getQueue(), 1, &semaphores.presentComplete, 1, &scene.offscreen.semaphore, 1, &scene.offscreen.commandBuffer);
-        vk::queueSubmit(device.getQueue(), 1, &scene.offscreen.semaphore, 1, &semaphores.renderComplete, 1, &primaryRenderCmdBuffers[swapchainStep]);
-        queuePresent(device.getQueue(), swapchain, swapchainStep, 1, &semaphores.renderComplete);
+        auto swapchainStep = swapchain.getNextStep();
+        auto presentCompleteSem = swapchain.getPresentCompleteSem();
+        vk::queueSubmit(device.getQueue(), 1, &presentCompleteSem, 1, &scene.offscreen.semaphore, 1, &scene.offscreen.commandBuffer);
+        swapchain.presentNext(device.getQueue(), swapchainStep, 1, &scene.offscreen.semaphore);
         KL_VK_CHECK_RESULT(vkQueueWaitIdle(device.getQueue()));
 
         window.endUpdate();

@@ -113,12 +113,37 @@ vk::Swapchain::Swapchain(const Device &device, VkRenderPass renderPass, uint32_t
         steps[i].framebuffer = createFrameBuffer(device, view, depthStencil.getView(), renderPass, width, height);
         steps[i].image = images[i];
         steps[i].imageView = std::move(view);
+        steps[i].cmdBuffer = createCommandBuffer(device, device.getCommandPool());
     }
+
+    presentCompleteSem = createSemaphore(device);
+    renderCompleteSem = createSemaphore(device);
 }
 
-auto vk::Swapchain::getNextStep(VkSemaphore semaphore) const -> uint32_t
+auto vk::Swapchain::getNextStep() const -> uint32_t
 {
-    uint32_t result;
-    KL_VK_CHECK_RESULT(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, semaphore, nullptr, &result));
-    return result;
+    uint32_t step;
+    KL_VK_CHECK_RESULT(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentCompleteSem, nullptr, &step));
+    return step;
+}
+
+void vk::Swapchain::recordRenderCommands(std::function<void(uint32_t, VkCommandBuffer)> issueCommands)
+{
+    for (size_t i = 0; i < steps.size(); ++i)
+        issueCommands(i, steps[i].cmdBuffer);
+}
+
+void vk::Swapchain::presentNext(VkQueue queue, uint32_t step, uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores)
+{
+    queueSubmit(queue, waitSemaphoreCount, waitSemaphores, 1, &renderCompleteSem, 1, &steps[step].cmdBuffer);
+
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.pNext = nullptr;
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = &swapchain;
+    presentInfo.pImageIndices = &step;
+    presentInfo.pWaitSemaphores = &renderCompleteSem;
+    presentInfo.waitSemaphoreCount = 1;
+    KL_VK_CHECK_RESULT(vkQueuePresentKHR(queue, &presentInfo));
 }
