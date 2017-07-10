@@ -10,11 +10,44 @@
 
 namespace vk
 {
+    class PipelineConfig
+    {
+    public:
+        PipelineConfig(VkShaderModule vertexShader, VkShaderModule fragmentShader);
+        ~PipelineConfig() {}
+
+        auto withTopology(VkPrimitiveTopology topology) -> PipelineConfig&;
+
+        auto withVertexAttribute(uint32_t location, uint32_t binding, VkFormat format, uint32_t offset) -> PipelineConfig&;
+        auto withVertexBinding(uint32_t binding, uint32_t stride, VkVertexInputRate inputRate) -> PipelineConfig&;
+
+        auto withDescriptorSetLayout(VkDescriptorSetLayout layout) -> PipelineConfig&;
+
+        auto withFrontFace(VkFrontFace frontFace) -> PipelineConfig&;
+        auto withCullMode(VkCullModeFlags cullFlags) -> PipelineConfig&;
+
+        auto withDepthTest(bool write, bool test) -> PipelineConfig&;
+
+    private:
+        friend class Pipeline;
+
+        VkShaderModule vertexShader;
+        VkShaderModule fragmentShader;
+        VkPipelineRasterizationStateCreateInfo rasterStateInfo;
+        VkPipelineDepthStencilStateCreateInfo depthStencilStateInfo;
+
+        std::vector<VkVertexInputAttributeDescription> vertexAttrs;
+        std::vector<VkVertexInputBindingDescription> vertexBindings;
+        std::vector<VkDescriptorSetLayout> descSetLayouts;
+
+        VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    };
+
     class Pipeline
     {
     public:
         Pipeline() {}
-        Pipeline(VkDevice device, VkRenderPass renderPass, Resource<VkPipeline> pipeline, Resource<VkPipelineLayout> layout);
+        Pipeline(VkDevice device, VkRenderPass renderPass, const PipelineConfig &config);
         Pipeline(const Pipeline &other) = delete;
         Pipeline(Pipeline &&other) = default;
         ~Pipeline() {}
@@ -28,50 +61,10 @@ namespace vk
         VkPipelineLayout getLayout() const;
 
     private:
-        VkDevice device = nullptr;
-        VkRenderPass renderPass = nullptr;
         Resource<VkPipeline> pipeline;
         Resource<VkPipelineLayout> layout;
     };
 
-    class PipelineBuilder
-    {
-    public:
-        PipelineBuilder(VkDevice device, VkRenderPass renderPass, VkShaderModule vertexShader, VkShaderModule fragmentShader);
-        ~PipelineBuilder() {}
-
-        auto withTopology(VkPrimitiveTopology topology) -> PipelineBuilder&;
-
-        auto withVertexAttribute(uint32_t location, uint32_t binding, VkFormat format, uint32_t offset) -> PipelineBuilder&;
-        auto withVertexBinding(uint32_t binding, uint32_t stride, VkVertexInputRate inputRate) -> PipelineBuilder&;
-
-        auto withDescriptorSetLayout(VkDescriptorSetLayout layout) -> PipelineBuilder&;
-
-        auto withFrontFace(VkFrontFace frontFace) -> PipelineBuilder&;
-        auto withCullMode(VkCullModeFlags cullFlags) -> PipelineBuilder&;
-
-        auto withDepthTest(bool write, bool test) -> PipelineBuilder&;
-
-        auto build() -> Pipeline;
-
-    private:
-        VkDevice device = nullptr;
-        VkRenderPass renderPass = nullptr;
-
-        VkShaderModule vertexShader;
-        VkShaderModule fragmentShader;
-        VkPipelineShaderStageCreateInfo vertexShaderStageInfo;
-        VkPipelineShaderStageCreateInfo fragmentShaderStageInfo;
-        VkPipelineRasterizationStateCreateInfo rasterState;
-        VkPipelineDepthStencilStateCreateInfo depthStencilState;
-
-        std::vector<VkVertexInputAttributeDescription> vertexAttrs;
-        std::vector<VkVertexInputBindingDescription> vertexBindings;
-        std::vector<VkDescriptorSetLayout> descSetLayouts;
-
-        VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    };
-    
     inline VkPipeline Pipeline::getHandle() const
     {
         return pipeline;
@@ -82,7 +75,7 @@ namespace vk
         return layout;
     }
 
-    inline auto PipelineBuilder::withTopology(VkPrimitiveTopology topology) -> PipelineBuilder&
+    inline auto PipelineConfig::withTopology(VkPrimitiveTopology topology) -> PipelineConfig&
     {
         this->topology = topology;
         return *this;

@@ -297,7 +297,7 @@ int main()
             .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        scene.box.pipeline = vk::PipelineBuilder(device, scene.offscreen.renderPass, vs, fs)
+        scene.box.pipeline = vk::Pipeline(device, scene.offscreen.renderPass, vk::PipelineConfig(vs, fs)
             .withDescriptorSetLayout(scene.globalDescSetLayout)
             .withDescriptorSetLayout(scene.box.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
@@ -305,8 +305,7 @@ int main()
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
-            .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3)
-            .build();
+            .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3));
 
         scene.box.descriptorSet = scene.descriptorPool.allocateSet(scene.box.descSetLayout);
 
@@ -332,7 +331,7 @@ int main()
             .withBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        scene.screenQuad.pipeline = vk::PipelineBuilder(device, primaryRenderPass, vs, fs)
+        scene.screenQuad.pipeline = vk::Pipeline(device, primaryRenderPass, vk::PipelineConfig(vs, fs)
             .withDepthTest(false, false)
             .withDescriptorSetLayout(scene.screenQuad.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
@@ -340,8 +339,7 @@ int main()
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
-            .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3)
-            .build();
+            .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3));
 
         scene.screenQuad.descriptorSet = scene.descriptorPool.allocateSet(scene.screenQuad.descSetLayout);
 
@@ -368,7 +366,7 @@ int main()
             .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        scene.skybox.pipeline = vk::PipelineBuilder(device, scene.offscreen.renderPass, vs, fs)
+        scene.skybox.pipeline = vk::Pipeline(device, scene.offscreen.renderPass, vk::PipelineConfig(vs, fs)
             .withDepthTest(false, false)
             .withDescriptorSetLayout(scene.globalDescSetLayout)
             .withDescriptorSetLayout(scene.skybox.descSetLayout)
@@ -377,8 +375,7 @@ int main()
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
-            .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3)
-            .build();
+            .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3));
 
         scene.skybox.descriptorSet = scene.descriptorPool.allocateSet(scene.skybox.descSetLayout);
 
@@ -427,15 +424,14 @@ int main()
             .withBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
             .build();
 
-        scene.axes.pipeline = vk::PipelineBuilder(device, scene.offscreen.renderPass, vs, fs)
+        scene.axes.pipeline = vk::Pipeline(device, scene.offscreen.renderPass, vk::PipelineConfig(vs, fs)
             .withDescriptorSetLayout(scene.globalDescSetLayout)
             .withDescriptorSetLayout(scene.axes.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_NONE)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
             .withVertexBinding(0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX)
-            .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
-            .build();
+            .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0));
 
         scene.axes.redDescSet = scene.descriptorPool.allocateSet(scene.axes.descSetLayout);
         scene.axes.greenDescSet = scene.descriptorPool.allocateSet(scene.axes.descSetLayout);
