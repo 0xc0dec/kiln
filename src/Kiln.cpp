@@ -263,10 +263,9 @@ int main()
     auto viewMatricesBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(viewMatrices));
     viewMatricesBuffer.update(&viewMatrices);
 
-    scene.descriptorPool = vk::DescriptorPoolBuilder(device)
+    scene.descriptorPool = vk::DescriptorPool(device, 20, vk::DescriptorPoolConfig()
         .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 20)
-        .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 20)
-        .build(20);
+        .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 20));
 
     scene.globalDescSetLayout = vk::DescriptorSetLayoutBuilder(device)
         .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)

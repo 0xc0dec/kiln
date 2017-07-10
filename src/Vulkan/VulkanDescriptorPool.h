@@ -10,11 +10,22 @@
 
 namespace vk
 {
+    class DescriptorPoolConfig
+    {
+    public:
+        auto forDescriptors(VkDescriptorType descriptorType, uint32_t descriptorCount) -> DescriptorPoolConfig&;
+
+    private:
+        friend class DescriptorPool;
+
+        std::vector<VkDescriptorPoolSize> sizes;
+    };
+
     class DescriptorPool
     {
     public:
         DescriptorPool() {}
-        DescriptorPool(VkDevice device, Resource<VkDescriptorPool> pool);
+        DescriptorPool(VkDevice device, uint32_t maxSetCount, const DescriptorPoolConfig &config);
         DescriptorPool(const DescriptorPool &other) = delete;
         DescriptorPool(DescriptorPool &&other) = default;
         ~DescriptorPool() {}
@@ -27,18 +38,5 @@ namespace vk
     private:
         VkDevice device = nullptr;
         Resource<VkDescriptorPool> pool;
-    };
-
-    class DescriptorPoolBuilder
-    {
-    public:
-        explicit DescriptorPoolBuilder(VkDevice device);
-
-        auto forDescriptors(VkDescriptorType descriptorType, uint32_t descriptorCount) -> DescriptorPoolBuilder&;
-        auto build(uint32_t maxSetCount) -> DescriptorPool;
-
-    private:
-        VkDevice device = nullptr;
-        std::vector<VkDescriptorPoolSize> sizes;
     };
 }
