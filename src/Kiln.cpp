@@ -222,13 +222,13 @@ int main()
     } scene;
 
     {
-        scene.offscreen.image = createImage(device, VK_FORMAT_R8G8B8A8_UNORM, CanvasWidth, CanvasHeight, 1, 1, 0,
+        scene.offscreen.image = createImage(device, VK_FORMAT_R8G8B8A8_UNORM, CanvasWidth / 2, CanvasHeight / 2, 1, 1, 0,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
         scene.offscreen.imageMemory = allocateImageMemory(device, device.getPhysicalMemoryFeatures(), scene.offscreen.image);
         scene.offscreen.imageView = createImageView(device, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_VIEW_TYPE_2D, 1, 1,
             scene.offscreen.image, VK_IMAGE_ASPECT_COLOR_BIT);
         scene.offscreen.sampler = createSampler(device, device.getPhysicalFeatures(), device.getPhysicalProperties(), 1);
-        scene.offscreen.depthStencilImage = createImage(device, device.getDepthFormat(), CanvasWidth, CanvasHeight, 1, 1, 0,
+        scene.offscreen.depthStencilImage = createImage(device, device.getDepthFormat(), CanvasWidth / 2, CanvasHeight / 2, 1, 1, 0,
             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
         scene.offscreen.depthStencilMemory = allocateImageMemory(device, device.getPhysicalMemoryFeatures(), scene.offscreen.depthStencilImage);
         scene.offscreen.depthStencilImageView = createImageView(device, device.getDepthFormat(), VK_IMAGE_VIEW_TYPE_2D, 1, 1,
@@ -239,7 +239,7 @@ int main()
             .build();
         scene.offscreen.renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
         scene.offscreen.frameBuffer = createFrameBuffer(device, scene.offscreen.imageView,
-            scene.offscreen.depthStencilImageView, scene.offscreen.renderPass, CanvasWidth, CanvasHeight);
+            scene.offscreen.depthStencilImageView, scene.offscreen.renderPass, CanvasWidth / 2, CanvasHeight / 2);
         scene.offscreen.semaphore = createSemaphore(device);
         scene.offscreen.commandBuffer = createCommandBuffer(device, device.getCommandPool());
     }
@@ -461,9 +461,9 @@ int main()
         auto buf = scene.offscreen.commandBuffer;
         vk::beginCommandBuffer(buf, false);
 
-        scene.offscreen.renderPass.begin(buf, scene.offscreen.frameBuffer, CanvasWidth, CanvasHeight);
+        scene.offscreen.renderPass.begin(buf, scene.offscreen.frameBuffer, CanvasWidth / 2, CanvasHeight / 2);
 
-        auto vp = VkViewport{0, 0, CanvasWidth, CanvasHeight, 0, 1};
+        auto vp = VkViewport{0, 0, CanvasWidth / 2, CanvasHeight / 2, 0, 1};
 
         vkCmdSetViewport(buf, 0, 1, &vp);
 
