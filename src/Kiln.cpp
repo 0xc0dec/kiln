@@ -28,6 +28,7 @@
 #include <glm/gtx/transform.inl>
 #include <glm/gtc/matrix_transform.inl>
 #include <vector>
+#include <algorithm>
 
 static const std::vector<float> xAxisVertexData = 
 {
@@ -150,9 +151,10 @@ int main()
     semaphores.presentComplete = createSemaphore(device);
     semaphores.renderComplete = createSemaphore(device);
 
-    std::vector<VkCommandBuffer> primaryRenderCmdBuffers;
+    std::vector<vk::Resource<VkCommandBuffer>> primaryRenderCmdBuffers;
     primaryRenderCmdBuffers.resize(swapchain.getStepCount());
-    createCommandBuffers(device, device.getCommandPool(), swapchain.getStepCount(), primaryRenderCmdBuffers.data());
+    std::for_each(primaryRenderCmdBuffers.begin(), primaryRenderCmdBuffers.end(),
+        [&device](vk::Resource<VkCommandBuffer> &buf) { buf = vk::createCommandBuffer(device, device.getCommandPool()); });
 
     struct
     {
@@ -172,7 +174,7 @@ int main()
             vk::Resource<VkFramebuffer> frameBuffer;
             vk::RenderPass renderPass;
             vk::Resource<VkSemaphore> semaphore;
-            VkCommandBuffer commandBuffer;
+            vk::Resource<VkCommandBuffer> commandBuffer;
         } offscreen;
 
         struct
@@ -460,7 +462,7 @@ int main()
     // Record command buffers
 
     {
-        auto buf = scene.offscreen.commandBuffer;
+        VkCommandBuffer buf = scene.offscreen.commandBuffer;
         vk::beginCommandBuffer(buf, false);
 
         scene.offscreen.renderPass.begin(buf, scene.offscreen.frameBuffer, CanvasWidth / 2, CanvasHeight / 2);
@@ -527,7 +529,7 @@ int main()
 
     for (uint32_t i = 0; i < primaryRenderCmdBuffers.size(); i++)
     {
-        auto buf = primaryRenderCmdBuffers[i];
+        VkCommandBuffer buf = primaryRenderCmdBuffers[i];
         vk::beginCommandBuffer(buf, false);
 
         primaryRenderPass.begin(buf, swapchain.getFramebuffer(i), CanvasWidth, CanvasHeight);
@@ -575,8 +577,6 @@ int main()
 
         window.endUpdate();
     }
-
-    vkFreeCommandBuffers(device, device.getCommandPool(), primaryRenderCmdBuffers.size(), primaryRenderCmdBuffers.data());
 
     return 0;
 }

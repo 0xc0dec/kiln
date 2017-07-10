@@ -86,6 +86,4 @@ void vk::Buffer::transferTo(const Buffer &dst, VkQueue queue, VkCommandPool cmdP
 
     queueSubmit(queue, 0, nullptr, 0, nullptr, 1, &cmdBuf);
     KL_VK_CHECK_RESULT(vkQueueWaitIdle(queue));
-
-    vkFreeCommandBuffers(device, cmdPool, 1, &cmdBuf);
 }

@@ -12,7 +12,6 @@
 #   define VK_USE_PLATFORM_WIN32_KHR
 #endif
 #include <vulkan.h>
-#include <functional>
 
 #ifdef KL_DEBUG
 #   define KL_VK_CHECK_RESULT(vkCall, ...) KL_PANIC_IF(vkCall != VK_SUCCESS, __VA_ARGS__)
@@ -28,8 +27,7 @@ namespace vk
     auto createFrameBuffer(VkDevice device, VkImageView colorAttachment, VkImageView depthAttachment,
         VkRenderPass renderPass, uint32_t width, uint32_t height) -> Resource<VkFramebuffer>;
     auto createSemaphore(VkDevice device) -> Resource<VkSemaphore>;
-    void createCommandBuffers(VkDevice device, VkCommandPool commandPool, uint32_t count, VkCommandBuffer *result);
-    auto createCommandBuffer(VkDevice device, VkCommandPool commandPool) -> VkCommandBuffer;
+    auto createCommandBuffer(VkDevice device, VkCommandPool commandPool) -> Resource<VkCommandBuffer>;
     auto createShader(VkDevice device, const void *data, size_t size) -> Resource<VkShaderModule>;
     auto createShaderStageInfo(bool vertex, VkShaderModule shader, const char *entryPoint) -> VkPipelineShaderStageCreateInfo;
     void queueSubmit(VkQueue queue, uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores,

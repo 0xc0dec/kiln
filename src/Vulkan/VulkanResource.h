@@ -42,6 +42,11 @@ namespace vk
             this->del = [device, del](T obj) { del(device, obj, nullptr); };
         }
 
+        Resource(VkDevice device, VkCommandPool cmdPool, std::function<void(VkDevice, VkCommandPool, uint32_t, T*)> del)
+        {
+            this->del = [device, cmdPool, del](T obj) { del(device, cmdPool, 1, &obj); };
+        }
+
         ~Resource()
         {
             cleanup();

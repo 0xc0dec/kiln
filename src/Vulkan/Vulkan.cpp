@@ -57,19 +57,7 @@ auto vk::createSemaphore(VkDevice device) -> Resource<VkSemaphore>
     return semaphore;
 }
 
-void vk::createCommandBuffers(VkDevice device, VkCommandPool commandPool, uint32_t count, VkCommandBuffer *result)
-{
-    VkCommandBufferAllocateInfo allocateInfo{};
-    allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocateInfo.pNext = nullptr;
-    allocateInfo.commandPool = commandPool;
-    allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocateInfo.commandBufferCount = count;
-
-    KL_VK_CHECK_RESULT(vkAllocateCommandBuffers(device, &allocateInfo, result));
-}
-
-auto vk::createCommandBuffer(VkDevice device, VkCommandPool commandPool) -> VkCommandBuffer
+auto vk::createCommandBuffer(VkDevice device, VkCommandPool commandPool) -> Resource<VkCommandBuffer>
 {
     VkCommandBufferAllocateInfo allocateInfo{};
     allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -78,7 +66,7 @@ auto vk::createCommandBuffer(VkDevice device, VkCommandPool commandPool) -> VkCo
     allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocateInfo.commandBufferCount = 1;
 
-    VkCommandBuffer buffer;
+    Resource<VkCommandBuffer> buffer{device, commandPool, vkFreeCommandBuffers};
     KL_VK_CHECK_RESULT(vkAllocateCommandBuffers(device, &allocateInfo, &buffer));
 
     return buffer;

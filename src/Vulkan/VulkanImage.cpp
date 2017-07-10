@@ -97,8 +97,6 @@ auto vk::Image::create2D(const Device &device, const ImageData &data) -> Image
     queueSubmit(device.getQueue(), 0, nullptr, 0, nullptr, 1, &copyCmdBuf);
     KL_VK_CHECK_RESULT(vkQueueWaitIdle(device.getQueue()));
     
-    vkFreeCommandBuffers(device, device.getCommandPool(), 1, &copyCmdBuf);
-
     auto sampler = createSampler(device, device.getPhysicalFeatures(), device.getPhysicalProperties(), mipLevels);
     auto view = createImageView(device, format, VK_IMAGE_VIEW_TYPE_2D, mipLevels, 1, image, VK_IMAGE_ASPECT_COLOR_BIT);
 
@@ -181,8 +179,6 @@ auto vk::Image::createCube(const Device &device, const ImageData &data) -> Image
 
     queueSubmit(device.getQueue(), 0, nullptr, 0, nullptr, 1, &copyCmdBuf);
     KL_VK_CHECK_RESULT(vkQueueWaitIdle(device.getQueue()));
-
-    vkFreeCommandBuffers(device, device.getCommandPool(), 1, &copyCmdBuf);
 
     auto sampler = createSampler(device, device.getPhysicalFeatures(), device.getPhysicalProperties(), mipLevels);
     auto view = createImageView(device, format, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, 6, image, VK_IMAGE_ASPECT_COLOR_BIT);
