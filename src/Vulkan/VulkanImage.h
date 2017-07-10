@@ -20,6 +20,8 @@ namespace vk
         static auto createCube(const Device &device, const ImageData &data) -> Image;
 
         Image() {}
+        Image(const Device &device, uint32_t width, uint32_t height, uint32_t mipLevels, uint32_t layers, VkFormat format,
+            VkImageCreateFlags createFlags, VkImageUsageFlags usageFlags, VkImageViewType viewType, VkImageAspectFlags aspectMask);
         Image(const Image &other) = delete;
         Image(Image &&other) = default;
 
@@ -30,14 +32,16 @@ namespace vk
         auto getSampler() const -> VkSampler { return sampler; }
         auto getView() const -> VkImageView { return view; }
 
+        void uploadData(const Device &device, const ImageData &data);
+
     private:
         Resource<VkImage> image;
         Resource<VkDeviceMemory> memory;
         Resource<VkImageView> view;
         Resource<VkSampler> sampler;
         VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-        Image(Resource<VkImage> image, Resource<VkDeviceMemory> memory, Resource<VkImageView> view,
-            Resource<VkSampler> sampler, VkImageLayout layout);
+        uint32_t mipLevels = 0;
+        uint32_t layers = 0;
+        VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     };
 }
