@@ -6,6 +6,7 @@
 #pragma once
 
 #include "Vulkan.h"
+#include "VulkanImage.h"
 #include <vector>
 
 namespace vk
@@ -44,9 +45,7 @@ namespace vk
 
         VkDevice device = nullptr;
         Resource<VkSwapchainKHR> swapchain;
-        Resource<VkImage> depthStencilImage;
-        Resource<VkImageView> depthStencilImageView;
-        Resource<VkDeviceMemory> depthStencilMem;
+        Image depthStencil;
         std::vector<Step> steps;
     };
 }

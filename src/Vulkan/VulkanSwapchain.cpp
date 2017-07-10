@@ -98,11 +98,11 @@ vk::Swapchain::Swapchain(const Device &device, VkRenderPass renderPass, uint32_t
 {
     swapchain = createSwapchain(device, width, height, vsync);
 
-    depthStencilImage = createImage(device, device.getDepthFormat(), width, height, 1, 1, 0,
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-    depthStencilMem = allocateImageMemory(device, device.getPhysicalMemoryFeatures(), depthStencilImage);
-    depthStencilImageView = createImageView(device, device.getDepthFormat(), VK_IMAGE_VIEW_TYPE_2D, 1, 1,
-        depthStencilImage, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
+    depthStencil = Image(device, width, height, 1, 1, device.getDepthFormat(),
+        0,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+        VK_IMAGE_VIEW_TYPE_2D,
+        VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
 
     auto images = getSwapchainImages(device, swapchain);
     steps.resize(images.size());
@@ -110,7 +110,7 @@ vk::Swapchain::Swapchain(const Device &device, VkRenderPass renderPass, uint32_t
     for (uint32_t i = 0; i < images.size(); i++)
     {
         auto view = createImageView(device, device.getColorFormat(), VK_IMAGE_VIEW_TYPE_2D, 1, 1, images[i], VK_IMAGE_ASPECT_COLOR_BIT);
-        steps[i].framebuffer = createFrameBuffer(device, view, depthStencilImageView, renderPass, width, height);
+        steps[i].framebuffer = createFrameBuffer(device, view, depthStencil.getView(), renderPass, width, height);
         steps[i].image = images[i];
         steps[i].imageView = std::move(view);
     }
