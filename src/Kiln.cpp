@@ -1,6 +1,6 @@
 // TODO RenderPlan/Job system/whatever for submitting to queue and dependency graph
 // TODO Return "jobs" from methods that transfer data (or make two versions - sync (using queueWaitIdle) and "async")
-// TODO Refactor swapchain a bit more - avoid external call for getNextStep
+// TODO Refactor swapchain a bit more - avoid external call for getNextStep. Create primary render pass inside swapchain
 
 /*
     Copyright (c) Aleksey Fedotov
