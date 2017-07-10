@@ -133,10 +133,9 @@ int main()
     Window window{CanvasWidth, CanvasHeight, "Demo"};
     auto device = vk::Device::create(window.getPlatformHandle());
 
-    auto primaryRenderPass = vk::RenderPassBuilder(device)
+    auto primaryRenderPass = vk::RenderPass(device, vk::RenderPassConfig()
         .withColorAttachment(device.getColorFormat(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-        .withDepthAttachment(device.getDepthFormat())
-        .build();
+        .withDepthAttachment(device.getDepthFormat()));
     // TODO Take into account that clear values must correspond to attachments,
     // so I guess N attachments means N clear values + 1 for depth
     primaryRenderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
@@ -237,10 +236,9 @@ int main()
         scene.offscreen.depthStencilMemory = allocateImageMemory(device, device.getPhysicalMemoryFeatures(), scene.offscreen.depthStencilImage);
         scene.offscreen.depthStencilImageView = createImageView(device, device.getDepthFormat(), VK_IMAGE_VIEW_TYPE_2D, 1, 1,
             scene.offscreen.depthStencilImage, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
-        scene.offscreen.renderPass = vk::RenderPassBuilder(device)
+        scene.offscreen.renderPass = vk::RenderPass(device, vk::RenderPassConfig()
             .withColorAttachment(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-            .withDepthAttachment(device.getDepthFormat())
-            .build();
+            .withDepthAttachment(device.getDepthFormat()));
         scene.offscreen.renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
         scene.offscreen.frameBuffer = createFrameBuffer(device, scene.offscreen.imageView,
             scene.offscreen.depthStencilImageView, scene.offscreen.renderPass, CanvasWidth / 2, CanvasHeight / 2);

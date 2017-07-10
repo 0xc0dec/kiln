@@ -6,93 +6,18 @@
 #include "VulkanRenderPass.h"
 #include <array>
 
-vk::RenderPass::RenderPass(VkDevice device, Resource<VkRenderPass> pass):
-    device(device),
-    pass(std::move(pass))
+vk::RenderPass::RenderPass(VkDevice device, const RenderPassConfig &config):
+    device(device)
 {
-}
-
-void vk::RenderPass::begin(VkCommandBuffer cmdBuf, VkFramebuffer framebuffer, uint32_t canvasWidth, uint32_t canvasHeight)
-{
-    VkRenderPassBeginInfo info{};
-    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    info.pNext = nullptr;
-    info.renderPass = pass;
-	info.renderArea.offset.x = 0;
-	info.renderArea.offset.y = 0;
-	info.renderArea.extent.width = canvasWidth;
-	info.renderArea.extent.height = canvasHeight;
-	info.clearValueCount = clearValues.size();
-	info.pClearValues = clearValues.data();
-    info.framebuffer = framebuffer;
-
-    vkCmdBeginRenderPass(cmdBuf, &info, VK_SUBPASS_CONTENTS_INLINE);
-}
-
-void vk::RenderPass::end(VkCommandBuffer cmdBuf)
-{
-    vkCmdEndRenderPass(cmdBuf);
-}
-
-vk::RenderPassBuilder::RenderPassBuilder(VkDevice device):
-    device(device),
-    depthAttachmentRef{0, VK_IMAGE_LAYOUT_UNDEFINED}
-{
-}
-
-auto vk::RenderPassBuilder::withColorAttachment(VkFormat colorFormat, VkImageLayout finalLayout) -> RenderPassBuilder&
-{
-    VkAttachmentDescription desc{};
-    desc.format = colorFormat;
-    desc.flags = 0;
-    desc.samples = VK_SAMPLE_COUNT_1_BIT;
-    desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    desc.finalLayout = finalLayout;
-    attachments.push_back(desc);
-
-    VkAttachmentReference reference{};
-    reference.attachment = attachments.size() - 1;
-    reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    colorAttachmentRefs.push_back(reference);
-
-    return *this;
-}
-
-auto vk::RenderPassBuilder::withDepthAttachment(VkFormat depthFormat) -> RenderPassBuilder&
-{
-    VkAttachmentDescription desc{};
-    desc.format = depthFormat;
-    desc.flags = 0;
-    desc.samples = VK_SAMPLE_COUNT_1_BIT;
-    desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    desc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    attachments.push_back(desc);
-
-    depthAttachmentRef.attachment = attachments.size() - 1;
-    depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    return *this;
-}
-
-auto vk::RenderPassBuilder::build() -> RenderPass
-{
-    auto colorAttachments = colorAttachmentRefs.empty() ? nullptr : colorAttachmentRefs.data();
-    auto depthAttachment = depthAttachmentRef.layout != VK_IMAGE_LAYOUT_UNDEFINED ? &depthAttachmentRef : nullptr;
+    auto colorAttachments = config.colorAttachmentRefs.empty() ? nullptr : config.colorAttachmentRefs.data();
+    auto depthAttachment = config.depthAttachmentRef.layout != VK_IMAGE_LAYOUT_UNDEFINED ? &config.depthAttachmentRef : nullptr;
 
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.flags = 0;
     subpass.inputAttachmentCount = 0;
     subpass.pInputAttachments = nullptr;
-    subpass.colorAttachmentCount = colorAttachmentRefs.size();
+    subpass.colorAttachmentCount = config.colorAttachmentRefs.size();
     subpass.pColorAttachments = colorAttachments;
     subpass.pResolveAttachments = nullptr;
     subpass.pDepthStencilAttachment = depthAttachment;
@@ -121,8 +46,8 @@ auto vk::RenderPassBuilder::build() -> RenderPass
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     renderPassInfo.flags = 0;
     renderPassInfo.pNext = nullptr;
-    renderPassInfo.attachmentCount = attachments.size();
-    renderPassInfo.pAttachments = attachments.data();
+    renderPassInfo.attachmentCount = config.attachments.size();
+    renderPassInfo.pAttachments = config.attachments.data();
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
     renderPassInfo.dependencyCount = dependencies.size();
@@ -131,7 +56,76 @@ auto vk::RenderPassBuilder::build() -> RenderPass
     Resource<VkRenderPass> pass{device, vkDestroyRenderPass};
     KL_VK_CHECK_RESULT(vkCreateRenderPass(device, &renderPassInfo, nullptr, pass.cleanRef()));
 
-    return RenderPass(device, std::move(pass));
+    this->pass = std::move(pass);
+}
+
+void vk::RenderPass::begin(VkCommandBuffer cmdBuf, VkFramebuffer framebuffer, uint32_t canvasWidth, uint32_t canvasHeight)
+{
+    VkRenderPassBeginInfo info{};
+    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    info.pNext = nullptr;
+    info.renderPass = pass;
+	info.renderArea.offset.x = 0;
+	info.renderArea.offset.y = 0;
+	info.renderArea.extent.width = canvasWidth;
+	info.renderArea.extent.height = canvasHeight;
+	info.clearValueCount = clearValues.size();
+	info.pClearValues = clearValues.data();
+    info.framebuffer = framebuffer;
+
+    vkCmdBeginRenderPass(cmdBuf, &info, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void vk::RenderPass::end(VkCommandBuffer cmdBuf)
+{
+    vkCmdEndRenderPass(cmdBuf);
+}
+
+vk::RenderPassConfig::RenderPassConfig():
+    depthAttachmentRef{0, VK_IMAGE_LAYOUT_UNDEFINED}
+{
+}
+
+auto vk::RenderPassConfig::withColorAttachment(VkFormat colorFormat, VkImageLayout finalLayout) -> RenderPassConfig&
+{
+    VkAttachmentDescription desc{};
+    desc.format = colorFormat;
+    desc.flags = 0;
+    desc.samples = VK_SAMPLE_COUNT_1_BIT;
+    desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    desc.finalLayout = finalLayout;
+    attachments.push_back(desc);
+
+    VkAttachmentReference reference{};
+    reference.attachment = attachments.size() - 1;
+    reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorAttachmentRefs.push_back(reference);
+
+    return *this;
+}
+
+auto vk::RenderPassConfig::withDepthAttachment(VkFormat depthFormat) -> RenderPassConfig&
+{
+    VkAttachmentDescription desc{};
+    desc.format = depthFormat;
+    desc.flags = 0;
+    desc.samples = VK_SAMPLE_COUNT_1_BIT;
+    desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    desc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    attachments.push_back(desc);
+
+    depthAttachmentRef.attachment = attachments.size() - 1;
+    depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    return *this;
 }
 
 void vk::RenderPass::setClear(bool clearColor, bool clearDepthStencil, VkClearColorValue color, VkClearDepthStencilValue depthStencil)
