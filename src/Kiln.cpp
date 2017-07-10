@@ -1,8 +1,3 @@
-// TODO Use Image class for offscreen color/depth targets
-// TODO Separate Image creation from copying data to it
-// TODO Resource wrapper for command buffers
-// TODO Replace builders with "configs" passed as ctor parameters
-
 /*
     Copyright (c) Aleksey Fedotov
     MIT license
