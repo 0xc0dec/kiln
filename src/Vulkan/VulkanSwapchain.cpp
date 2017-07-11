@@ -93,23 +93,30 @@ static auto createSwapchain(const vk::Device &device, uint32_t width, uint32_t h
     return swapchain;
 }
 
-vk::Swapchain::Swapchain(const Device &device, VkRenderPass renderPass, uint32_t width, uint32_t height, bool vsync):
+vk::Swapchain::Swapchain(const Device &device, uint32_t width, uint32_t height, bool vsync):
     device(device)
 {
+    const auto colorFormat = device.getColorFormat();
+    const auto depthFormat = device.getDepthFormat();
+
     swapchain = createSwapchain(device, width, height, vsync);
 
-    depthStencil = Image(device, width, height, 1, 1, device.getDepthFormat(),
+    renderPass = RenderPass(device, RenderPassConfig()
+        .withColorAttachment(colorFormat, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+        .withDepthAttachment(depthFormat));
+    
+    depthStencil = Image(device, width, height, 1, 1, depthFormat,
         0,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
         VK_IMAGE_VIEW_TYPE_2D,
         VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
 
     auto images = getSwapchainImages(device, swapchain);
+    
     steps.resize(images.size());
-
     for (uint32_t i = 0; i < images.size(); i++)
     {
-        auto view = createImageView(device, device.getColorFormat(), VK_IMAGE_VIEW_TYPE_2D, 1, 1, images[i], VK_IMAGE_ASPECT_COLOR_BIT);
+        auto view = createImageView(device, colorFormat, VK_IMAGE_VIEW_TYPE_2D, 1, 1, images[i], VK_IMAGE_ASPECT_COLOR_BIT);
         steps[i].framebuffer = createFrameBuffer(device, view, depthStencil.getView(), renderPass, width, height);
         steps[i].image = images[i];
         steps[i].imageView = std::move(view);
@@ -127,10 +134,15 @@ auto vk::Swapchain::getNextStep() const -> uint32_t
     return step;
 }
 
-void vk::Swapchain::recordRenderCommands(std::function<void(uint32_t, VkCommandBuffer)> issueCommands)
+void vk::Swapchain::recordCommandBuffers(std::function<void(VkFramebuffer, VkCommandBuffer)> issueCommands)
 {
     for (size_t i = 0; i < steps.size(); ++i)
-        issueCommands(i, steps[i].cmdBuffer);
+    {
+        VkCommandBuffer buf = steps[i].cmdBuffer;
+        beginCommandBuffer(buf, false);
+        issueCommands(steps[i].framebuffer, buf);
+        KL_VK_CHECK_RESULT(vkEndCommandBuffer(buf));
+    }
 }
 
 void vk::Swapchain::presentNext(VkQueue queue, uint32_t step, uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores)

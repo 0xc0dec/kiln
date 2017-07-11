@@ -1,6 +1,5 @@
 // TODO RenderPlan/Job system/whatever for submitting to queue and dependency graph
 // TODO Return "jobs" from methods that transfer data (or make two versions - sync (using queueWaitIdle) and "async")
-// TODO Refactor swapchain a bit more - avoid external call for getNextStep. Create primary render pass inside swapchain
 
 /*
     Copyright (c) Aleksey Fedotov
@@ -131,14 +130,10 @@ int main()
     Window window{CanvasWidth, CanvasHeight, "Demo"};
     auto device = vk::Device::create(window.getPlatformHandle());
 
-    auto primaryRenderPass = vk::RenderPass(device, vk::RenderPassConfig()
-        .withColorAttachment(device.getColorFormat(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-        .withDepthAttachment(device.getDepthFormat()));
+    auto swapchain = vk::Swapchain(device, CanvasWidth, CanvasHeight, false);
     // TODO Take into account that clear values must correspond to attachments,
     // so I guess N attachments means N clear values + 1 for depth
-    primaryRenderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
-
-    auto swapchain = vk::Swapchain(device, primaryRenderPass, CanvasWidth, CanvasHeight, false);
+    swapchain.getRenderPass().setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
 
     struct
     {
@@ -316,7 +311,7 @@ int main()
             .withBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        scene.screenQuad.pipeline = vk::Pipeline(device, primaryRenderPass, vk::PipelineConfig(vs, fs)
+        scene.screenQuad.pipeline = vk::Pipeline(device, swapchain.getRenderPass(), vk::PipelineConfig(vs, fs)
             .withDepthTest(false, false)
             .withDescriptorSetLayout(scene.screenQuad.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
@@ -507,11 +502,9 @@ int main()
         KL_VK_CHECK_RESULT(vkEndCommandBuffer(buf));
     }
 
-    swapchain.recordRenderCommands([&](uint32_t i, VkCommandBuffer buf)
+    swapchain.recordCommandBuffers([&](VkFramebuffer fb, VkCommandBuffer buf)
     {
-        vk::beginCommandBuffer(buf, false);
-
-        primaryRenderPass.begin(buf, swapchain.getFramebuffer(i), CanvasWidth, CanvasHeight);
+        swapchain.getRenderPass().begin(buf, fb, CanvasWidth, CanvasHeight);
 
         auto vp = VkViewport{0, 0, static_cast<float>(CanvasWidth), static_cast<float>(CanvasHeight), 0, 1};
 
@@ -528,9 +521,7 @@ int main()
         vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
         vkCmdDraw(buf, 6, 1, 0, 0);
 
-        primaryRenderPass.end(buf);
-
-        KL_VK_CHECK_RESULT(vkEndCommandBuffer(buf));
+        swapchain.getRenderPass().end(buf);
     });
 
     // Main loop
