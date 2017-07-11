@@ -263,8 +263,8 @@ int main()
         .updateSets();
 
     {
-        auto vsSrc = fs::readBytes("../../assets/Textured.vert.spv");
-        auto fsSrc = fs::readBytes("../../assets/Textured.frag.spv");
+        auto vsSrc = fs::readBytes("../../assets/shaders/Textured.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/shaders/Textured.frag.spv");
         auto vs = createShader(device, vsSrc.data(), vsSrc.size());
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
@@ -294,7 +294,7 @@ int main()
 
         scene.box.descriptorSet = scene.descriptorPool.allocateSet(scene.box.descSetLayout);
 
-        auto textureData = ImageData::load2D("../../assets/Cobblestone.png");
+        auto textureData = ImageData::load2D("../../assets/textures/Cobblestone.png");
         scene.box.texture = vk::Image::create2D(device, textureData);
 
         vk::DescriptorSetUpdater(device)
@@ -304,8 +304,8 @@ int main()
     }
 
     {
-        auto vsSrc = fs::readBytes("../../assets/ScreenQuad.vert.spv");
-        auto fsSrc = fs::readBytes("../../assets/ScreenQuad.frag.spv");
+        auto vsSrc = fs::readBytes("../../assets/shaders/ScreenQuad.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/shaders/ScreenQuad.frag.spv");
         auto vs = createShader(device, vsSrc.data(), vsSrc.size());
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
@@ -335,8 +335,8 @@ int main()
     }
 
     {
-        auto vsSrc = fs::readBytes("../../assets/Skybox.vert.spv");
-        auto fsSrc = fs::readBytes("../../assets/Skybox.frag.spv");
+        auto vsSrc = fs::readBytes("../../assets/shaders/Skybox.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/shaders/Skybox.frag.spv");
         auto vs = createShader(device, vsSrc.data(), vsSrc.size());
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
@@ -365,7 +365,7 @@ int main()
 
         scene.skybox.descriptorSet = scene.descriptorPool.allocateSet(scene.skybox.descSetLayout);
 
-        auto data = ImageData::loadCube("../../assets/Cubemap_space.ktx");
+        auto data = ImageData::loadCube("../../assets/textures/Cubemap_space.ktx");
         scene.skybox.texture = vk::Image::createCube(device, data);
 
         vk::DescriptorSetUpdater(device)
@@ -393,8 +393,8 @@ int main()
         scene.axes.blueColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::vec3));
         scene.axes.blueColorUniformBuffer.update(&blue);
 
-        auto vsSrc = fs::readBytes("../../assets/Axis.vert.spv");
-        auto fsSrc = fs::readBytes("../../assets/Axis.frag.spv");
+        auto vsSrc = fs::readBytes("../../assets/shaders/Axis.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/shaders/Axis.frag.spv");
         auto vs = createShader(device, vsSrc.data(), vsSrc.size());
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
@@ -502,7 +502,7 @@ int main()
             vkCmdDrawIndexed(buf, boxIndexData.size(), 1, 0, 0, 0);
         }
 
-        scene.offscreen.renderPass.end(buf);
+        scene.offscreen.renderPass.end(buf); 
 
         KL_VK_CHECK_RESULT(vkEndCommandBuffer(buf));
     }

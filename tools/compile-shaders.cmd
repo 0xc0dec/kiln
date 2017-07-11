@@ -1,0 +1,1 @@
+"./compile-shaders.py" "../assets/shaders"
