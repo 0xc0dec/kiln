@@ -19,9 +19,6 @@
     <ClCompile Include="..\src\Vulkan\VulkanDescriptorSetLayoutBuilder.cpp">
       <Filter>vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Vulkan\VulkanEffect.cpp">
-      <Filter>vulkan</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Vulkan\VulkanPipeline.cpp">
       <Filter>vulkan</Filter>
     </ClCompile>
@@ -60,9 +57,6 @@
       <Filter>vulkan</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Vulkan\VulkanDescriptorSetLayoutBuilder.h">
-      <Filter>vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Vulkan\VulkanEffect.h">
       <Filter>vulkan</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Vulkan\VulkanPipeline.h">
