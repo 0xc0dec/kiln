@@ -127,11 +127,10 @@ vk::Swapchain::Swapchain(const Device &device, uint32_t width, uint32_t height, 
     renderCompleteSem = createSemaphore(device);
 }
 
-auto vk::Swapchain::getNextStep() const -> uint32_t
+auto vk::Swapchain::acquireNext() -> VkSemaphore
 {
-    uint32_t step;
-    KL_VK_CHECK_RESULT(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentCompleteSem, nullptr, &step));
-    return step;
+    KL_VK_CHECK_RESULT(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentCompleteSem, nullptr, &nextStep));
+    return presentCompleteSem;
 }
 
 void vk::Swapchain::recordCommandBuffers(std::function<void(VkFramebuffer, VkCommandBuffer)> issueCommands)
@@ -145,16 +144,16 @@ void vk::Swapchain::recordCommandBuffers(std::function<void(VkFramebuffer, VkCom
     }
 }
 
-void vk::Swapchain::presentNext(VkQueue queue, uint32_t step, uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores)
+void vk::Swapchain::presentNext(VkQueue queue, uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores)
 {
-    queueSubmit(queue, waitSemaphoreCount, waitSemaphores, 1, &renderCompleteSem, 1, &steps[step].cmdBuffer);
+    queueSubmit(queue, waitSemaphoreCount, waitSemaphores, 1, &renderCompleteSem, 1, &steps[nextStep].cmdBuffer);
 
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.pNext = nullptr;
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = &swapchain;
-    presentInfo.pImageIndices = &step;
+    presentInfo.pImageIndices = &nextStep;
     presentInfo.pWaitSemaphores = &renderCompleteSem;
     presentInfo.waitSemaphoreCount = 1;
     KL_VK_CHECK_RESULT(vkQueuePresentKHR(queue, &presentInfo));

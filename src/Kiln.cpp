@@ -122,6 +122,71 @@ static const std::vector<uint32_t> boxIndexData =
     20, 23, 21
 };
 
+class Job
+{
+public:
+    explicit Job(vk::Device &device): device(device) {}
+    ~Job() {}
+
+    auto then(VkCommandBuffer cmdBuf) -> Job&
+    {
+        Step step{};
+        step.command.cmdBuf = cmdBuf;
+        if (!steps.empty())
+        {
+            steps.rbegin()->command.signalSemaphore = createSemaphore(device);
+            steps.rbegin()->signalSemaphore = &steps.rbegin()->command.signalSemaphore;
+            step.waitSemaphores.push_back(steps.rbegin()->command.signalSemaphore);
+        }
+        steps.push_back(std::move(step));
+        return *this;
+    }
+
+    void submit(VkQueue queue)
+    {
+        for (auto &step: steps)
+        {
+            if (step.command.cmdBuf)
+            {
+                vk::queueSubmit(queue, step.waitSemaphores.size(), step.waitSemaphores.data(),
+                    step.signalSemaphore ? 1 : 0, step.signalSemaphore, 1, &step.command.cmdBuf);
+            }
+            else if (step.swapchain.swapchain)
+            {
+                if (step.swapchain.acquireNext)
+                {
+                    auto sem = step.swapchain.swapchain->acquireNext();
+                    // TODO
+                }
+            }
+        }
+    }
+
+private:
+    vk::Device &device;
+
+    struct Step
+    {
+        VkSemaphore *signalSemaphore;
+        std::vector<VkSemaphore> waitSemaphores;
+
+        struct
+        {
+            VkCommandBuffer cmdBuf;
+            vk::Resource<VkSemaphore> signalSemaphore;
+        } command;
+
+        struct
+        {
+            vk::Swapchain *swapchain;
+            bool acquireNext;
+            bool presentNext;
+        } swapchain;
+    };
+
+    std::vector<Step> steps;
+};
+
 int main()
 {
     const uint32_t CanvasWidth = 1366;
@@ -539,10 +604,9 @@ int main()
         viewMatrices.viewMatrix = cam.getViewMatrix();
         viewMatricesBuffer.update(&viewMatrices);
 
-        auto swapchainStep = swapchain.getNextStep();
-        auto presentCompleteSem = swapchain.getPresentCompleteSem();
+        auto presentCompleteSem = swapchain.acquireNext();
         vk::queueSubmit(device.getQueue(), 1, &presentCompleteSem, 1, &scene.offscreen.semaphore, 1, &scene.offscreen.commandBuffer);
-        swapchain.presentNext(device.getQueue(), swapchainStep, 1, &scene.offscreen.semaphore);
+        swapchain.presentNext(device.getQueue(), 1, &scene.offscreen.semaphore);
         KL_VK_CHECK_RESULT(vkQueueWaitIdle(device.getQueue()));
 
         window.endUpdate();

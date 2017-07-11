@@ -30,12 +30,11 @@ namespace vk
         operator VkSwapchainKHR() { return swapchain; }
         operator VkSwapchainKHR() const { return swapchain; }
 
-        auto getPresentCompleteSem() const -> VkSemaphore { return presentCompleteSem; }
-        auto getNextStep() const -> uint32_t;
         auto getRenderPass() -> RenderPass& { return renderPass; }
 
         void recordCommandBuffers(std::function<void(VkFramebuffer, VkCommandBuffer)> issueCommands);
-        void presentNext(VkQueue queue, uint32_t step, uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores);
+        auto acquireNext() -> VkSemaphore;
+        void presentNext(VkQueue queue, uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores);
 
     private:
         struct Step
@@ -53,5 +52,6 @@ namespace vk
         Resource<VkSemaphore> presentCompleteSem;
         Resource<VkSemaphore> renderCompleteSem;
         RenderPass renderPass;
+        uint32_t nextStep = 0;
     };
 }
