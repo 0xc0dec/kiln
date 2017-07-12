@@ -122,106 +122,6 @@ static const std::vector<uint32_t> boxIndexData =
     20, 23, 21
 };
 
-class Job
-{
-public:
-    explicit Job(vk::Device *device): device(device) {}
-    ~Job() {}
-
-    auto then(VkCommandBuffer cmdBuf) -> Job&
-    {
-        Step step{};
-        step.command.cmdBuf = cmdBuf;
-        if (!steps.empty())
-        {
-            steps.rbegin()->command.signalSemaphore = createSemaphore(*device);
-            steps.rbegin()->signalSemaphore = steps.rbegin()->command.signalSemaphore;
-        }
-        steps.push_back(std::move(step));
-        return *this;
-    }
-
-    auto thenSwapchainAcquireNext(vk::Swapchain *swapchain) -> Job&
-    {
-        Step step{};
-        step.swapchain.swapchain = swapchain;
-        step.swapchain.acquireNext = true;
-        step.signalSemaphore = swapchain->getPresentCompleteSemaphore();
-        steps.push_back(std::move(step));
-        return *this;
-    }
-
-    auto thenSwapchainPresent(vk::Swapchain *swapchain) -> Job&
-    {
-        Step step{};
-        step.swapchain.swapchain = swapchain;
-        step.swapchain.presentNext = true;
-        if (!steps.empty())
-        {
-            steps.rbegin()->command.signalSemaphore = createSemaphore(*device);
-            steps.rbegin()->signalSemaphore = steps.rbegin()->command.signalSemaphore;
-        }
-        steps.push_back(std::move(step));
-        return *this;
-    }
-
-    auto thenWaitIdle()
-    {
-        Step step{};
-        step.waitIdle = true;
-        steps.push_back(std::move(step));
-        return *this;
-    }
-
-    void submit(VkQueue queue)
-    {
-        VkSemaphore lastSignal = nullptr;
-        for (auto &step: steps)
-        {
-            if (step.command.cmdBuf)
-            {
-                vk::queueSubmit(queue, lastSignal ? 1 : 0, &lastSignal,
-                    step.signalSemaphore ? 1 : 0, &step.signalSemaphore, 1, &step.command.cmdBuf);
-            }
-            else if (step.swapchain.swapchain)
-            {
-                if (step.swapchain.acquireNext)
-                    step.swapchain.swapchain->acquireNext();
-                else if (step.swapchain.presentNext)
-                    step.swapchain.swapchain->presentNext(device->getQueue(), lastSignal ? 1 : 0, &lastSignal);
-            }
-            else if (step.waitIdle)
-                KL_VK_CHECK_RESULT(vkQueueWaitIdle(device->getQueue()));
-            lastSignal = step.signalSemaphore;
-        }
-    }
-
-private:
-    vk::Device *device = nullptr;
-
-    struct Step
-    {
-        VkSemaphore signalSemaphore;
-
-        bool waitIdle;
-
-        struct
-        {
-            VkCommandBuffer cmdBuf;
-            vk::Resource<VkSemaphore> signalSemaphore;
-        } command;
-
-        struct
-        {
-            vk::Swapchain *swapchain;
-            bool acquireNext;
-            bool presentNext;
-        } swapchain;
-    };
-
-    std::vector<Step> steps;
-};
-
 int main()
 {
     const uint32_t CanvasWidth = 1366;
@@ -628,12 +528,6 @@ int main()
 
     Input input;
 
-    auto job = Job(&device)
-        .thenSwapchainAcquireNext(&swapchain)
-        .then(scene.offscreen.commandBuffer)
-        .thenSwapchainPresent(&swapchain)
-        .thenWaitIdle();
-
     while (!window.closeRequested())
     {
         window.beginUpdate(input);
@@ -645,12 +539,10 @@ int main()
         viewMatrices.viewMatrix = cam.getViewMatrix();
         viewMatricesBuffer.update(&viewMatrices);
 
-        job.submit(device.getQueue());
-
-        /*auto presentCompleteSem = swapchain.acquireNext();
-        vk::queueSubmit(device.getQueue(), 1, &presentCompleteSem, 1, &scene.offscreen.semaphore, 1, &scene.offscreen.commandBuffer);
+        auto presentCompleteSemaphore = swapchain.acquireNext();
+        vk::queueSubmit(device.getQueue(), 1, &presentCompleteSemaphore, 1, &scene.offscreen.semaphore, 1, &scene.offscreen.commandBuffer);
         swapchain.presentNext(device.getQueue(), 1, &scene.offscreen.semaphore);
-        KL_VK_CHECK_RESULT(vkQueueWaitIdle(device.getQueue()));*/
+        KL_VK_CHECK_RESULT(vkQueueWaitIdle(device.getQueue()));
 
         window.endUpdate();
     }

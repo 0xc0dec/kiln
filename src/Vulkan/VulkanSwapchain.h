@@ -34,7 +34,7 @@ namespace vk
         auto getPresentCompleteSemaphore() const -> VkSemaphore { return presentCompleteSem; }
 
         void recordCommandBuffers(std::function<void(VkFramebuffer, VkCommandBuffer)> issueCommands);
-        void acquireNext();
+        auto acquireNext() -> VkSemaphore;
         void presentNext(VkQueue queue, uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores);
 
     private:
