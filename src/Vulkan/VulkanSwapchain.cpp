@@ -127,10 +127,9 @@ vk::Swapchain::Swapchain(const Device &device, uint32_t width, uint32_t height, 
     renderCompleteSem = createSemaphore(device);
 }
 
-auto vk::Swapchain::acquireNext() -> VkSemaphore
+void vk::Swapchain::acquireNext()
 {
     KL_VK_CHECK_RESULT(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentCompleteSem, nullptr, &nextStep));
-    return presentCompleteSem;
 }
 
 void vk::Swapchain::recordCommandBuffers(std::function<void(VkFramebuffer, VkCommandBuffer)> issueCommands)

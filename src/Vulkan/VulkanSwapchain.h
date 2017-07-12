@@ -31,9 +31,10 @@ namespace vk
         operator VkSwapchainKHR() const { return swapchain; }
 
         auto getRenderPass() -> RenderPass& { return renderPass; }
+        auto getPresentCompleteSemaphore() const -> VkSemaphore { return presentCompleteSem; }
 
         void recordCommandBuffers(std::function<void(VkFramebuffer, VkCommandBuffer)> issueCommands);
-        auto acquireNext() -> VkSemaphore;
+        void acquireNext();
         void presentNext(VkQueue queue, uint32_t waitSemaphoreCount, const VkSemaphore *waitSemaphores);
 
     private:
