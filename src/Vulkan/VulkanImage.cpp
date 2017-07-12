@@ -249,12 +249,6 @@ vk::Image::Image(const Device &device, uint32_t width, uint32_t height, uint32_t
 
 void vk::Image::uploadData(const Device &device, const ImageData &data)
 {
-    VkImageSubresourceRange subresourceRange{};
-	subresourceRange.aspectMask = aspectMask;
-	subresourceRange.baseMipLevel = 0;
-	subresourceRange.levelCount = mipLevels;
-	subresourceRange.layerCount = layers;
-
     uint32_t offset = 0;
     std::vector<VkBufferImageCopy> copyRegions;
     for (uint32_t layer = 0; layer < layers; layer++)
@@ -276,6 +270,12 @@ void vk::Image::uploadData(const Device &device, const ImageData &data)
             offset += data.getSize(layer, level);
         }
     }
+
+    VkImageSubresourceRange subresourceRange{};
+	subresourceRange.aspectMask = aspectMask;
+	subresourceRange.baseMipLevel = 0;
+	subresourceRange.levelCount = mipLevels;
+	subresourceRange.layerCount = layers;
 
     auto srcBuf = Buffer::createStaging(device, data.getSize(), data.getData());
 
