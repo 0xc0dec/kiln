@@ -529,7 +529,7 @@ int main()
 
     Input input;
 
-    while (!window.closeRequested())
+    while (!window.closeRequested() && !input.isKeyPressed(SDLK_ESCAPE, true))
     {
         window.beginUpdate(input);
 

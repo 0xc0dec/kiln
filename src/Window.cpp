@@ -65,12 +65,8 @@ void Window::beginUpdate(Input &input)
     {
         input.processEvent(evt);
 
-        if (evt.type == SDL_QUIT ||
-            evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_CLOSE ||
-            evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_ESCAPE)
-        {
+        if (evt.type == SDL_QUIT || evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_CLOSE)
             _closeRequested = true;
-        }
     }
 
     auto ticks = SDL_GetTicks();
