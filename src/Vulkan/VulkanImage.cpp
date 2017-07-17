@@ -13,7 +13,8 @@ static auto toVulkanFormat(ImageData::Format format) -> VkFormat
 {
     switch (format)
     {
-        case ImageData::Format::R8G8B8A8_UNORM: return VK_FORMAT_R8G8B8A8_UNORM;
+        case ImageData::Format::R8G8B8A8_UNORM:
+            return VK_FORMAT_R8G8B8A8_UNORM;
         default:
             KL_PANIC("Unsupported texture format");
             return VK_FORMAT_UNDEFINED;

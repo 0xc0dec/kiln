@@ -75,11 +75,11 @@ void Window::beginUpdate(Input &input)
 
     auto ticks = SDL_GetTicks();
     auto deltaTicks = ticks - lastTicks;
-    if (deltaTicks == 0)
-        deltaTicks = 1;
-
-    dt = deltaTicks / 1000.0f;
-    lastTicks = ticks;
+    if (deltaTicks > 0)
+    {
+        dt = deltaTicks / 1000.0f;
+        lastTicks = ticks;
+    }
 }
 
 void Window::endUpdate()
