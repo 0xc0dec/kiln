@@ -24,6 +24,7 @@
     <ClCompile Include="..\src\ImageData.cpp" />
     <ClCompile Include="..\src\Input.cpp" />
     <ClCompile Include="..\src\Kiln.cpp" />
+    <ClCompile Include="..\src\MeshData.cpp" />
     <ClCompile Include="..\src\Spectator.cpp" />
     <ClCompile Include="..\src\Transform.cpp" />
     <ClCompile Include="..\src\Vulkan\Vulkan.cpp" />
@@ -44,6 +45,7 @@
     <ClInclude Include="..\src\FileSystem.h" />
     <ClInclude Include="..\src\ImageData.h" />
     <ClInclude Include="..\src\Input.h" />
+    <ClInclude Include="..\src\MeshData.h" />
     <ClInclude Include="..\src\Spectator.h" />
     <ClInclude Include="..\src\Transform.h" />
     <ClInclude Include="..\src\Vulkan\Vulkan.h" />

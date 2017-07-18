@@ -65,7 +65,8 @@ void Window::beginUpdate(Input &input)
     {
         input.processEvent(evt);
 
-        if (evt.type == SDL_QUIT || evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_CLOSE)
+        if (evt.type == SDL_QUIT ||
+            evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_CLOSE)
             _closeRequested = true;
     }
 

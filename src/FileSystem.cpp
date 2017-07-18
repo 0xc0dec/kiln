@@ -4,6 +4,7 @@
 */
 
 #include "FileSystem.h"
+#include "Common.h"
 #include <fstream>
 #include <cassert>
 
@@ -21,4 +22,18 @@ auto fs::readBytes(const std::string& path) -> std::vector<uint8_t>
     file.close();
 
     return data;
+}
+
+void fs::iterateLines(const std::string &path, std::function<bool(const std::string &)> process)
+{
+    std::ifstream file(path);
+    KL_PANIC_IF(!file.is_open(), "Failed to open file");
+    while (!file.eof())
+    {
+        std::string line;
+        std::getline(file, line);
+        if (!process(line))
+            break;
+    }
+    file.close();
 }
