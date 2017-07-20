@@ -13,6 +13,7 @@
 #include "Camera.h"
 #include "Window.h"
 #include "ImageData.h"
+#include "MeshData.h"
 #include "vulkan/Vulkan.h"
 #include "vulkan/VulkanDevice.h"
 #include "vulkan/VulkanRenderPass.h"
@@ -159,9 +160,11 @@ int main()
             vk::Image texture;
             vk::Buffer modelMatrixBuffer;
             vk::Buffer vertexBuffer;
+            vk::Buffer texCoordBuffer;
             vk::Buffer indexBuffer;
+            uint32_t indexCount;
             VkDescriptorSet descriptorSet;
-        } box;
+        } mesh;
 
         struct
         {
@@ -265,37 +268,43 @@ int main()
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
         glm::mat4 modelMatrix{};
-        scene.box.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
-        scene.box.modelMatrixBuffer.update(&modelMatrix);
+        scene.mesh.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
+        scene.mesh.modelMatrixBuffer.update(&modelMatrix);
 
-        scene.box.vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * boxVertexData.size(),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, boxVertexData.data());
-        scene.box.indexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(uint32_t) * boxIndexData.size(),
-            VK_BUFFER_USAGE_INDEX_BUFFER_BIT, boxIndexData.data());
+        auto data = MeshData::loadObj("../../assets/meshes/Monkey.obj");
 
-        scene.box.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
+        scene.mesh.vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(glm::vec3) * data.vertices.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data.vertices.data());
+        scene.mesh.texCoordBuffer = vk::Buffer::createDeviceLocal(device, sizeof(glm::vec2) * data.texCoords.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data.texCoords.data());
+        scene.mesh.indexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(uint32_t) * data.indices[0].size(),
+            VK_BUFFER_USAGE_INDEX_BUFFER_BIT, data.indices[0].data());
+        scene.mesh.indexCount = data.indices[0].size();
+
+        scene.mesh.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
             .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        scene.box.pipeline = vk::Pipeline(device, scene.offscreen.renderPass, vk::PipelineConfig(vs, fs)
+        scene.mesh.pipeline = vk::Pipeline(device, scene.offscreen.renderPass, vk::PipelineConfig(vs, fs)
             .withDescriptorSetLayout(scene.globalDescSetLayout)
-            .withDescriptorSetLayout(scene.box.descSetLayout)
+            .withDescriptorSetLayout(scene.mesh.descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_NONE)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-            .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
+            .withVertexBinding(0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX)
+            .withVertexBinding(1, sizeof(float) * 2, VK_VERTEX_INPUT_RATE_VERTEX)
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
-            .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3));
+            .withVertexAttribute(1, 1, VK_FORMAT_R32G32_SFLOAT, 0));
 
-        scene.box.descriptorSet = scene.descriptorPool.allocateSet(scene.box.descSetLayout);
+        scene.mesh.descriptorSet = scene.descriptorPool.allocateSet(scene.mesh.descSetLayout);
 
         auto textureData = ImageData::load2D("../../assets/textures/Cobblestone.png");
-        scene.box.texture = vk::Image::create2D(device, textureData);
+        scene.mesh.texture = vk::Image::create2D(device, textureData);
 
         vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.box.descriptorSet, scene.box.modelMatrixBuffer, 0, sizeof(modelMatrix))
-            .forTexture(1, scene.box.descriptorSet, scene.box.texture.getView(), scene.box.texture.getSampler(), scene.box.texture.getLayout())
+            .forUniformBuffer(0, scene.mesh.descriptorSet, scene.mesh.modelMatrixBuffer, 0, sizeof(modelMatrix))
+            .forTexture(1, scene.mesh.descriptorSet, scene.mesh.texture.getView(), scene.mesh.texture.getSampler(), scene.mesh.texture.getLayout())
             .updateSets();
     }
 
@@ -450,11 +459,10 @@ int main()
         VkRect2D scissor{{0, 0}, {vp.width, vp.height}};
         vkCmdSetScissor(buf, 0, 1, &scissor);
 
-        std::vector<VkDeviceSize> vertexBufferOffsets = {0};
-
         // Skybox 
         {
             std::vector<VkBuffer> vertexBuffers = {scene.skybox.vertexBuffer};
+            std::vector<VkDeviceSize> vertexBufferOffsets = {0};
             std::vector<VkDescriptorSet> descSets = {scene.globalDescriptorSet, scene.skybox.descriptorSet};
             vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.skybox.pipeline);
             vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.skybox.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
@@ -468,6 +476,8 @@ int main()
 
             std::vector<VkDescriptorSet> descSets = {scene.globalDescriptorSet, scene.axes.redDescSet};
             
+            std::vector<VkDeviceSize> vertexBufferOffsets = {0};
+
             // TODO bind all at once
             std::vector<VkBuffer> vertexBuffers = {scene.axes.xAxisVertexBuffer};
             vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.axes.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
@@ -487,15 +497,16 @@ int main()
             vkCmdDraw(buf, 4, 1, 0, 0);
         }
 
-        // Box
+        // Mesh
         {
-            std::vector<VkBuffer> vertexBuffers = {scene.box.vertexBuffer};
-            std::vector<VkDescriptorSet> descSets = {scene.globalDescriptorSet, scene.box.descriptorSet};
-            vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.box.pipeline);
-            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.box.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
-            vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
-            vkCmdBindIndexBuffer(buf, scene.box.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-            vkCmdDrawIndexed(buf, boxIndexData.size(), 1, 0, 0, 0);
+            std::vector<VkBuffer> vertexBuffers = {scene.mesh.vertexBuffer, scene.mesh.texCoordBuffer};
+            std::vector<VkDeviceSize> vertexBufferOffsets = {0, 0};
+            std::vector<VkDescriptorSet> descSets = {scene.globalDescriptorSet, scene.mesh.descriptorSet};
+            vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.mesh.pipeline);
+            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.mesh.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
+            vkCmdBindVertexBuffers(buf, 0, vertexBuffers.size(), vertexBuffers.data(), vertexBufferOffsets.data());
+            vkCmdBindIndexBuffer(buf, scene.mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdDrawIndexed(buf, scene.mesh.indexCount, 1, 0, 0, 0);
         }
 
         scene.offscreen.renderPass.end(buf); 

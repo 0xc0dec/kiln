@@ -68,13 +68,13 @@ auto MeshData::loadObj(const std::string &path) -> MeshData
     std::vector<glm::vec3> inputVertices;
     std::vector<glm::vec3> inputNormals;
     std::vector<glm::vec2> inputUvs;
-    std::vector<uint16_t> currentIndices;
-    std::unordered_map<std::string, uint16_t> uniqueIndices;
+    std::vector<uint32_t> currentIndices;
+    std::unordered_map<std::string, uint32_t> uniqueIndices;
 
     auto finishIndex = [&]
     {
         data.indices.push_back(std::move(currentIndices));
-        currentIndices = std::vector<uint16_t>();
+        currentIndices = std::vector<uint32_t>();
         uniqueIndices.clear();
     };
 
@@ -126,7 +126,7 @@ auto MeshData::loadObj(const std::string &path) -> MeshData
                         data.texCoords.push_back(inputUvs[uvIdx - 1]);
                     if (idxs[2])
                         data.normals.push_back(inputNormals[nIdx - 1]);
-                    auto newIndex = static_cast<uint16_t>(data.vertices.size() - 1);
+                    auto newIndex = static_cast<uint32_t>(data.vertices.size() - 1);
                     uniqueIndices[three] = newIndex;
                     currentIndices.push_back(newIndex);
                 }
