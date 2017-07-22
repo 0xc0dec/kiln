@@ -6,7 +6,6 @@
 #pragma once
 
 #include "Vulkan.h"
-#include "../Common.h"
 #include <vector>
 
 namespace vk
@@ -14,9 +13,7 @@ namespace vk
     class Device
     {
     public:
-#ifdef KL_WINDOWS
         static auto create(const std::vector<uint8_t> &platformHandle) -> Device;
-#endif
 
         auto getInstance() const -> VkInstance { return instance; }
         auto getSurface() const -> VkSurfaceKHR { return surface; }
