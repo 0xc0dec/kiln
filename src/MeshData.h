@@ -11,10 +11,20 @@
 class MeshData
 {
 public:
-    std::vector<glm::vec3> vertices;
-    std::vector<glm::vec3> normals;
-    std::vector<glm::vec2> texCoords;
-    std::vector<std::vector<uint32_t>> indices;
+    struct Vertex
+    {
+        glm::vec3 position;
+        glm::vec3 normal;
+        glm::vec2 texCoord;
+
+        bool operator==(const Vertex &other) const
+        {
+            return position == other.position && normal == other.normal && texCoord == other.texCoord;
+        }
+    };
+
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
 
     static auto loadObj(const std::string &path) -> MeshData;
 };

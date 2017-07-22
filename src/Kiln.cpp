@@ -1,6 +1,5 @@
 // TODO RenderPlan/Job system/whatever for submitting to queue and dependency graph
 // TODO Return "jobs" from methods that transfer data (or make two versions - sync (using queueWaitIdle) and "async")
-// TODO Mesh loading
 
 /*
     Copyright (c) Aleksey Fedotov
@@ -94,7 +93,6 @@ int main()
             vk::Image texture;
             vk::Buffer modelMatrixBuffer;
             vk::Buffer vertexBuffer;
-            vk::Buffer texCoordBuffer;
             vk::Buffer indexBuffer;
             uint32_t indexCount;
             VkDescriptorSet descriptorSet;
@@ -138,13 +136,13 @@ int main()
     } scene;
 
     {
-        scene.offscreen.colorAttachment = vk::Image(device, CanvasWidth / 2, CanvasHeight / 2, 1, 1,
+        scene.offscreen.colorAttachment = vk::Image(device, CanvasWidth, CanvasHeight, 1, 1,
             VK_FORMAT_R8G8B8A8_UNORM,
             0,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VK_IMAGE_VIEW_TYPE_2D,
             VK_IMAGE_ASPECT_COLOR_BIT);
-        scene.offscreen.depthAttachment = vk::Image(device, CanvasWidth / 2, CanvasHeight / 2, 1, 1,
+        scene.offscreen.depthAttachment = vk::Image(device, CanvasWidth, CanvasHeight, 1, 1,
             device.getDepthFormat(),
             0,
             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
@@ -158,7 +156,7 @@ int main()
         scene.offscreen.renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
 
         scene.offscreen.frameBuffer = createFrameBuffer(device, scene.offscreen.colorAttachment.getView(),
-            scene.offscreen.depthAttachment.getView(), scene.offscreen.renderPass, CanvasWidth / 2, CanvasHeight / 2);
+            scene.offscreen.depthAttachment.getView(), scene.offscreen.renderPass, CanvasWidth, CanvasHeight);
 
         scene.offscreen.semaphore = createSemaphore(device);
 
@@ -196,8 +194,8 @@ int main()
         .updateSets();
 
     {
-        auto vsSrc = fs::readBytes("../../assets/shaders/Textured.vert.spv");
-        auto fsSrc = fs::readBytes("../../assets/shaders/Textured.frag.spv");
+        auto vsSrc = fs::readBytes("../../assets/shaders/Mesh.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/shaders/Mesh.frag.spv");
         auto vs = createShader(device, vsSrc.data(), vsSrc.size());
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
@@ -205,15 +203,13 @@ int main()
         scene.mesh.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
         scene.mesh.modelMatrixBuffer.update(&modelMatrix);
 
-        auto data = MeshData::loadObj("../../assets/meshes/Monkey.obj");
+        auto data = MeshData::loadObj("../../assets/meshes/Teapot.obj");
 
-        scene.mesh.vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(glm::vec3) * data.vertices.size(),
+        scene.mesh.vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(MeshData::Vertex) * data.vertices.size(),
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data.vertices.data());
-        scene.mesh.texCoordBuffer = vk::Buffer::createDeviceLocal(device, sizeof(glm::vec2) * data.texCoords.size(),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data.texCoords.data());
-        scene.mesh.indexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(uint32_t) * data.indices[0].size(),
-            VK_BUFFER_USAGE_INDEX_BUFFER_BIT, data.indices[0].data());
-        scene.mesh.indexCount = data.indices[0].size();
+        scene.mesh.indexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(uint32_t) * data.indices.size(),
+            VK_BUFFER_USAGE_INDEX_BUFFER_BIT, data.indices.data());
+        scene.mesh.indexCount = data.indices.size();
 
         scene.mesh.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
             .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
@@ -226,10 +222,10 @@ int main()
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_NONE)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-            .withVertexBinding(0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX)
-            .withVertexBinding(1, sizeof(float) * 2, VK_VERTEX_INPUT_RATE_VERTEX)
+            .withVertexBinding(0, sizeof(MeshData::Vertex), VK_VERTEX_INPUT_RATE_VERTEX)
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
-            .withVertexAttribute(1, 1, VK_FORMAT_R32G32_SFLOAT, 0));
+            .withVertexAttribute(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(MeshData::Vertex, normal))
+            .withVertexAttribute(2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(MeshData::Vertex, texCoord)));
 
         scene.mesh.descriptorSet = scene.descriptorPool.allocateSet(scene.mesh.descSetLayout);
 
@@ -243,8 +239,8 @@ int main()
     }
 
     {
-        auto vsSrc = fs::readBytes("../../assets/shaders/ScreenQuad.vert.spv");
-        auto fsSrc = fs::readBytes("../../assets/shaders/ScreenQuad.frag.spv");
+        auto vsSrc = fs::readBytes("../../assets/shaders/PostProcess.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/shaders/PostProcess.frag.spv");
         auto vs = createShader(device, vsSrc.data(), vsSrc.size());
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
@@ -384,9 +380,9 @@ int main()
         VkCommandBuffer buf = scene.offscreen.commandBuffer;
         vk::beginCommandBuffer(buf, false);
 
-        scene.offscreen.renderPass.begin(buf, scene.offscreen.frameBuffer, CanvasWidth / 2, CanvasHeight / 2);
+        scene.offscreen.renderPass.begin(buf, scene.offscreen.frameBuffer, CanvasWidth, CanvasHeight);
 
-        auto vp = VkViewport{0, 0, CanvasWidth / 2, CanvasHeight / 2, 0, 1};
+        auto vp = VkViewport{0, 0, CanvasWidth, CanvasHeight, 0, 1};
 
         vkCmdSetViewport(buf, 0, 1, &vp);
 
@@ -433,12 +429,12 @@ int main()
 
         // Mesh
         {
-            std::vector<VkBuffer> vertexBuffers = {scene.mesh.vertexBuffer, scene.mesh.texCoordBuffer};
-            std::vector<VkDeviceSize> vertexBufferOffsets = {0, 0};
+            VkBuffer vertexBuffer = scene.mesh.vertexBuffer;
+            VkDeviceSize vertexBufferOffset = 0;
             std::vector<VkDescriptorSet> descSets = {scene.globalDescriptorSet, scene.mesh.descriptorSet};
             vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.mesh.pipeline);
             vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.mesh.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
-            vkCmdBindVertexBuffers(buf, 0, vertexBuffers.size(), vertexBuffers.data(), vertexBufferOffsets.data());
+            vkCmdBindVertexBuffers(buf, 0, 1, &vertexBuffer, &vertexBufferOffset);
             vkCmdBindIndexBuffer(buf, scene.mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
             vkCmdDrawIndexed(buf, scene.mesh.indexCount, 1, 0, 0, 0);
         }
