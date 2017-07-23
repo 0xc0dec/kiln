@@ -199,8 +199,8 @@ int main()
 
         auto data = MeshData::loadObj("../../assets/meshes/Teapot.obj");
 
-        scene.mesh.vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(MeshData::Vertex) * data.vertices.size(),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data.vertices.data());
+        scene.mesh.vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * data.data.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data.data.data());
         scene.mesh.indexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(uint32_t) * data.indices.size(),
             VK_BUFFER_USAGE_INDEX_BUFFER_BIT, data.indices.data());
         scene.mesh.indexCount = data.indices.size();
@@ -216,10 +216,10 @@ int main()
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_NONE)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-            .withVertexBinding(0, sizeof(MeshData::Vertex), VK_VERTEX_INPUT_RATE_VERTEX)
+            .withVertexBinding(0, 8 * sizeof(float), VK_VERTEX_INPUT_RATE_VERTEX)
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
-            .withVertexAttribute(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(MeshData::Vertex, normal))
-            .withVertexAttribute(2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(MeshData::Vertex, texCoord)));
+            .withVertexAttribute(1, 0, VK_FORMAT_R32G32B32_SFLOAT, 3 * sizeof(float))
+            .withVertexAttribute(2, 0, VK_FORMAT_R32G32_SFLOAT, 6 * sizeof(float)));
 
         scene.mesh.descriptorSet = scene.descriptorPool.allocateSet(scene.mesh.descSetLayout);
 

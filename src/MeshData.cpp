@@ -11,12 +11,24 @@
 #include <tiny_obj_loader.h>
 #include <unordered_map>
 
+struct Vertex
+{
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 texCoord;
+
+    bool operator==(const Vertex &other) const
+    {
+        return position == other.position && normal == other.normal && texCoord == other.texCoord;
+    }
+};
+
 namespace std
 {
     template<>
-    struct hash<MeshData::Vertex>
+    struct hash<Vertex>
     {
-        auto operator()(const MeshData::Vertex &v) const -> size_t
+        auto operator()(const Vertex &v) const -> size_t
         {
             return (hash<glm::vec3>()(v.position) ^ (hash<glm::vec3>()(v.normal) << 1)) >> 1 ^ (hash<glm::vec2>()(v.texCoord) << 1);
         }
@@ -73,8 +85,15 @@ auto MeshData::loadObj(const std::string &path) -> MeshData
 
             if (uniqueVertices.count(v) == 0)
             {
-                uniqueVertices[v] = static_cast<uint32_t>(data.vertices.size());
-                data.vertices.push_back(v);
+                uniqueVertices[v] = static_cast<uint32_t>(data.data.size() / 8);
+                data.data.push_back(v.position.x);
+                data.data.push_back(v.position.y);
+                data.data.push_back(v.position.z);
+                data.data.push_back(v.normal.x);
+                data.data.push_back(v.normal.y);
+                data.data.push_back(v.normal.z);
+                data.data.push_back(v.texCoord.x);
+                data.data.push_back(v.texCoord.y);
             }
 
             data.indices.push_back(uniqueVertices[v]);
