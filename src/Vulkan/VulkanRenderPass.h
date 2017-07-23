@@ -15,8 +15,8 @@ namespace vk
     public:
         RenderPassConfig();
 
-        auto withColorAttachment(VkFormat colorFormat, VkImageLayout finalLayout) -> RenderPassConfig&;
-        auto withDepthAttachment(VkFormat depthFormat) -> RenderPassConfig&;
+        auto withColorAttachment(VkFormat colorFormat, VkImageLayout finalLayout, bool clear, VkClearColorValue clearValue = {}) -> RenderPassConfig&;
+        auto withDepthAttachment(VkFormat depthFormat, bool clear, VkClearDepthStencilValue clearValue = {}) -> RenderPassConfig&;
 
     private:
         friend class RenderPass;
@@ -25,6 +25,7 @@ namespace vk
         std::vector<VkAttachmentDescription> attachments;
         std::vector<VkAttachmentReference> colorAttachmentRefs;
         VkAttachmentReference depthAttachmentRef;
+        std::vector<VkClearValue> clearValues;
     };
 
     class RenderPass
@@ -38,8 +39,6 @@ namespace vk
 
         auto operator=(const RenderPass &other) -> RenderPass& = delete;
         auto operator=(RenderPass &&other) -> RenderPass& = default;
-
-        void setClear(bool clearColor, bool clearDepthStencil, VkClearColorValue color, VkClearDepthStencilValue depthStencil);
 
         void begin(VkCommandBuffer cmdBuf, VkFramebuffer framebuffer, uint32_t canvasWidth, uint32_t canvasHeight);
         void end(VkCommandBuffer cmdBuf);

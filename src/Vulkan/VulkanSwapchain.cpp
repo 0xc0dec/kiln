@@ -102,8 +102,8 @@ vk::Swapchain::Swapchain(const Device &device, uint32_t width, uint32_t height, 
     swapchain = createSwapchain(device, width, height, vsync);
 
     renderPass = RenderPass(device, RenderPassConfig()
-        .withColorAttachment(colorFormat, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-        .withDepthAttachment(depthFormat));
+        .withColorAttachment(colorFormat, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, true, {0, 0, 0, 1})
+        .withDepthAttachment(depthFormat, true, {1, 0}));
     
     depthStencil = Image(device, width, height, 1, 1, depthFormat,
         0,

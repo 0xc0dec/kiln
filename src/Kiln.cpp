@@ -64,11 +64,7 @@ int main()
 
     Window window{CanvasWidth, CanvasHeight, "Demo"};
     auto device = vk::Device::create(window.getPlatformHandle());
-
     auto swapchain = vk::Swapchain(device, CanvasWidth, CanvasHeight, false);
-    // TODO Take into account that clear values must correspond to attachments,
-    // so I guess N attachments means N clear values + 1 for depth
-    swapchain.getRenderPass().setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
 
     struct
     {
@@ -150,10 +146,8 @@ int main()
             VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
 
         scene.offscreen.renderPass = vk::RenderPass(device, vk::RenderPassConfig()
-            .withColorAttachment(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-            .withDepthAttachment(device.getDepthFormat()));
-
-        scene.offscreen.renderPass.setClear(true, true, {{0, 1, 0, 1}}, {1, 0});
+            .withColorAttachment(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true, {0, 1, 1, 0})
+            .withDepthAttachment(device.getDepthFormat(), true, {1, 0}));
 
         scene.offscreen.frameBuffer = createFrameBuffer(device, scene.offscreen.colorAttachment.getView(),
             scene.offscreen.depthAttachment.getView(), scene.offscreen.renderPass, CanvasWidth, CanvasHeight);

@@ -7,7 +7,8 @@
 #include <array>
 
 vk::RenderPass::RenderPass(VkDevice device, const RenderPassConfig &config):
-    device(device)
+    device(device),
+    clearValues(config.clearValues)
 {
     auto colorAttachments = config.colorAttachmentRefs.empty() ? nullptr : config.colorAttachmentRefs.data();
     auto depthAttachment = config.depthAttachmentRef.layout != VK_IMAGE_LAYOUT_UNDEFINED ? &config.depthAttachmentRef : nullptr;
@@ -86,13 +87,13 @@ vk::RenderPassConfig::RenderPassConfig():
 {
 }
 
-auto vk::RenderPassConfig::withColorAttachment(VkFormat colorFormat, VkImageLayout finalLayout) -> RenderPassConfig&
+auto vk::RenderPassConfig::withColorAttachment(VkFormat colorFormat, VkImageLayout finalLayout, bool clear, VkClearColorValue clearValue) -> RenderPassConfig&
 {
     VkAttachmentDescription desc{};
     desc.format = colorFormat;
     desc.flags = 0;
     desc.samples = VK_SAMPLE_COUNT_1_BIT;
-    desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    desc.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -105,16 +106,18 @@ auto vk::RenderPassConfig::withColorAttachment(VkFormat colorFormat, VkImageLayo
     reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     colorAttachmentRefs.push_back(reference);
 
+    clearValues.push_back({clearValue});
+
     return *this;
 }
 
-auto vk::RenderPassConfig::withDepthAttachment(VkFormat depthFormat) -> RenderPassConfig&
+auto vk::RenderPassConfig::withDepthAttachment(VkFormat depthFormat, bool clear, VkClearDepthStencilValue clearValue) -> RenderPassConfig&
 {
     VkAttachmentDescription desc{};
     desc.format = depthFormat;
     desc.flags = 0;
     desc.samples = VK_SAMPLE_COUNT_1_BIT;
-    desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    desc.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -125,24 +128,10 @@ auto vk::RenderPassConfig::withDepthAttachment(VkFormat depthFormat) -> RenderPa
     depthAttachmentRef.attachment = attachments.size() - 1;
     depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+    VkClearValue cv;
+    cv.depthStencil = clearValue;
+    clearValues.push_back(cv);
+
     return *this;
 }
 
-void vk::RenderPass::setClear(bool clearColor, bool clearDepthStencil, VkClearColorValue color, VkClearDepthStencilValue depthStencil)
-{
-    clearValues.clear();
-
-    if (clearColor)
-    {
-        VkClearValue colorValue;
-        colorValue.color = color;
-        clearValues.push_back(colorValue);
-    }
-
-    if (clearDepthStencil)
-    {
-        VkClearValue depthValue;
-        depthValue.depthStencil = depthStencil;
-        clearValues.push_back(depthValue);
-    }
-}
