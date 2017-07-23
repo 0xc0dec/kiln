@@ -6,6 +6,7 @@
 #include "MeshData.h"
 #include "FileSystem.h"
 #include "Common.h"
+#include "StringUtils.h"
 #include <glm/gtx/hash.hpp>
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -35,21 +36,10 @@ namespace std
     };
 }
 
-auto MeshData::loadObj(const std::string &path) -> MeshData
+static void fromTinyObj(const std::vector<tinyobj::shape_t> &shapes, const tinyobj::attrib_t &attrib,
+    std::vector<float> &vertexData, std::vector<uint32_t> &indexData, VertexFormat &format)
 {
-    std::ifstream file{path};
-    KL_PANIC_IF(!file.is_open());
-
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string err;
-    KL_PANIC_IF(!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, &file));
-
-    file.close();
-
     std::unordered_map<Vertex, uint32_t> uniqueVertices;
-    MeshData data;
 
     for (const auto &shape: shapes)
     {
@@ -85,20 +75,69 @@ auto MeshData::loadObj(const std::string &path) -> MeshData
 
             if (uniqueVertices.count(v) == 0)
             {
-                uniqueVertices[v] = static_cast<uint32_t>(data.data.size() / 8);
-                data.data.push_back(v.position.x);
-                data.data.push_back(v.position.y);
-                data.data.push_back(v.position.z);
-                data.data.push_back(v.normal.x);
-                data.data.push_back(v.normal.y);
-                data.data.push_back(v.normal.z);
-                data.data.push_back(v.texCoord.x);
-                data.data.push_back(v.texCoord.y);
+                uniqueVertices[v] = static_cast<uint32_t>(vertexData.size() / 8);
+                vertexData.push_back(v.position.x);
+                vertexData.push_back(v.position.y);
+                vertexData.push_back(v.position.z);
+                vertexData.push_back(v.normal.x);
+                vertexData.push_back(v.normal.y);
+                vertexData.push_back(v.normal.z);
+                vertexData.push_back(v.texCoord.x);
+                vertexData.push_back(v.texCoord.y);
             }
 
-            data.indices.push_back(uniqueVertices[v]);
+            indexData.push_back(uniqueVertices[v]);
         }
     }
 
+    format = VertexFormat({3, 3, 2});
+}
+
+static bool isLoadable(const std::string &path)
+{
+    return strutils::endsWith(path, ".obj");
+}
+
+auto MeshData::load(const std::string &path) -> MeshData
+{
+    KL_PANIC_IF(!isLoadable(path));
+
+    auto file = fs::getStream(path);
+
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string err;
+    KL_PANIC_IF(!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, &file));
+
+    MeshData data;
+    fromTinyObj(shapes, attrib, data.vertexData, data.indexData, data.format);
+
     return std::move(data);
+}
+
+VertexFormat::VertexFormat(const std::vector<uint32_t> &attributes):
+    attributes(attributes)
+{
+}
+
+auto VertexFormat::getSize() const -> uint32_t
+{
+    uint32_t size = 0;
+    for (const auto component : attributes)
+        size += component * sizeof(float);
+    return size;
+}
+
+auto VertexFormat::getAttributeSize(uint32_t attrib) const -> uint32_t
+{
+    return attributes[attrib] * sizeof(float);
+}
+
+auto VertexFormat::getAttributeOffset(uint32_t attrib) const -> uint32_t
+{
+    uint32_t offset = 0;
+    for (auto i = 0; i < attrib; i++)
+        offset += attributes[i] * sizeof(float);
+    return offset;
 }

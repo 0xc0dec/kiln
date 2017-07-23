@@ -5,6 +5,7 @@
 
 #include "ImageData.h"
 #include "FileSystem.h"
+#include "StringUtils.h"
 #include <gli/gli.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -108,7 +109,7 @@ private:
     {
         for (const auto &ext : supportedFormats)
         {
-            if (std::equal(ext.rbegin(), ext.rend(), path.rbegin()))
+            if (strutils::endsWith(path, ext))
                 return true;
         }
         return false;
@@ -139,7 +140,7 @@ public:
     {
         for (const auto &ext : supportedFormats)
         {
-            if (std::equal(ext.rbegin(), ext.rend(), path.rbegin()))
+            if (strutils::endsWith(path, ext))
                 return true;
         }
         return false;

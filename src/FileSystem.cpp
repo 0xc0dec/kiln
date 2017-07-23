@@ -5,6 +5,7 @@
 
 #include "FileSystem.h"
 #include "Common.h"
+#include <string>
 #include <fstream>
 #include <cassert>
 
@@ -36,4 +37,11 @@ void fs::iterateLines(const std::string &path, std::function<bool(const std::str
             break;
     }
     file.close();
+}
+
+auto fs::getStream(const std::string &path) -> std::ifstream
+{
+    std::ifstream file{path};
+    KL_PANIC_IF(!file.is_open());
+    return std::move(file);
 }

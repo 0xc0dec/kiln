@@ -8,6 +8,8 @@
 #include "Vulkan.h"
 #include <vector>
 
+class VertexFormat;
+
 namespace vk
 {
     class PipelineConfig
@@ -18,6 +20,7 @@ namespace vk
 
         auto withVertexAttribute(uint32_t location, uint32_t binding, VkFormat format, uint32_t offset) -> PipelineConfig&;
         auto withVertexBinding(uint32_t binding, uint32_t stride, VkVertexInputRate inputRate) -> PipelineConfig&;
+        auto withVertexFormat(const VertexFormat &format) -> PipelineConfig&;
 
         auto withDescriptorSetLayout(VkDescriptorSetLayout layout) -> PipelineConfig&;
 

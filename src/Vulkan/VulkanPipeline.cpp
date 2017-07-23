@@ -4,6 +4,7 @@
 */
 
 #include "VulkanPipeline.h"
+#include "../MeshData.h"
 
 vk::Pipeline::Pipeline(VkDevice device, VkRenderPass renderPass, const PipelineConfig &config)
 {
@@ -166,6 +167,34 @@ auto vk::PipelineConfig::withVertexBinding(uint32_t binding, uint32_t stride, Vk
     vertexBindings[binding].binding = binding;
     vertexBindings[binding].stride = stride;
     vertexBindings[binding].inputRate = inputRate;
+    return *this;
+}
+
+auto vk::PipelineConfig::withVertexFormat(const VertexFormat &format) -> PipelineConfig&
+{
+    withVertexBinding(0, format.getSize(), VK_VERTEX_INPUT_RATE_VERTEX);
+
+    for (auto i = 0; i < format.getAttributeCount(); i++)
+    {
+        auto vkFormat = VK_FORMAT_UNDEFINED;
+        switch (format.getAttributeSize(i))
+        {
+            case 4:
+                vkFormat = VK_FORMAT_R32_SFLOAT;
+                break;
+            case 8:
+                vkFormat = VK_FORMAT_R32G32_SFLOAT;
+                break;
+            case 12:
+                vkFormat = VK_FORMAT_R32G32B32_SFLOAT;
+                break;
+            default:
+                KL_PANIC("Unsupported vertex attribute size");
+                break;
+        }
+        withVertexAttribute(i, 0, vkFormat, format.getAttributeOffset(i));
+    }
+
     return *this;
 }
 

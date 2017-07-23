@@ -47,6 +47,7 @@
     <ClInclude Include="..\src\Input.h" />
     <ClInclude Include="..\src\MeshData.h" />
     <ClInclude Include="..\src\Spectator.h" />
+    <ClInclude Include="..\src\StringUtils.h" />
     <ClInclude Include="..\src\Transform.h" />
     <ClInclude Include="..\src\Vulkan\Vulkan.h" />
     <ClInclude Include="..\src\Vulkan\VulkanBuffer.h" />
