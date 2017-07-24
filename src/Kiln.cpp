@@ -294,6 +294,120 @@ private:
     VkDescriptorSet globalDescSet;
 };
 
+class Axes
+{
+public:
+    Axes(const vk::Device &device, vk::DescriptorPool &descPool, Offscreen &offscreen, VkDescriptorSetLayout globalDescSetLayout,
+        VkDescriptorSet globalDescSet):
+        globalDescSet(globalDescSet)
+    {
+        Transform t;
+        t.setLocalPosition({3, 0, 3});
+        glm::mat4 modelMatrix = t.getWorldMatrix();
+        modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
+        modelMatrixBuffer.update(&modelMatrix);
+
+        glm::vec3 red{1.0f, 0, 0};
+        redColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::vec3));
+        redColorUniformBuffer.update(&red);
+
+        glm::vec3 green{0, 1.0f, 0};
+        greenColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::vec3));
+        greenColorUniformBuffer.update(&green);
+
+        glm::vec3 blue{0, 0, 1.0f};
+        blueColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::vec3));
+        blueColorUniformBuffer.update(&blue);
+
+        auto vsSrc = fs::readBytes("../../assets/shaders/Axis.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/shaders/Axis.frag.spv");
+        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
+        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
+
+        xAxisVertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * xAxisVertexData.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, xAxisVertexData.data());
+        yAxisVertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * yAxisVertexData.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, yAxisVertexData.data());
+        zAxisVertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * zAxisVertexData.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, zAxisVertexData.data());
+
+        descSetLayout = vk::DescriptorSetLayoutBuilder(device)
+            .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .withBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .build();
+
+        pipeline = vk::Pipeline(device, offscreen.getRenderPass(), vk::PipelineConfig(vs, fs)
+            .withDescriptorSetLayout(globalDescSetLayout)
+            .withDescriptorSetLayout(descSetLayout)
+            .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
+            .withCullMode(VK_CULL_MODE_NONE)
+            .withTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
+            .withVertexBinding(0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX)
+            .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0));
+
+        redDescSet = descPool.allocateSet(descSetLayout);
+        greenDescSet = descPool.allocateSet(descSetLayout);
+        blueDescSet = descPool.allocateSet(descSetLayout);
+
+        vk::DescriptorSetUpdater(device)
+            .forUniformBuffer(0, redDescSet, modelMatrixBuffer, 0, sizeof(modelMatrix))
+            .forUniformBuffer(1, redDescSet, redColorUniformBuffer, 0, sizeof(glm::vec3))
+            .updateSets();
+
+        vk::DescriptorSetUpdater(device)
+            .forUniformBuffer(0, greenDescSet, modelMatrixBuffer, 0, sizeof(modelMatrix))
+            .forUniformBuffer(1, greenDescSet, greenColorUniformBuffer, 0, sizeof(glm::vec3))
+            .updateSets();
+
+        vk::DescriptorSetUpdater(device)
+            .forUniformBuffer(0, blueDescSet, modelMatrixBuffer, 0, sizeof(modelMatrix))
+            .forUniformBuffer(1, blueDescSet, blueColorUniformBuffer, 0, sizeof(glm::vec3))
+            .updateSets();
+    }
+
+    void render(VkCommandBuffer buf)
+    {
+        vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+        std::vector<VkDescriptorSet> descSets = {globalDescSet, redDescSet};
+            
+        std::vector<VkDeviceSize> vertexBufferOffsets = {0};
+
+        // TODO bind all at once
+        std::vector<VkBuffer> vertexBuffers = {xAxisVertexBuffer};
+        vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
+        vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
+        vkCmdDraw(buf, 4, 1, 0, 0);
+
+        vertexBuffers[0] = yAxisVertexBuffer;
+        descSets[1] = greenDescSet;
+        vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
+        vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
+        vkCmdDraw(buf, 4, 1, 0, 0);
+
+        vertexBuffers[0] = zAxisVertexBuffer;
+        descSets[1] = blueDescSet;
+        vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
+        vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
+        vkCmdDraw(buf, 4, 1, 0, 0);
+    }
+
+private:
+    vk::Resource<VkDescriptorSetLayout> descSetLayout;
+    vk::Pipeline pipeline;
+    vk::Buffer redColorUniformBuffer;
+    vk::Buffer greenColorUniformBuffer;
+    vk::Buffer blueColorUniformBuffer;
+    vk::Buffer xAxisVertexBuffer;
+    vk::Buffer yAxisVertexBuffer;
+    vk::Buffer zAxisVertexBuffer;
+    vk::Buffer modelMatrixBuffer;
+    VkDescriptorSet redDescSet;
+    VkDescriptorSet greenDescSet;
+    VkDescriptorSet blueDescSet;
+    VkDescriptorSet globalDescSet;
+};
+
 int main()
 {
     const uint32_t CanvasWidth = 1366;
@@ -308,22 +422,6 @@ int main()
         vk::DescriptorPool descPool;
         vk::Resource<VkDescriptorSetLayout> globalDescSetLayout;
         VkDescriptorSet globalDescSet;
-
-        struct
-        {
-            vk::Resource<VkDescriptorSetLayout> descSetLayout;
-            vk::Pipeline pipeline;
-            vk::Buffer redColorUniformBuffer;
-            vk::Buffer greenColorUniformBuffer;
-            vk::Buffer blueColorUniformBuffer;
-            vk::Buffer xAxisVertexBuffer;
-            vk::Buffer yAxisVertexBuffer;
-            vk::Buffer zAxisVertexBuffer;
-            vk::Buffer modelMatrixBuffer;
-            VkDescriptorSet redDescSet;
-            VkDescriptorSet greenDescSet;
-            VkDescriptorSet blueDescSet;
-        } axes;
     } scene;
 
     Offscreen offscreen{device, CanvasWidth, CanvasHeight};
@@ -361,71 +459,7 @@ int main()
     Mesh mesh{device, offscreen.getRenderPass(), scene.globalDescSetLayout, scene.globalDescSet, scene.descPool};
     PostProcessor postProcessor{device, offscreen, scene.descPool};
     Skybox skybox{device, scene.descPool, scene.globalDescSetLayout, scene.globalDescSet, offscreen};
-
-    {
-        Transform t;
-        t.setLocalPosition({3, 0, 3});
-        glm::mat4 modelMatrix = t.getWorldMatrix();
-        scene.axes.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
-        scene.axes.modelMatrixBuffer.update(&modelMatrix);
-
-        glm::vec3 red{1.0f, 0, 0};
-        scene.axes.redColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::vec3));
-        scene.axes.redColorUniformBuffer.update(&red);
-
-        glm::vec3 green{0, 1.0f, 0};
-        scene.axes.greenColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::vec3));
-        scene.axes.greenColorUniformBuffer.update(&green);
-
-        glm::vec3 blue{0, 0, 1.0f};
-        scene.axes.blueColorUniformBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::vec3));
-        scene.axes.blueColorUniformBuffer.update(&blue);
-
-        auto vsSrc = fs::readBytes("../../assets/shaders/Axis.vert.spv");
-        auto fsSrc = fs::readBytes("../../assets/shaders/Axis.frag.spv");
-        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
-        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
-
-        scene.axes.xAxisVertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * xAxisVertexData.size(),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, xAxisVertexData.data());
-        scene.axes.yAxisVertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * yAxisVertexData.size(),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, yAxisVertexData.data());
-        scene.axes.zAxisVertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * zAxisVertexData.size(),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, zAxisVertexData.data());
-
-        scene.axes.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
-            .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .withBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .build();
-
-        scene.axes.pipeline = vk::Pipeline(device, offscreen.getRenderPass(), vk::PipelineConfig(vs, fs)
-            .withDescriptorSetLayout(scene.globalDescSetLayout)
-            .withDescriptorSetLayout(scene.axes.descSetLayout)
-            .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
-            .withCullMode(VK_CULL_MODE_NONE)
-            .withTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
-            .withVertexBinding(0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX)
-            .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0));
-
-        scene.axes.redDescSet = scene.descPool.allocateSet(scene.axes.descSetLayout);
-        scene.axes.greenDescSet = scene.descPool.allocateSet(scene.axes.descSetLayout);
-        scene.axes.blueDescSet = scene.descPool.allocateSet(scene.axes.descSetLayout);
-
-        vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.axes.redDescSet, scene.axes.modelMatrixBuffer, 0, sizeof(modelMatrix))
-            .forUniformBuffer(1, scene.axes.redDescSet, scene.axes.redColorUniformBuffer, 0, sizeof(glm::vec3))
-            .updateSets();
-
-        vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.axes.greenDescSet, scene.axes.modelMatrixBuffer, 0, sizeof(modelMatrix))
-            .forUniformBuffer(1, scene.axes.greenDescSet, scene.axes.greenColorUniformBuffer, 0, sizeof(glm::vec3))
-            .updateSets();
-
-        vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.axes.blueDescSet, scene.axes.modelMatrixBuffer, 0, sizeof(modelMatrix))
-            .forUniformBuffer(1, scene.axes.blueDescSet, scene.axes.blueColorUniformBuffer, 0, sizeof(glm::vec3))
-            .updateSets();
-    }
+    Axes axes{device, scene.descPool, offscreen, scene.globalDescSetLayout, scene.globalDescSet};
 
     // Record command buffers
 
@@ -443,34 +477,7 @@ int main()
         vkCmdSetScissor(buf, 0, 1, &scissor);
 
         skybox.render(buf);
-
-        // Axes
-        {
-            vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.axes.pipeline);
-
-            std::vector<VkDescriptorSet> descSets = {scene.globalDescSet, scene.axes.redDescSet};
-            
-            std::vector<VkDeviceSize> vertexBufferOffsets = {0};
-
-            // TODO bind all at once
-            std::vector<VkBuffer> vertexBuffers = {scene.axes.xAxisVertexBuffer};
-            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.axes.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
-            vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
-            vkCmdDraw(buf, 4, 1, 0, 0);
-
-            vertexBuffers[0] = scene.axes.yAxisVertexBuffer;
-            descSets[1] = scene.axes.greenDescSet;
-            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.axes.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
-            vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
-            vkCmdDraw(buf, 4, 1, 0, 0);
-
-            vertexBuffers[0] = scene.axes.zAxisVertexBuffer;
-            descSets[1] = scene.axes.blueDescSet;
-            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.axes.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
-            vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
-            vkCmdDraw(buf, 4, 1, 0, 0);
-        }
-
+        axes.render(buf);
         mesh.render(buf);
 
         offscreen.getRenderPass().end(buf); 
