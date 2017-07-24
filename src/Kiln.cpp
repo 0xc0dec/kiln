@@ -102,6 +102,78 @@ private:
     vk::Resource<VkCommandBuffer> commandBuffer;
 };
 
+class Mesh
+{
+public:
+    Mesh(const vk::Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalDescSetLayout, VkDescriptorSet globalDescSet,
+        vk::DescriptorPool &descriptorPool):
+        globalDescriptorSet(globalDescSet)
+    {
+        auto vsSrc = fs::readBytes("../../assets/shaders/Mesh.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/shaders/Mesh.frag.spv");
+        auto vs = vk::createShader(device, vsSrc.data(), vsSrc.size());
+        auto fs = vk::createShader(device, fsSrc.data(), fsSrc.size());
+
+        glm::mat4 modelMatrix{};
+        modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
+        modelMatrixBuffer.update(&modelMatrix);
+
+        auto data = MeshData::load("../../assets/meshes/Teapot.obj");
+
+        vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * data.getVertexData().size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data.getVertexData().data());
+        indexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(uint32_t) * data.getIndexData().size(),
+            VK_BUFFER_USAGE_INDEX_BUFFER_BIT, data.getIndexData().data());
+        indexCount = data.getIndexData().size();
+
+        descSetLayout = vk::DescriptorSetLayoutBuilder(device)
+            .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .build();
+
+        pipeline = vk::Pipeline(device, renderPass, vk::PipelineConfig(vs, fs)
+            .withDescriptorSetLayout(globalDescSetLayout)
+            .withDescriptorSetLayout(descSetLayout)
+            .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
+            .withCullMode(VK_CULL_MODE_NONE)
+            .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+            .withVertexFormat(data.getFormat()));
+
+        descriptorSet = descriptorPool.allocateSet(descSetLayout);
+
+        auto textureData = ImageData::load2D("../../assets/textures/Cobblestone.png");
+        texture = vk::Image::create2D(device, textureData);
+
+        vk::DescriptorSetUpdater(device)
+            .forUniformBuffer(0, descriptorSet, modelMatrixBuffer, 0, sizeof(modelMatrix))
+            .forTexture(1, descriptorSet, texture.getView(), texture.getSampler(), texture.getLayout())
+            .updateSets();
+    }
+
+    void render(VkCommandBuffer buf)
+    {
+        VkBuffer vertexBuffer = this->vertexBuffer;
+        VkDeviceSize vertexBufferOffset = 0;
+        std::vector<VkDescriptorSet> descSets = {globalDescriptorSet, descriptorSet};
+        vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
+        vkCmdBindVertexBuffers(buf, 0, 1, &vertexBuffer, &vertexBufferOffset);
+        vkCmdBindIndexBuffer(buf, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(buf, indexCount, 1, 0, 0, 0);
+    }
+
+private:
+    vk::Resource<VkDescriptorSetLayout> descSetLayout;
+    vk::Pipeline pipeline;
+    vk::Image texture;
+    vk::Buffer modelMatrixBuffer;
+    vk::Buffer vertexBuffer;
+    vk::Buffer indexBuffer;
+    uint32_t indexCount;
+    VkDescriptorSet descriptorSet;
+    VkDescriptorSet globalDescriptorSet;
+};
+
 int main()
 {
     const uint32_t CanvasWidth = 1366;
@@ -116,18 +188,6 @@ int main()
         vk::DescriptorPool descriptorPool;
         vk::Resource<VkDescriptorSetLayout> globalDescSetLayout;
         VkDescriptorSet globalDescriptorSet;
-
-        struct
-        {
-            vk::Resource<VkDescriptorSetLayout> descSetLayout;
-            vk::Pipeline pipeline;
-            vk::Image texture;
-            vk::Buffer modelMatrixBuffer;
-            vk::Buffer vertexBuffer;
-            vk::Buffer indexBuffer;
-            uint32_t indexCount;
-            VkDescriptorSet descriptorSet;
-        } mesh;
 
         struct
         {
@@ -168,32 +228,6 @@ int main()
 
     Offscreen offscreen{device, CanvasWidth, CanvasHeight};
 
-    /*{
-        scene.offscreen.colorAttachment = vk::Image(device, CanvasWidth, CanvasHeight, 1, 1,
-            VK_FORMAT_R8G8B8A8_UNORM,
-            0,
-            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-            VK_IMAGE_VIEW_TYPE_2D,
-            VK_IMAGE_ASPECT_COLOR_BIT);
-        scene.offscreen.depthAttachment = vk::Image(device, CanvasWidth, CanvasHeight, 1, 1,
-            device.getDepthFormat(),
-            0,
-            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-            VK_IMAGE_VIEW_TYPE_2D,
-            VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
-
-        scene.offscreen.renderPass = vk::RenderPass(device, vk::RenderPassConfig()
-            .withColorAttachment(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true, {0, 1, 1, 0})
-            .withDepthAttachment(device.getDepthFormat(), true, {1, 0}));
-
-        scene.offscreen.frameBuffer = createFrameBuffer(device, scene.offscreen.colorAttachment.getView(),
-            scene.offscreen.depthAttachment.getView(), scene.offscreen.renderPass, CanvasWidth, CanvasHeight);
-
-        scene.offscreen.semaphore = createSemaphore(device);
-
-        scene.offscreen.commandBuffer = createCommandBuffer(device, device.getCommandPool());
-    }*/
-
     struct
     {
         glm::mat4 projectionMatrix;
@@ -224,47 +258,7 @@ int main()
         .forUniformBuffer(0, scene.globalDescriptorSet, viewMatricesBuffer, 0, sizeof(viewMatrices))
         .updateSets();
 
-    {
-        auto vsSrc = fs::readBytes("../../assets/shaders/Mesh.vert.spv");
-        auto fsSrc = fs::readBytes("../../assets/shaders/Mesh.frag.spv");
-        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
-        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
-
-        glm::mat4 modelMatrix{};
-        scene.mesh.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
-        scene.mesh.modelMatrixBuffer.update(&modelMatrix);
-
-        auto data = MeshData::load("../../assets/meshes/Teapot.obj");
-
-        scene.mesh.vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * data.getVertexData().size(),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data.getVertexData().data());
-        scene.mesh.indexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(uint32_t) * data.getIndexData().size(),
-            VK_BUFFER_USAGE_INDEX_BUFFER_BIT, data.getIndexData().data());
-        scene.mesh.indexCount = data.getIndexData().size();
-
-        scene.mesh.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
-            .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
-            .build();
-
-        scene.mesh.pipeline = vk::Pipeline(device, offscreen.getRenderPass(), vk::PipelineConfig(vs, fs)
-            .withDescriptorSetLayout(scene.globalDescSetLayout)
-            .withDescriptorSetLayout(scene.mesh.descSetLayout)
-            .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
-            .withCullMode(VK_CULL_MODE_NONE)
-            .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-            .withVertexFormat(data.getFormat()));
-
-        scene.mesh.descriptorSet = scene.descriptorPool.allocateSet(scene.mesh.descSetLayout);
-
-        auto textureData = ImageData::load2D("../../assets/textures/Cobblestone.png");
-        scene.mesh.texture = vk::Image::create2D(device, textureData);
-
-        vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.mesh.descriptorSet, scene.mesh.modelMatrixBuffer, 0, sizeof(modelMatrix))
-            .forTexture(1, scene.mesh.descriptorSet, scene.mesh.texture.getView(), scene.mesh.texture.getSampler(), scene.mesh.texture.getLayout())
-            .updateSets();
-    }
+    Mesh mesh{device, offscreen.getRenderPass(), scene.globalDescSetLayout, scene.globalDescriptorSet, scene.descriptorPool};
 
     {
         auto vsSrc = fs::readBytes("../../assets/shaders/PostProcess.vert.spv");
@@ -455,17 +449,7 @@ int main()
             vkCmdDraw(buf, 4, 1, 0, 0);
         }
 
-        // Mesh
-        {
-            VkBuffer vertexBuffer = scene.mesh.vertexBuffer;
-            VkDeviceSize vertexBufferOffset = 0;
-            std::vector<VkDescriptorSet> descSets = {scene.globalDescriptorSet, scene.mesh.descriptorSet};
-            vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.mesh.pipeline);
-            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.mesh.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
-            vkCmdBindVertexBuffers(buf, 0, 1, &vertexBuffer, &vertexBufferOffset);
-            vkCmdBindIndexBuffer(buf, scene.mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-            vkCmdDrawIndexed(buf, scene.mesh.indexCount, 1, 0, 0, 0);
-        }
+        mesh.render(buf);
 
         offscreen.getRenderPass().end(buf); 
 
