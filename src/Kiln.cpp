@@ -111,8 +111,8 @@ public:
     {
         auto vsSrc = fs::readBytes("../../assets/shaders/Mesh.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/shaders/Mesh.frag.spv");
-        auto vs = vk::createShader(device, vsSrc.data(), vsSrc.size());
-        auto fs = vk::createShader(device, fsSrc.data(), fsSrc.size());
+        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
+        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
         glm::mat4 modelMatrix{};
         modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
@@ -174,6 +174,59 @@ private:
     VkDescriptorSet globalDescriptorSet;
 };
 
+class PostProcessor
+{
+public:
+    PostProcessor(const vk::Device &device, Offscreen &offscreen, vk::DescriptorPool &descriptorPool)
+    {
+        auto vsSrc = fs::readBytes("../../assets/shaders/PostProcess.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/shaders/PostProcess.frag.spv");
+        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
+        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
+
+        vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * quadVertexData.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, quadVertexData.data());
+
+        descSetLayout = vk::DescriptorSetLayoutBuilder(device)
+            .withBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .build();
+
+        pipeline = vk::Pipeline(device, offscreen.getRenderPass(), vk::PipelineConfig(vs, fs)
+            .withDepthTest(false, false)
+            .withDescriptorSetLayout(descSetLayout)
+            .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
+            .withCullMode(VK_CULL_MODE_NONE)
+            .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+            .withVertexFormat(VertexFormat{{3, 2}}));
+
+        descriptorSet = descriptorPool.allocateSet(descSetLayout);
+
+        auto &colorAttachment = offscreen.getColorAttachment();
+        vk::DescriptorSetUpdater(device)
+            .forTexture(0, descriptorSet, colorAttachment.getView(), colorAttachment.getSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+            .updateSets();
+    }
+
+    void render(VkCommandBuffer buf)
+    {
+        std::vector<VkBuffer> vertexBuffers = {vertexBuffer};
+        std::vector<VkDeviceSize> vertexBufferOffsets = {0};
+        std::vector<VkDescriptorSet> descSets = {descriptorSet};
+        vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 0, 1, descSets.data(), 0, nullptr);
+        vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
+        vkCmdDraw(buf, 6, 1, 0, 0);
+    }
+
+private:
+    vk::Resource<VkDescriptorSetLayout> descSetLayout;
+    vk::Pipeline pipeline;
+    vk::Image texture;
+    vk::Buffer modelMatrixBuffer;
+    vk::Buffer vertexBuffer;
+    VkDescriptorSet descriptorSet;
+};
+
 int main()
 {
     const uint32_t CanvasWidth = 1366;
@@ -198,16 +251,6 @@ int main()
             vk::Buffer vertexBuffer;
             VkDescriptorSet descriptorSet;
         } skybox;
-
-        struct
-        {
-            vk::Resource<VkDescriptorSetLayout> descSetLayout;
-            vk::Pipeline pipeline;
-            vk::Image texture;
-            vk::Buffer modelMatrixBuffer;
-            vk::Buffer vertexBuffer;
-            VkDescriptorSet descriptorSet;
-        } screenQuad;
 
         struct
         {
@@ -259,37 +302,7 @@ int main()
         .updateSets();
 
     Mesh mesh{device, offscreen.getRenderPass(), scene.globalDescSetLayout, scene.globalDescriptorSet, scene.descriptorPool};
-
-    {
-        auto vsSrc = fs::readBytes("../../assets/shaders/PostProcess.vert.spv");
-        auto fsSrc = fs::readBytes("../../assets/shaders/PostProcess.frag.spv");
-        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
-        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
-
-        scene.screenQuad.vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * quadVertexData.size(),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, quadVertexData.data());
-
-        scene.screenQuad.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
-            .withBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
-            .build();
-
-        scene.screenQuad.pipeline = vk::Pipeline(device, swapchain.getRenderPass(), vk::PipelineConfig(vs, fs)
-            .withDepthTest(false, false)
-            .withDescriptorSetLayout(scene.screenQuad.descSetLayout)
-            .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
-            .withCullMode(VK_CULL_MODE_NONE)
-            .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-            .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
-            .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
-            .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3));
-
-        scene.screenQuad.descriptorSet = scene.descriptorPool.allocateSet(scene.screenQuad.descSetLayout);
-
-        auto &colorAttachment = offscreen.getColorAttachment();
-        vk::DescriptorSetUpdater(device)
-            .forTexture(0, scene.screenQuad.descriptorSet, colorAttachment.getView(), colorAttachment.getSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-            .updateSets();
-    }
+    PostProcessor postProcessor{device, offscreen, scene.descriptorPool};
 
     {
         auto vsSrc = fs::readBytes("../../assets/shaders/Skybox.vert.spv");
@@ -467,13 +480,7 @@ int main()
         VkRect2D scissor{{0, 0}, {vp.width, vp.height}};
         vkCmdSetScissor(buf, 0, 1, &scissor);
 
-        std::vector<VkBuffer> vertexBuffers = {scene.screenQuad.vertexBuffer};
-        std::vector<VkDeviceSize> vertexBufferOffsets = {0};
-        std::vector<VkDescriptorSet> descSets = {scene.screenQuad.descriptorSet};
-        vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.screenQuad.pipeline);
-        vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.screenQuad.pipeline.getLayout(), 0, 1, descSets.data(), 0, nullptr);
-        vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
-        vkCmdDraw(buf, 6, 1, 0, 0);
+        postProcessor.render(buf);
 
         swapchain.getRenderPass().end(buf);
     });
