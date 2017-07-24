@@ -227,6 +227,73 @@ private:
     VkDescriptorSet descriptorSet;
 };
 
+class Skybox
+{
+public:
+    Skybox(const vk::Device &device, vk::DescriptorPool &descriptorPool, VkDescriptorSetLayout globalDescSetLayout,
+        VkDescriptorSet globalDescSet, Offscreen &offscreen):
+        globalDescSet(globalDescSet)
+    {
+        auto vsSrc = fs::readBytes("../../assets/shaders/Skybox.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/shaders/Skybox.frag.spv");
+        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
+        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
+
+        glm::mat4 modelMatrix{};
+        modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
+        modelMatrixBuffer.update(&modelMatrix);
+
+        vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * quadVertexData.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, quadVertexData.data());
+
+        descSetLayout = vk::DescriptorSetLayoutBuilder(device)
+            .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .build();
+
+        pipeline = vk::Pipeline(device, offscreen.getRenderPass(), vk::PipelineConfig(vs, fs)
+            .withDepthTest(false, false)
+            .withDescriptorSetLayout(globalDescSetLayout)
+            .withDescriptorSetLayout(descSetLayout)
+            .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
+            .withCullMode(VK_CULL_MODE_NONE)
+            .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+            .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
+            .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
+            .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3));
+
+        descriptorSet = descriptorPool.allocateSet(descSetLayout);
+
+        auto data = ImageData::loadCube("../../assets/textures/Cubemap_space.ktx");
+        texture = vk::Image::createCube(device, data);
+
+        vk::DescriptorSetUpdater(device)
+            .forUniformBuffer(0, descriptorSet, modelMatrixBuffer, 0, sizeof(modelMatrix))
+            .forTexture(1, descriptorSet, texture.getView(), texture.getSampler(), texture.getLayout())
+            .updateSets();
+    }
+
+    void render(VkCommandBuffer buf)
+    {
+        std::vector<VkBuffer> vertexBuffers = {vertexBuffer};
+        std::vector<VkDeviceSize> vertexBufferOffsets = {0};
+        std::vector<VkDescriptorSet> descSets = {globalDescSet, descriptorSet};
+        vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
+        vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
+        vkCmdDraw(buf, 6, 1, 0, 0);
+    }
+
+private:
+    vk::Resource<VkDescriptorSetLayout> descSetLayout;
+    vk::Pipeline pipeline;
+    vk::Image texture;
+    vk::Buffer modelMatrixBuffer;
+    vk::Buffer vertexBuffer;
+    VkDescriptorSet descriptorSet;
+    VkDescriptorSet globalDescSet;
+};
+
 int main()
 {
     const uint32_t CanvasWidth = 1366;
@@ -241,16 +308,6 @@ int main()
         vk::DescriptorPool descriptorPool;
         vk::Resource<VkDescriptorSetLayout> globalDescSetLayout;
         VkDescriptorSet globalDescriptorSet;
-
-        struct
-        {
-            vk::Resource<VkDescriptorSetLayout> descSetLayout;
-            vk::Pipeline pipeline;
-            vk::Image texture;
-            vk::Buffer modelMatrixBuffer;
-            vk::Buffer vertexBuffer;
-            VkDescriptorSet descriptorSet;
-        } skybox;
 
         struct
         {
@@ -303,46 +360,7 @@ int main()
 
     Mesh mesh{device, offscreen.getRenderPass(), scene.globalDescSetLayout, scene.globalDescriptorSet, scene.descriptorPool};
     PostProcessor postProcessor{device, offscreen, scene.descriptorPool};
-
-    {
-        auto vsSrc = fs::readBytes("../../assets/shaders/Skybox.vert.spv");
-        auto fsSrc = fs::readBytes("../../assets/shaders/Skybox.frag.spv");
-        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
-        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
-
-        glm::mat4 modelMatrix{};
-        scene.skybox.modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
-        scene.skybox.modelMatrixBuffer.update(&modelMatrix);
-
-        scene.skybox.vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * quadVertexData.size(),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, quadVertexData.data());
-
-        scene.skybox.descSetLayout = vk::DescriptorSetLayoutBuilder(device)
-            .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-            .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
-            .build();
-
-        scene.skybox.pipeline = vk::Pipeline(device, offscreen.getRenderPass(), vk::PipelineConfig(vs, fs)
-            .withDepthTest(false, false)
-            .withDescriptorSetLayout(scene.globalDescSetLayout)
-            .withDescriptorSetLayout(scene.skybox.descSetLayout)
-            .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
-            .withCullMode(VK_CULL_MODE_NONE)
-            .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-            .withVertexBinding(0, sizeof(float) * 5, VK_VERTEX_INPUT_RATE_VERTEX)
-            .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
-            .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3));
-
-        scene.skybox.descriptorSet = scene.descriptorPool.allocateSet(scene.skybox.descSetLayout);
-
-        auto data = ImageData::loadCube("../../assets/textures/Cubemap_space.ktx");
-        scene.skybox.texture = vk::Image::createCube(device, data);
-
-        vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, scene.skybox.descriptorSet, scene.skybox.modelMatrixBuffer, 0, sizeof(modelMatrix))
-            .forTexture(1, scene.skybox.descriptorSet, scene.skybox.texture.getView(), scene.skybox.texture.getSampler(), scene.skybox.texture.getLayout())
-            .updateSets();
-    }
+    Skybox skybox{device, scene.descriptorPool, scene.globalDescSetLayout, scene.globalDescriptorSet, offscreen};
 
     {
         Transform t;
@@ -424,16 +442,7 @@ int main()
         VkRect2D scissor{{0, 0}, {vp.width, vp.height}};
         vkCmdSetScissor(buf, 0, 1, &scissor);
 
-        // Skybox 
-        {
-            std::vector<VkBuffer> vertexBuffers = {scene.skybox.vertexBuffer};
-            std::vector<VkDeviceSize> vertexBufferOffsets = {0};
-            std::vector<VkDescriptorSet> descSets = {scene.globalDescriptorSet, scene.skybox.descriptorSet};
-            vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.skybox.pipeline);
-            vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.skybox.pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
-            vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
-            vkCmdDraw(buf, 6, 1, 0, 0);
-        }
+        skybox.render(buf);
 
         // Axes
         {
