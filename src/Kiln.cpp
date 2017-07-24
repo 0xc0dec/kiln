@@ -106,8 +106,8 @@ class Mesh
 {
 public:
     Mesh(const vk::Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalDescSetLayout, VkDescriptorSet globalDescSet,
-        vk::DescriptorPool &descriptorPool):
-        globalDescriptorSet(globalDescSet)
+        vk::DescriptorPool &descPool):
+        globalDescSet(globalDescSet)
     {
         auto vsSrc = fs::readBytes("../../assets/shaders/Mesh.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/shaders/Mesh.frag.spv");
@@ -139,14 +139,14 @@ public:
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withVertexFormat(data.getFormat()));
 
-        descriptorSet = descriptorPool.allocateSet(descSetLayout);
+        descSet = descPool.allocateSet(descSetLayout);
 
         auto textureData = ImageData::load2D("../../assets/textures/Cobblestone.png");
         texture = vk::Image::create2D(device, textureData);
 
         vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, descriptorSet, modelMatrixBuffer, 0, sizeof(modelMatrix))
-            .forTexture(1, descriptorSet, texture.getView(), texture.getSampler(), texture.getLayout())
+            .forUniformBuffer(0, descSet, modelMatrixBuffer, 0, sizeof(modelMatrix))
+            .forTexture(1, descSet, texture.getView(), texture.getSampler(), texture.getLayout())
             .updateSets();
     }
 
@@ -154,7 +154,7 @@ public:
     {
         VkBuffer vertexBuffer = this->vertexBuffer;
         VkDeviceSize vertexBufferOffset = 0;
-        std::vector<VkDescriptorSet> descSets = {globalDescriptorSet, descriptorSet};
+        std::vector<VkDescriptorSet> descSets = {globalDescSet, descSet};
         vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
         vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
         vkCmdBindVertexBuffers(buf, 0, 1, &vertexBuffer, &vertexBufferOffset);
@@ -170,14 +170,14 @@ private:
     vk::Buffer vertexBuffer;
     vk::Buffer indexBuffer;
     uint32_t indexCount;
-    VkDescriptorSet descriptorSet;
-    VkDescriptorSet globalDescriptorSet;
+    VkDescriptorSet descSet;
+    VkDescriptorSet globalDescSet;
 };
 
 class PostProcessor
 {
 public:
-    PostProcessor(const vk::Device &device, Offscreen &offscreen, vk::DescriptorPool &descriptorPool)
+    PostProcessor(const vk::Device &device, Offscreen &offscreen, vk::DescriptorPool &descPool)
     {
         auto vsSrc = fs::readBytes("../../assets/shaders/PostProcess.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/shaders/PostProcess.frag.spv");
@@ -199,11 +199,11 @@ public:
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withVertexFormat(VertexFormat{{3, 2}}));
 
-        descriptorSet = descriptorPool.allocateSet(descSetLayout);
+        descSet = descPool.allocateSet(descSetLayout);
 
         auto &colorAttachment = offscreen.getColorAttachment();
         vk::DescriptorSetUpdater(device)
-            .forTexture(0, descriptorSet, colorAttachment.getView(), colorAttachment.getSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+            .forTexture(0, descSet, colorAttachment.getView(), colorAttachment.getSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
             .updateSets();
     }
 
@@ -211,7 +211,7 @@ public:
     {
         std::vector<VkBuffer> vertexBuffers = {vertexBuffer};
         std::vector<VkDeviceSize> vertexBufferOffsets = {0};
-        std::vector<VkDescriptorSet> descSets = {descriptorSet};
+        std::vector<VkDescriptorSet> descSets = {descSet};
         vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
         vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 0, 1, descSets.data(), 0, nullptr);
         vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
@@ -224,13 +224,13 @@ private:
     vk::Image texture;
     vk::Buffer modelMatrixBuffer;
     vk::Buffer vertexBuffer;
-    VkDescriptorSet descriptorSet;
+    VkDescriptorSet descSet;
 };
 
 class Skybox
 {
 public:
-    Skybox(const vk::Device &device, vk::DescriptorPool &descriptorPool, VkDescriptorSetLayout globalDescSetLayout,
+    Skybox(const vk::Device &device, vk::DescriptorPool &descPool, VkDescriptorSetLayout globalDescSetLayout,
         VkDescriptorSet globalDescSet, Offscreen &offscreen):
         globalDescSet(globalDescSet)
     {
@@ -262,14 +262,14 @@ public:
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
             .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3));
 
-        descriptorSet = descriptorPool.allocateSet(descSetLayout);
+        descSet = descPool.allocateSet(descSetLayout);
 
         auto data = ImageData::loadCube("../../assets/textures/Cubemap_space.ktx");
         texture = vk::Image::createCube(device, data);
 
         vk::DescriptorSetUpdater(device)
-            .forUniformBuffer(0, descriptorSet, modelMatrixBuffer, 0, sizeof(modelMatrix))
-            .forTexture(1, descriptorSet, texture.getView(), texture.getSampler(), texture.getLayout())
+            .forUniformBuffer(0, descSet, modelMatrixBuffer, 0, sizeof(modelMatrix))
+            .forTexture(1, descSet, texture.getView(), texture.getSampler(), texture.getLayout())
             .updateSets();
     }
 
@@ -277,7 +277,7 @@ public:
     {
         std::vector<VkBuffer> vertexBuffers = {vertexBuffer};
         std::vector<VkDeviceSize> vertexBufferOffsets = {0};
-        std::vector<VkDescriptorSet> descSets = {globalDescSet, descriptorSet};
+        std::vector<VkDescriptorSet> descSets = {globalDescSet, descSet};
         vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
         vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
         vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers.data(), vertexBufferOffsets.data());
@@ -290,7 +290,7 @@ private:
     vk::Image texture;
     vk::Buffer modelMatrixBuffer;
     vk::Buffer vertexBuffer;
-    VkDescriptorSet descriptorSet;
+    VkDescriptorSet descSet;
     VkDescriptorSet globalDescSet;
 };
 
@@ -305,9 +305,9 @@ int main()
 
     struct
     {
-        vk::DescriptorPool descriptorPool;
+        vk::DescriptorPool descPool;
         vk::Resource<VkDescriptorSetLayout> globalDescSetLayout;
-        VkDescriptorSet globalDescriptorSet;
+        VkDescriptorSet globalDescSet;
 
         struct
         {
@@ -345,22 +345,22 @@ int main()
     auto viewMatricesBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(viewMatrices));
     viewMatricesBuffer.update(&viewMatrices);
 
-    scene.descriptorPool = vk::DescriptorPool(device, 20, vk::DescriptorPoolConfig()
+    scene.descPool = vk::DescriptorPool(device, 20, vk::DescriptorPoolConfig()
         .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 20)
         .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 20));
 
     scene.globalDescSetLayout = vk::DescriptorSetLayoutBuilder(device)
         .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
         .build();
-    scene.globalDescriptorSet = scene.descriptorPool.allocateSet(scene.globalDescSetLayout);
+    scene.globalDescSet = scene.descPool.allocateSet(scene.globalDescSetLayout);
 
     vk::DescriptorSetUpdater(device)
-        .forUniformBuffer(0, scene.globalDescriptorSet, viewMatricesBuffer, 0, sizeof(viewMatrices))
+        .forUniformBuffer(0, scene.globalDescSet, viewMatricesBuffer, 0, sizeof(viewMatrices))
         .updateSets();
 
-    Mesh mesh{device, offscreen.getRenderPass(), scene.globalDescSetLayout, scene.globalDescriptorSet, scene.descriptorPool};
-    PostProcessor postProcessor{device, offscreen, scene.descriptorPool};
-    Skybox skybox{device, scene.descriptorPool, scene.globalDescSetLayout, scene.globalDescriptorSet, offscreen};
+    Mesh mesh{device, offscreen.getRenderPass(), scene.globalDescSetLayout, scene.globalDescSet, scene.descPool};
+    PostProcessor postProcessor{device, offscreen, scene.descPool};
+    Skybox skybox{device, scene.descPool, scene.globalDescSetLayout, scene.globalDescSet, offscreen};
 
     {
         Transform t;
@@ -407,9 +407,9 @@ int main()
             .withVertexBinding(0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX)
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0));
 
-        scene.axes.redDescSet = scene.descriptorPool.allocateSet(scene.axes.descSetLayout);
-        scene.axes.greenDescSet = scene.descriptorPool.allocateSet(scene.axes.descSetLayout);
-        scene.axes.blueDescSet = scene.descriptorPool.allocateSet(scene.axes.descSetLayout);
+        scene.axes.redDescSet = scene.descPool.allocateSet(scene.axes.descSetLayout);
+        scene.axes.greenDescSet = scene.descPool.allocateSet(scene.axes.descSetLayout);
+        scene.axes.blueDescSet = scene.descPool.allocateSet(scene.axes.descSetLayout);
 
         vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, scene.axes.redDescSet, scene.axes.modelMatrixBuffer, 0, sizeof(modelMatrix))
@@ -448,7 +448,7 @@ int main()
         {
             vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, scene.axes.pipeline);
 
-            std::vector<VkDescriptorSet> descSets = {scene.globalDescriptorSet, scene.axes.redDescSet};
+            std::vector<VkDescriptorSet> descSets = {scene.globalDescSet, scene.axes.redDescSet};
             
             std::vector<VkDeviceSize> vertexBufferOffsets = {0};
 
