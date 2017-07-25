@@ -57,6 +57,52 @@ static const std::vector<float> quadVertexData =
      1, -1, 0, 1, 1
 };
 
+class Scene
+{
+public:
+    Scene(const vk::Device &device)
+    {
+        viewMatricesBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(viewMatrices));
+
+        descPool = vk::DescriptorPool(device, 20, vk::DescriptorPoolConfig()
+            .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 20)
+            .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 20));
+
+        descSetLayout = vk::DescriptorSetLayoutBuilder(device)
+            .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .build();
+        descSet = descPool.allocateSet(descSetLayout);
+
+        vk::DescriptorSetUpdater(device)
+            .forUniformBuffer(0, descSet, viewMatricesBuffer, 0, sizeof(viewMatrices))
+            .updateSets();
+    }
+
+    void update(const Camera &cam)
+    {
+        viewMatrices.proj = cam.getProjectionMatrix();
+        viewMatrices.view = cam.getViewMatrix();
+        viewMatricesBuffer.update(&viewMatrices);
+    }
+
+    auto getDescPool() -> vk::DescriptorPool& { return descPool; }
+    auto getDescSetLayout() const -> VkDescriptorSetLayout { return descSetLayout; }
+    auto getDescSet() const -> VkDescriptorSet { return descSet; }
+
+private:
+    vk::DescriptorPool descPool;
+    vk::Resource<VkDescriptorSetLayout> descSetLayout;
+    VkDescriptorSet descSet;
+
+    struct
+    {
+        glm::mat4 proj;
+        glm::mat4 view;
+    } viewMatrices;
+
+    vk::Buffer viewMatricesBuffer;
+};
+
 class Offscreen
 {
 public:
@@ -105,9 +151,8 @@ private:
 class Mesh
 {
 public:
-    Mesh(const vk::Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalDescSetLayout, VkDescriptorSet globalDescSet,
-        vk::DescriptorPool &descPool):
-        globalDescSet(globalDescSet)
+    Mesh(const vk::Device &device, VkRenderPass renderPass, Scene &scene):
+        globalDescSet(scene.getDescSet())
     {
         auto vsSrc = fs::readBytes("../../assets/shaders/Mesh.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/shaders/Mesh.frag.spv");
@@ -132,14 +177,14 @@ public:
             .build();
 
         pipeline = vk::Pipeline(device, renderPass, vk::PipelineConfig(vs, fs)
-            .withDescriptorSetLayout(globalDescSetLayout)
+            .withDescriptorSetLayout(scene.getDescSetLayout())
             .withDescriptorSetLayout(descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_NONE)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withVertexFormat(data.getFormat()));
 
-        descSet = descPool.allocateSet(descSetLayout);
+        descSet = scene.getDescPool().allocateSet(descSetLayout);
 
         auto textureData = ImageData::load2D("../../assets/textures/Cobblestone.png");
         texture = vk::Image::create2D(device, textureData);
@@ -177,7 +222,7 @@ private:
 class PostProcessor
 {
 public:
-    PostProcessor(const vk::Device &device, Offscreen &offscreen, vk::DescriptorPool &descPool)
+    PostProcessor(const vk::Device &device, Offscreen &offscreen, Scene &scene)
     {
         auto vsSrc = fs::readBytes("../../assets/shaders/PostProcess.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/shaders/PostProcess.frag.spv");
@@ -199,7 +244,7 @@ public:
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withVertexFormat(VertexFormat{{3, 2}}));
 
-        descSet = descPool.allocateSet(descSetLayout);
+        descSet = scene.getDescPool().allocateSet(descSetLayout);
 
         auto &colorAttachment = offscreen.getColorAttachment();
         vk::DescriptorSetUpdater(device)
@@ -230,9 +275,8 @@ private:
 class Skybox
 {
 public:
-    Skybox(const vk::Device &device, vk::DescriptorPool &descPool, VkDescriptorSetLayout globalDescSetLayout,
-        VkDescriptorSet globalDescSet, Offscreen &offscreen):
-        globalDescSet(globalDescSet)
+    Skybox(const vk::Device &device, Offscreen &offscreen, Scene &scene):
+        globalDescSet(scene.getDescSet())
     {
         auto vsSrc = fs::readBytes("../../assets/shaders/Skybox.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/shaders/Skybox.frag.spv");
@@ -253,7 +297,7 @@ public:
 
         pipeline = vk::Pipeline(device, offscreen.getRenderPass(), vk::PipelineConfig(vs, fs)
             .withDepthTest(false, false)
-            .withDescriptorSetLayout(globalDescSetLayout)
+            .withDescriptorSetLayout(scene.getDescSetLayout())
             .withDescriptorSetLayout(descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_NONE)
@@ -262,7 +306,7 @@ public:
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0)
             .withVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 3));
 
-        descSet = descPool.allocateSet(descSetLayout);
+        descSet = scene.getDescPool().allocateSet(descSetLayout);
 
         auto data = ImageData::loadCube("../../assets/textures/Cubemap_space.ktx");
         texture = vk::Image::createCube(device, data);
@@ -297,9 +341,8 @@ private:
 class Axes
 {
 public:
-    Axes(const vk::Device &device, vk::DescriptorPool &descPool, Offscreen &offscreen, VkDescriptorSetLayout globalDescSetLayout,
-        VkDescriptorSet globalDescSet):
-        globalDescSet(globalDescSet)
+    Axes(const vk::Device &device, Offscreen &offscreen, Scene &scene):
+        globalDescSet(scene.getDescSet())
     {
         Transform t;
         t.setLocalPosition({3, 0, 3});
@@ -337,7 +380,7 @@ public:
             .build();
 
         pipeline = vk::Pipeline(device, offscreen.getRenderPass(), vk::PipelineConfig(vs, fs)
-            .withDescriptorSetLayout(globalDescSetLayout)
+            .withDescriptorSetLayout(scene.getDescSetLayout())
             .withDescriptorSetLayout(descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_NONE)
@@ -345,9 +388,9 @@ public:
             .withVertexBinding(0, sizeof(float) * 3, VK_VERTEX_INPUT_RATE_VERTEX)
             .withVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0));
 
-        redDescSet = descPool.allocateSet(descSetLayout);
-        greenDescSet = descPool.allocateSet(descSetLayout);
-        blueDescSet = descPool.allocateSet(descSetLayout);
+        redDescSet = scene.getDescPool().allocateSet(descSetLayout);
+        greenDescSet = scene.getDescPool().allocateSet(descSetLayout);
+        blueDescSet = scene.getDescPool().allocateSet(descSetLayout);
 
         vk::DescriptorSetUpdater(device)
             .forUniformBuffer(0, redDescSet, modelMatrixBuffer, 0, sizeof(modelMatrix))
@@ -417,49 +460,17 @@ int main()
     auto device = vk::Device::create(window.getPlatformHandle());
     auto swapchain = vk::Swapchain(device, CanvasWidth, CanvasHeight, false);
 
-    struct
-    {
-        vk::DescriptorPool descPool;
-        vk::Resource<VkDescriptorSetLayout> globalDescSetLayout;
-        VkDescriptorSet globalDescSet;
-    } scene;
-
-    Offscreen offscreen{device, CanvasWidth, CanvasHeight};
-
-    struct
-    {
-        glm::mat4 projectionMatrix;
-        glm::mat4 viewMatrix;
-    } viewMatrices;
-
     Camera cam;
     cam.setPerspective(glm::radians(45.0f), CanvasWidth / (CanvasHeight * 1.0f), 0.01f, 100);
     cam.getTransform().setLocalPosition({10, -5, 10});
     cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
-    viewMatrices.projectionMatrix = cam.getProjectionMatrix();
-    viewMatrices.viewMatrix = glm::mat4();
-
-    auto viewMatricesBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(viewMatrices));
-    viewMatricesBuffer.update(&viewMatrices);
-
-    scene.descPool = vk::DescriptorPool(device, 20, vk::DescriptorPoolConfig()
-        .forDescriptors(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 20)
-        .forDescriptors(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 20));
-
-    scene.globalDescSetLayout = vk::DescriptorSetLayoutBuilder(device)
-        .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
-        .build();
-    scene.globalDescSet = scene.descPool.allocateSet(scene.globalDescSetLayout);
-
-    vk::DescriptorSetUpdater(device)
-        .forUniformBuffer(0, scene.globalDescSet, viewMatricesBuffer, 0, sizeof(viewMatrices))
-        .updateSets();
-
-    Mesh mesh{device, offscreen.getRenderPass(), scene.globalDescSetLayout, scene.globalDescSet, scene.descPool};
-    PostProcessor postProcessor{device, offscreen, scene.descPool};
-    Skybox skybox{device, scene.descPool, scene.globalDescSetLayout, scene.globalDescSet, offscreen};
-    Axes axes{device, scene.descPool, offscreen, scene.globalDescSetLayout, scene.globalDescSet};
+    Scene scene{device};
+    Offscreen offscreen{device, CanvasWidth, CanvasHeight};
+    Mesh mesh{device, offscreen.getRenderPass(), scene};
+    PostProcessor postProcessor{device, offscreen, scene};
+    Skybox skybox{device, offscreen, scene};
+    Axes axes{device, offscreen, scene};
 
     // Record command buffers
 
@@ -512,9 +523,7 @@ int main()
         auto dt = window.getTimeDelta();
 
         applySpectator(cam.getTransform(), input, dt, 1, 5);
-
-        viewMatrices.viewMatrix = cam.getViewMatrix();
-        viewMatricesBuffer.update(&viewMatrices);
+        scene.update(cam);
 
         auto presentCompleteSemaphore = swapchain.acquireNext();
         vk::queueSubmit(device.getQueue(), 1, &presentCompleteSemaphore, 1, &offscreen.getSemaphore(), 1, &offscreen.getCommandBuffer());
