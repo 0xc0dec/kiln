@@ -236,7 +236,9 @@ vk::Image::Image(const Device &device, uint32_t width, uint32_t height, uint32_t
     VkImageCreateFlags createFlags, VkImageUsageFlags usageFlags, VkImageViewType viewType, VkImageAspectFlags aspectMask):
     mipLevels(mipLevels),
     layers(layers),
-    aspectMask(aspectMask)
+    aspectMask(aspectMask),
+    width(width),
+    height(height)
 {
     auto image = createImage(device, format, width, height, mipLevels, layers, createFlags, usageFlags);
     auto memory = allocateImageMemory(device, device.getPhysicalMemoryFeatures(), image);

@@ -40,6 +40,7 @@
       <Filter>vulkan</Filter>
     </ClCompile>
     <ClCompile Include="..\src\MeshData.cpp" />
+    <ClCompile Include="..\src\Font.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Camera.h" />
@@ -85,6 +86,7 @@
     </ClInclude>
     <ClInclude Include="..\src\MeshData.h" />
     <ClInclude Include="..\src\StringUtils.h" />
+    <ClInclude Include="..\src\Font.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="vulkan">

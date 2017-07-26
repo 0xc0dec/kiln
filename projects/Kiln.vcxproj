@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\Camera.cpp" />
     <ClCompile Include="..\src\FileSystem.cpp" />
+    <ClCompile Include="..\src\Font.cpp" />
     <ClCompile Include="..\src\ImageData.cpp" />
     <ClCompile Include="..\src\Input.cpp" />
     <ClCompile Include="..\src\Kiln.cpp" />
@@ -43,6 +44,7 @@
     <ClInclude Include="..\src\Camera.h" />
     <ClInclude Include="..\src\Common.h" />
     <ClInclude Include="..\src\FileSystem.h" />
+    <ClInclude Include="..\src\Font.h" />
     <ClInclude Include="..\src\ImageData.h" />
     <ClInclude Include="..\src\Input.h" />
     <ClInclude Include="..\src\MeshData.h" />
@@ -122,7 +124,7 @@
     <OutDir>$(ProjectDir)..\build\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)..\build\$(Configuration)\temp\Kiln\</IntDir>
     <LibraryPath>$(ProjectDir)..\build\$(Configuration)\;$(ProjectDir)..\vendor\vulkan\lib\;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(ProjectDir)..\vendor\tinyobjloader\1.0.6\;$(ProjectDir)..\vendor\stb_image\2.15\;$(ProjectDir)..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\vendor\vulkan\include\;$(ProjectDir)..\vendor\glm\0.9.8.4\;$(ProjectDir)..\vendor\gli\0.8.2.0\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\vendor\tinyobjloader\1.0.6\;$(ProjectDir)..\vendor\stb_truetype\1.11\;$(ProjectDir)..\vendor\stb_image\2.15\;$(ProjectDir)..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\vendor\vulkan\include\;$(ProjectDir)..\vendor\glm\0.9.8.4\;$(ProjectDir)..\vendor\gli\0.8.2.0\;$(IncludePath)</IncludePath>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
     <CustomBuildAfterTargets>
     </CustomBuildAfterTargets>
@@ -135,7 +137,7 @@
     <OutDir>$(ProjectDir)..\build\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)..\build\$(Configuration)\temp\Kiln\</IntDir>
     <LibraryPath>$(ProjectDir)..\build\$(Configuration)\;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(ProjectDir)..\vendor\tinyobjloader\1.0.6\;$(ProjectDir)..\vendor\stb_image\2.15\;$(ProjectDir)..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\vendor\glm\0.9.8.4\;$(ProjectDir)..\vendor\gli\0.8.2.0\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\vendor\tinyobjloader\1.0.6\;$(ProjectDir)..\vendor\stb_truetype\1.11\;$(ProjectDir)..\vendor\stb_image\2.15\;$(ProjectDir)..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\vendor\glm\0.9.8.4\;$(ProjectDir)..\vendor\gli\0.8.2.0\;$(IncludePath)</IncludePath>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
     <CustomBuildAfterTargets>
     </CustomBuildAfterTargets>

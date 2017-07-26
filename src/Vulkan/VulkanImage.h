@@ -6,6 +6,7 @@
 #pragma once
 
 #include "Vulkan.h"
+#include <glm/glm.hpp>
 
 class ImageData;
 
@@ -28,6 +29,7 @@ namespace vk
         auto operator=(const Image &other) -> Image& = delete;
         auto operator=(Image &&other) -> Image& = default;
 
+        auto getSize() const -> glm::vec2 { return {width, height}; }
         auto getLayout() const -> VkImageLayout { return layout; }
         auto getSampler() const -> VkSampler { return sampler; }
         auto getView() const -> VkImageView { return view; }
@@ -42,6 +44,8 @@ namespace vk
         VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
         uint32_t mipLevels = 0;
         uint32_t layers = 0;
+        uint32_t width = 0;
+        uint32_t height = 0;
         VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     };
 }
