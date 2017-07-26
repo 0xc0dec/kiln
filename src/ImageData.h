@@ -17,15 +17,15 @@ public:
         R8G8B8A8_UNORM
     };
 
+    static auto load2D(const std::string &path) -> ImageData;
+    static auto loadCube(const std::string &path) -> ImageData;
+
     ImageData(ImageData &&other) = default;
     ImageData(const ImageData &other) = delete;
     virtual ~ImageData() {}
 
     auto operator=(const ImageData &other) -> ImageData& = delete;
     auto operator=(ImageData &&other) -> ImageData& = default;
-
-    static auto load2D(const std::string &path) -> ImageData;
-    static auto loadCube(const std::string &path) -> ImageData;
 
     virtual auto getMipLevelCount() const -> uint32_t;
     virtual auto getFaceCount() const -> uint32_t;
