@@ -1,6 +1,5 @@
-// TODO RenderPlan/Job system/whatever for submitting to queue and dependency graph
-// TODO Return "jobs" from methods that transfer data (or make two versions - sync (using queueWaitIdle) and "async")
 // TODO Refactor ImageData/Font using pointers avoiding pimpl
+// TODO Font geometry and rendering
 
 /*
     Copyright (c) Aleksey Fedotov
