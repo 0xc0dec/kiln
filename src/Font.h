@@ -7,20 +7,22 @@
 
 #include "Common.h"
 #include "Vulkan/VulkanDevice.h"
+#include "Vulkan/VulkanImage.h"
 #include <glm/glm.hpp>
-
-struct GlyphInfo
-{
-    glm::vec3 positions[4];
-    glm::vec2 uvs[2];
-    float offsetX, offsetY;
-};
 
 class Font
 {
 public:
-    Font(const vk::Device &device, uint8_t *fontData, uint32_t size, uint32_t atlasWidth, uint32_t atlasHeight,
-        uint32_t firstChar, uint32_t charCount, uint32_t oversampleX, uint32_t oversampleY);
+    struct GlyphInfo
+    {
+        glm::vec3 positions[4];
+        glm::vec2 uvs[2];
+        float offsetX, offsetY;
+    };
+
+    static auto createTrueType(const vk::Device &device, const std::vector<uint8_t> &data, uint32_t atlasWidth, uint32_t atlasHeight,
+        uint32_t firstChar, uint32_t charCount, uint32_t oversampleX, uint32_t oversampleY) -> Font;
+
     Font(const Font &other) = delete;
     Font(Font &&other) = default;
     virtual ~Font() = default;
@@ -28,7 +30,17 @@ public:
     auto operator=(const Font &other) -> Font& = delete;
     auto operator=(Font &&other) -> Font& = default;
 
-    virtual auto getGlyphInfo(uint32_t character, float offsetX, float offsetY) -> GlyphInfo = 0;
+    virtual auto getGlyphInfo(uint32_t character, float offsetX, float offsetY) -> GlyphInfo
+    {
+        return impl->getGlyphInfo(character, offsetX, offsetY);
+    }
+
+    auto getAtlas() const -> const vk::Image& { return atlas; }
+
+protected:
+    Font() {}
+
+    vk::Image atlas;
 
 private:
     uptr<Font> impl;

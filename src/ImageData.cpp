@@ -10,7 +10,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-class GliImageData : public ImageData
+class GliData : public ImageData
 {
 public:
     static bool isLoadable2D(const std::string &path)
@@ -23,18 +23,18 @@ public:
         return isLoadable(path);
     }
 
-    static auto load2D(const std::string &path) -> uptr<GliImageData>
+    static auto load2D(const std::string &path) -> uptr<GliData>
     {
         auto bytes = fs::readBytes(path);
         gli::texture2d data(gli::load(reinterpret_cast<const char*>(bytes.data()), bytes.size()));
-        return std::unique_ptr<GliImageData>(new GliImageData(std::move(data)));
+        return std::unique_ptr<GliData>(new GliData(std::move(data)));
     }
 
-    static auto loadCube(const std::string &path) -> uptr<GliImageData>
+    static auto loadCube(const std::string &path) -> uptr<GliData>
     {
         auto bytes = fs::readBytes(path);
         gli::texture_cube data(gli::load(reinterpret_cast<const char*>(bytes.data()), bytes.size()));
-        return std::unique_ptr<GliImageData>(new GliImageData(std::move(data)));
+        return std::unique_ptr<GliData>(new GliData(std::move(data)));
     }
 
     auto getMipLevelCount() const -> uint32_t override
@@ -82,7 +82,7 @@ public:
         return texCube[face][mipLevel].extent().y;
     }
 
-    auto getData() const -> void* override
+    auto getData() const -> const void* override
     {
         return getGenericHandle().data();
     }
@@ -115,11 +115,11 @@ private:
         return false;
     }
 
-    explicit GliImageData(gli::texture2d &&t): tex2d(std::move(t))
+    explicit GliData(gli::texture2d &&t): tex2d(std::move(t))
     {
     }
 
-    explicit GliImageData(gli::texture_cube &&t): texCube(std::move(t))
+    explicit GliData(gli::texture_cube &&t): texCube(std::move(t))
     {
     }
 
@@ -131,9 +131,9 @@ private:
     }
 };
 
-decltype(GliImageData::supportedFormats) GliImageData::supportedFormats = {".dds", ".ktx"};
+decltype(GliData::supportedFormats) GliData::supportedFormats = {".dds", ".ktx"};
 
-class StbiImageData: public ImageData
+class StbiData: public ImageData
 {
 public:
     static bool isLoadable2D(const std::string &path)
@@ -151,21 +151,21 @@ public:
         return false;
     }
 
-    static auto load2D(const std::string &path) -> uptr<StbiImageData>
+    static auto load2D(const std::string &path) -> uptr<StbiData>
     {
         auto bytes = fs::readBytes(path);
         int width, height, channels;
         auto data = stbi_load_from_memory(bytes.data(), bytes.size(), &width, &height, &channels, STBI_rgb_alpha);
-        return std::unique_ptr<StbiImageData>(new StbiImageData(width, height, channels, data));
+        return std::unique_ptr<StbiData>(new StbiData(width, height, channels, data));
     }
 
-    static auto loadCube(const std::string &path) -> uptr<GliImageData>
+    static auto loadCube(const std::string &path) -> uptr<GliData>
     {
         KL_PANIC("Not implemented");
         return nullptr;
     }
 
-    ~StbiImageData()
+    ~StbiData()
     {
         if (data)
             stbi_image_free(data);
@@ -216,7 +216,7 @@ public:
         return height;
     }
 
-    auto getData() const -> void* override
+    auto getData() const -> const void* override
     {
         return data;
     }
@@ -234,21 +234,57 @@ private:
     uint32_t height = 0;
     stbi_uc *data = nullptr;
 
-    StbiImageData(uint32_t width, uint32_t height, uint32_t channels, stbi_uc *data):
+    StbiData(uint32_t width, uint32_t height, uint32_t channels, stbi_uc *data):
         channels(channels), width(width), height(height), data(data)
     {
     }
 };
 
-decltype(StbiImageData::supportedFormats) StbiImageData::supportedFormats = {".bmp", ".jpg", ".jpeg", ".png"};
+class SimpleData: public ImageData
+{
+public:
+    SimpleData(uint32_t width, uint32_t height, uint32_t mipLevels, uint32_t layers, uint32_t faces, Format format, const std::vector<uint8_t> &data):
+        width(width),
+        height(height),
+        mipLevels(mipLevels),
+        layers(layers),
+        faces(faces),
+        format(format),
+        data(data)
+    {
+    }
+
+    auto getMipLevelCount() const -> uint32_t override { return mipLevels; }
+    auto getFaceCount() const -> uint32_t override { return faces; }
+    auto getSize() const -> uint32_t override { return data.size(); }
+    auto getSize(uint32_t mipLevel) const -> uint32_t override { return data.size(); }
+    auto getSize(uint32_t face, uint32_t mipLevel) const -> uint32_t override { return data.size(); }
+    auto getWidth(uint32_t mipLevel) const -> uint32_t override { return width; }
+    auto getWidth(uint32_t face, uint32_t mipLevel) const -> uint32_t override { return width; }
+    auto getHeight(uint32_t mipLevel) const -> uint32_t override { return height; }
+    auto getHeight(uint32_t face, uint32_t mipLevel) const -> uint32_t override { return height; }
+    auto getData() const -> const void* override { return data.data(); }
+    auto getFormat() const -> Format override { return format; }
+
+private:
+    uint32_t width;
+    uint32_t height;
+    uint32_t mipLevels;
+    uint32_t layers;
+    uint32_t faces;
+    Format format;
+    std::vector<uint8_t> data;
+};
+
+decltype(StbiData::supportedFormats) StbiData::supportedFormats = {".bmp", ".jpg", ".jpeg", ".png"};
 
 auto ImageData::load2D(const std::string &path) -> ImageData
 {
     ImageData data{};
-    if (GliImageData::isLoadable2D(path))
-        data.impl = GliImageData::load2D(path);
-    else if (StbiImageData::isLoadable2D(path))
-        data.impl = StbiImageData::load2D(path);
+    if (GliData::isLoadable2D(path))
+        data.impl = GliData::load2D(path);
+    else if (StbiData::isLoadable2D(path))
+        data.impl = StbiData::load2D(path);
     else
         KL_PANIC("Unsupported texture format");
     return data;
@@ -257,66 +293,18 @@ auto ImageData::load2D(const std::string &path) -> ImageData
 auto ImageData::loadCube(const std::string &path) -> ImageData
 {
     ImageData data{};
-    if (GliImageData::isLoadableCube(path))
-        data.impl = GliImageData::loadCube(path);
-    else if (StbiImageData::isLoadableCube(path))
-        data.impl = StbiImageData::loadCube(path);
+    if (GliData::isLoadableCube(path))
+        data.impl = GliData::loadCube(path);
+    else if (StbiData::isLoadableCube(path))
+        data.impl = StbiData::loadCube(path);
     else
         KL_PANIC("Unsupported texture format");
     return data;
 }
 
-auto ImageData::getMipLevelCount() const -> uint32_t
+auto ImageData::createSimple(uint32_t width, uint32_t height, Format format, const std::vector<uint8_t> &data) -> ImageData
 {
-    return impl->getMipLevelCount();
-}
-
-auto ImageData::getFaceCount() const -> uint32_t
-{
-    return impl->getFaceCount();
-}
-
-auto ImageData::getSize() const -> uint32_t
-{
-    return impl->getSize();
-}
-
-auto ImageData::getSize(uint32_t mipLevel) const -> uint32_t
-{
-    return impl->getSize(mipLevel);
-}
-
-auto ImageData::getSize(uint32_t face, uint32_t mipLevel) const -> uint32_t
-{
-    return impl->getSize(face, mipLevel);
-}
-
-auto ImageData::getWidth(uint32_t mipLevel) const -> uint32_t
-{
-    return impl->getWidth(mipLevel);
-}
-
-auto ImageData::getWidth(uint32_t face, uint32_t mipLevel) const -> uint32_t
-{
-    return impl->getWidth(face, mipLevel);
-}
-
-auto ImageData::getHeight(uint32_t mipLevel) const -> uint32_t
-{
-    return impl->getHeight(mipLevel);
-}
-
-auto ImageData::getHeight(uint32_t face, uint32_t mipLevel) const -> uint32_t
-{
-    return impl->getHeight(face, mipLevel);
-}
-
-auto ImageData::getData() const -> void*
-{
-    return impl->getData();
-}
-
-auto ImageData::getFormat() const -> Format
-{
-    return impl->getFormat();
+    ImageData result;
+    result.impl = std::make_unique<SimpleData>(width, height, 1, 1, 1, format, data);
+    return result;
 }

@@ -1,5 +1,6 @@
 // TODO RenderPlan/Job system/whatever for submitting to queue and dependency graph
 // TODO Return "jobs" from methods that transfer data (or make two versions - sync (using queueWaitIdle) and "async")
+// TODO Refactor ImageData/Font using pointers avoiding pimpl
 
 /*
     Copyright (c) Aleksey Fedotov
@@ -13,6 +14,7 @@
 #include "Window.h"
 #include "ImageData.h"
 #include "MeshData.h"
+#include "Font.h"
 #include "vulkan/Vulkan.h"
 #include "vulkan/VulkanDevice.h"
 #include "vulkan/VulkanRenderPass.h"
@@ -471,6 +473,9 @@ int main()
     PostProcessor postProcessor{device, offscreen, scene};
     Skybox skybox{device, offscreen, scene};
     Axes axes{device, offscreen, scene};
+
+    auto fontData = fs::readBytes("../../assets/Aller.ttf");
+    auto font = Font::createTrueType(device, fontData, 1024, 1024, ' ', '~' - ' ', 2, 2);
 
     // Record command buffers
 

@@ -4,6 +4,7 @@
 */
 
 #include "Font.h"
+#include "ImageData.h"
 #include "Vulkan/VulkanImage.h"
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_truetype.h>
@@ -11,28 +12,31 @@
 class TrueTypeFont: public Font
 {
 public:
-    TrueTypeFont(const vk::Device &device, uint8_t *fontData, uint32_t size, uint32_t atlasWidth, uint32_t atlasHeight,
+    TrueTypeFont(const vk::Device &device, const std::vector<uint8_t> &data, uint32_t atlasWidth, uint32_t atlasHeight,
         uint32_t firstChar, uint32_t charCount, uint32_t oversampleX, uint32_t oversampleY):
-        Font(device, fontData, size, atlasWidth, atlasHeight, firstChar, charCount, oversampleX, oversampleY),
         firstChar(firstChar)
     {
         charInfo = std::make_unique<stbtt_packedchar[]>(charCount);
 
-        auto pixels = std::make_unique<uint8_t[]>(atlasWidth * atlasHeight);
+        std::vector<uint8_t> pixels;
+        pixels.resize(atlasWidth * atlasHeight);
 
         stbtt_pack_context context;
-        auto ret = stbtt_PackBegin(&context, pixels.get(), atlasWidth, atlasHeight, 0, 1, nullptr);
+        auto ret = stbtt_PackBegin(&context, pixels.data(), atlasWidth, atlasHeight, 0, 1, nullptr);
         KL_PANIC_IF(!ret);
 
         stbtt_PackSetOversampling(&context, oversampleX, oversampleY);
-        stbtt_PackFontRange(&context, fontData, 0, static_cast<float>(size), firstChar, charCount, charInfo.get());
+        stbtt_PackFontRange(&context, const_cast<unsigned char *>(data.data()), 0, data.size(), firstChar, charCount, charInfo.get());
         stbtt_PackEnd(&context);
+
+        auto imageData = ImageData::createSimple(atlasWidth, atlasHeight, ImageData::Format::R8_UNORM, pixels);        
 
         atlas = vk::Image(device, atlasWidth, atlasHeight, 1, 1, VK_FORMAT_R8_UNORM,
             0,
             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VK_IMAGE_VIEW_TYPE_2D,
             VK_IMAGE_ASPECT_COLOR_BIT);
+        atlas.uploadData(device, imageData);
     }
 
     auto getGlyphInfo(uint32_t character, float offsetX, float offsetY) -> GlyphInfo override
@@ -65,17 +69,12 @@ public:
 private:
     uint32_t firstChar;
     uptr<stbtt_packedchar[]> charInfo;
-    vk::Image atlas;
 };
 
-Font::Font(const vk::Device &device, uint8_t *fontData, uint32_t size, uint32_t atlasWidth, uint32_t atlasHeight,
-    uint32_t firstChar, uint32_t charCount, uint32_t oversampleX, uint32_t oversampleY)
+auto Font::createTrueType(const vk::Device &device, const std::vector<uint8_t> &data, uint32_t atlasWidth, uint32_t atlasHeight,
+    uint32_t firstChar, uint32_t charCount, uint32_t oversampleX, uint32_t oversampleY) -> Font
 {
-    impl = std::make_unique<TrueTypeFont>(device, fontData, size, atlasWidth, atlasHeight, firstChar,
-        charCount, oversampleX, oversampleY);
-}
-
-auto Font::getGlyphInfo(uint32_t character, float offsetX, float offsetY) -> GlyphInfo
-{
-    return impl->getGlyphInfo(character, offsetX, offsetY);
+    Font f;
+    f.impl = std::make_unique<TrueTypeFont>(device, data, atlasWidth, atlasHeight, firstChar, charCount, oversampleX, oversampleY);
+    return f;
 }
