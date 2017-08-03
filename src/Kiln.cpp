@@ -452,6 +452,123 @@ private:
     VkDescriptorSet globalDescSet;
 };
 
+class Label
+{
+public:
+    Label(const vk::Device &device, const std::string &text, VkRenderPass renderPass, Scene &scene):
+        globalDescSet(scene.getDescSet())
+    {
+        auto fontData = fs::readBytes("../../assets/Aller.ttf");
+        font = Font::createTrueType(device, fontData, 10, 1024, 1024, ' ', '~' - ' ', 2, 2);
+
+        std::vector<float> vertexData;
+        std::vector<uint32_t> indexData;
+
+        uint16_t lastIndex = 0;
+        float offsetX = 0, offsetY = 0;
+        for (auto c : text)
+        {
+            auto glyphInfo = font.getGlyphInfo(c, offsetX, offsetY);
+            offsetX = glyphInfo.offsetX;
+            offsetY = glyphInfo.offsetY;
+
+            vertexData.push_back(glyphInfo.positions[0].x);
+            vertexData.push_back(glyphInfo.positions[0].y);
+            vertexData.push_back(glyphInfo.positions[0].z);
+            vertexData.push_back(glyphInfo.uvs[0].x);
+            vertexData.push_back(glyphInfo.uvs[0].y);
+
+            vertexData.push_back(glyphInfo.positions[1].x);
+            vertexData.push_back(glyphInfo.positions[1].y);
+            vertexData.push_back(glyphInfo.positions[1].z);
+            vertexData.push_back(glyphInfo.uvs[1].x);
+            vertexData.push_back(glyphInfo.uvs[1].y);
+
+            vertexData.push_back(glyphInfo.positions[2].x);
+            vertexData.push_back(glyphInfo.positions[2].y);
+            vertexData.push_back(glyphInfo.positions[2].z);
+            vertexData.push_back(glyphInfo.uvs[2].x);
+            vertexData.push_back(glyphInfo.uvs[2].y);
+
+            vertexData.push_back(glyphInfo.positions[3].x);
+            vertexData.push_back(glyphInfo.positions[3].y);
+            vertexData.push_back(glyphInfo.positions[3].z);
+            vertexData.push_back(glyphInfo.uvs[3].x);
+            vertexData.push_back(glyphInfo.uvs[3].y);
+
+            indexData.push_back(lastIndex);
+            indexData.push_back(lastIndex + 1);
+            indexData.push_back(lastIndex + 2);
+            indexData.push_back(lastIndex);
+            indexData.push_back(lastIndex + 2);
+            indexData.push_back(lastIndex + 3);
+
+            lastIndex += 4;
+        }
+
+        auto vsSrc = fs::readBytes("../../assets/shaders/Font.vert.spv");
+        auto fsSrc = fs::readBytes("../../assets/shaders/Font.frag.spv");
+        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
+        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
+
+        glm::mat4 modelMatrix{};
+        modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
+        modelMatrixBuffer.update(&modelMatrix);
+
+        vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * vertexData.size(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertexData.data());
+        indexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(uint32_t) * indexData.size(),
+            VK_BUFFER_USAGE_INDEX_BUFFER_BIT, indexData.data());
+        indexCount = indexData.size();
+
+        descSetLayout = vk::DescriptorSetLayoutBuilder(device)
+            .withBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .build();
+
+        auto vf = VertexFormat({3, 2});
+
+        pipeline = vk::Pipeline(device, renderPass, vk::PipelineConfig(vs, fs)
+            .withDescriptorSetLayout(scene.getDescSetLayout())
+            .withDescriptorSetLayout(descSetLayout)
+            .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
+            .withCullMode(VK_CULL_MODE_NONE)
+            .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+            .withVertexFormat(vf));
+
+        descSet = scene.getDescPool().allocateSet(descSetLayout);
+
+        vk::DescriptorSetUpdater(device)
+            .forUniformBuffer(0, descSet, modelMatrixBuffer, 0, sizeof(modelMatrix))
+            .forTexture(1, descSet, font.getAtlas().getView(), font.getAtlas().getSampler(), font.getAtlas().getLayout())
+            .updateSets();
+    }
+
+    void render(VkCommandBuffer buf)
+    {
+        VkBuffer vertexBuffer = this->vertexBuffer;
+        VkDeviceSize vertexBufferOffset = 0;
+        std::vector<VkDescriptorSet> descSets = {globalDescSet, descSet};
+        vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        vkCmdBindDescriptorSets(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 0, 2, descSets.data(), 0, nullptr);
+        vkCmdBindVertexBuffers(buf, 0, 1, &vertexBuffer, &vertexBufferOffset);
+        vkCmdBindIndexBuffer(buf, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(buf, indexCount, 1, 0, 0, 0);
+    }
+
+private:
+    Font font;
+    vk::Resource<VkDescriptorSetLayout> descSetLayout;
+    vk::Pipeline pipeline;
+    vk::Image texture;
+    vk::Buffer modelMatrixBuffer;
+    vk::Buffer vertexBuffer;
+    vk::Buffer indexBuffer;
+    uint32_t indexCount;
+    VkDescriptorSet descSet;
+    VkDescriptorSet globalDescSet;
+};
+
 int main()
 {
     const uint32_t CanvasWidth = 1366;
@@ -472,9 +589,7 @@ int main()
     PostProcessor postProcessor{device, offscreen, scene};
     Skybox skybox{device, offscreen, scene};
     Axes axes{device, offscreen, scene};
-
-    auto fontData = fs::readBytes("../../assets/Aller.ttf");
-    auto font = Font::createTrueType(device, fontData, 1024, 1024, ' ', '~' - ' ', 2, 2);
+    Label label{device, "Test", offscreen.getRenderPass(), scene};
 
     // Record command buffers
 
@@ -494,6 +609,7 @@ int main()
         skybox.render(buf);
         axes.render(buf);
         mesh.render(buf);
+        label.render(buf);
 
         offscreen.getRenderPass().end(buf); 
 

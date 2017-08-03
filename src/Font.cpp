@@ -12,7 +12,7 @@
 class TrueTypeFont: public Font
 {
 public:
-    TrueTypeFont(const vk::Device &device, const std::vector<uint8_t> &data, uint32_t atlasWidth, uint32_t atlasHeight,
+    TrueTypeFont(const vk::Device &device, const std::vector<uint8_t> &data, float size, uint32_t atlasWidth, uint32_t atlasHeight,
         uint32_t firstChar, uint32_t charCount, uint32_t oversampleX, uint32_t oversampleY):
         firstChar(firstChar)
     {
@@ -26,7 +26,7 @@ public:
         KL_PANIC_IF(!ret);
 
         stbtt_PackSetOversampling(&context, oversampleX, oversampleY);
-        stbtt_PackFontRange(&context, const_cast<unsigned char *>(data.data()), 0, data.size(), firstChar, charCount, charInfo.get());
+        stbtt_PackFontRange(&context, const_cast<unsigned char *>(data.data()), 0, size, firstChar, charCount, charInfo.get());
         stbtt_PackEnd(&context);
 
         auto imageData = ImageData::createSimple(atlasWidth, atlasHeight, ImageData::Format::R8_UNORM, pixels);        
@@ -45,7 +45,7 @@ public:
         auto atlasSize = atlas.getSize();
 
         stbtt_GetPackedQuad(charInfo.get(), static_cast<uint32_t>(atlasSize.x), static_cast<uint32_t>(atlasSize.y),
-        character - firstChar, &offsetX, &offsetY, &quad, 1);
+            character - firstChar, &offsetX, &offsetY, &quad, 1);
         auto xmin = quad.x0;
         auto xmax = quad.x1;
         auto ymin = -quad.y1;
@@ -71,10 +71,11 @@ private:
     uptr<stbtt_packedchar[]> charInfo;
 };
 
-auto Font::createTrueType(const vk::Device &device, const std::vector<uint8_t> &data, uint32_t atlasWidth, uint32_t atlasHeight,
-    uint32_t firstChar, uint32_t charCount, uint32_t oversampleX, uint32_t oversampleY) -> Font
+auto Font::createTrueType(const vk::Device &device, const std::vector<uint8_t> &data, float size,
+    uint32_t atlasWidth, uint32_t atlasHeight, uint32_t firstChar, uint32_t charCount,
+    uint32_t oversampleX, uint32_t oversampleY) -> Font
 {
     Font f;
-    f.impl = std::make_unique<TrueTypeFont>(device, data, atlasWidth, atlasHeight, firstChar, charCount, oversampleX, oversampleY);
+    f.impl = std::make_unique<TrueTypeFont>(device, data, size, atlasWidth, atlasHeight, firstChar, charCount, oversampleX, oversampleY);
     return f;
 }
