@@ -459,7 +459,7 @@ public:
         globalDescSet(scene.getDescSet())
     {
         auto fontData = fs::readBytes("../../assets/Aller.ttf");
-        font = Font::createTrueType(device, fontData, 10, 1024, 1024, ' ', '~' - ' ', 2, 2);
+        font = Font::createTrueType(device, fontData, 100, 2048, 2048, ' ', '~' - ' ', 2, 2);
 
         std::vector<float> vertexData;
         std::vector<uint32_t> indexData;
@@ -511,7 +511,10 @@ public:
         auto vs = createShader(device, vsSrc.data(), vsSrc.size());
         auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
-        glm::mat4 modelMatrix{};
+        Transform t;
+        t.setLocalScale({0.05f, 0.05f, 0.05f});
+        t.setLocalPosition({0, 0, 4});
+        glm::mat4 modelMatrix = t.getWorldMatrix();
         modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
         modelMatrixBuffer.update(&modelMatrix);
 
@@ -533,6 +536,8 @@ public:
             .withDescriptorSetLayout(descSetLayout)
             .withFrontFace(VK_FRONT_FACE_CLOCKWISE)
             .withCullMode(VK_CULL_MODE_NONE)
+            .withBlend(true, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ONE,
+                VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ONE)
             .withTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withVertexFormat(vf));
 

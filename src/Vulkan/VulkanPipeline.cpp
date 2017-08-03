@@ -31,16 +31,6 @@ vk::Pipeline::Pipeline(VkDevice device, VkRenderPass renderPass, const PipelineC
     multisampleState.alphaToCoverageEnable = false;
     multisampleState.alphaToOneEnable = false;
 
-    VkPipelineColorBlendAttachmentState blendAttachmentState{};
-    blendAttachmentState.blendEnable = VK_FALSE;
-    blendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-    blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-    blendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
-    blendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    blendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    blendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
-    blendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-
     VkPipelineColorBlendStateCreateInfo colorBlendState{};
     colorBlendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     colorBlendState.pNext = nullptr;
@@ -48,7 +38,7 @@ vk::Pipeline::Pipeline(VkDevice device, VkRenderPass renderPass, const PipelineC
     colorBlendState.logicOpEnable = VK_FALSE;
     colorBlendState.logicOp = VK_LOGIC_OP_COPY;
     colorBlendState.attachmentCount = 1;
-    colorBlendState.pAttachments = &blendAttachmentState;
+    colorBlendState.pAttachments = &config.blendAttachmentState;
     colorBlendState.blendConstants[0] = 0;
     colorBlendState.blendConstants[1] = 0;
     colorBlendState.blendConstants[2] = 0;
@@ -147,6 +137,15 @@ vk::PipelineConfig::PipelineConfig(VkShaderModule vertexShader, VkShaderModule f
 	depthStencilStateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 	depthStencilStateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
     depthStencilStateInfo.front = depthStencilStateInfo.back;
+
+    blendAttachmentState.blendEnable = VK_FALSE;
+    blendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    blendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+    blendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    blendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    blendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+    blendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 }
 
 auto vk::PipelineConfig::withVertexAttribute(uint32_t location, uint32_t binding, VkFormat format, uint32_t offset) -> PipelineConfig&
@@ -220,5 +219,16 @@ auto vk::PipelineConfig::withDepthTest(bool write, bool test) -> PipelineConfig&
 {
     depthStencilStateInfo.depthWriteEnable = write;
     depthStencilStateInfo.depthTestEnable = test;
+    return *this;
+}
+
+auto vk::PipelineConfig::withBlend(bool enabled, VkBlendFactor srcColorFactor, VkBlendFactor dstColorFactor,
+    VkBlendFactor srcAlphaFactor, VkBlendFactor dstAlphaFactor) -> PipelineConfig&
+{
+    blendAttachmentState.blendEnable = enabled ? VK_TRUE : VK_FALSE;
+    blendAttachmentState.srcColorBlendFactor = srcColorFactor;
+    blendAttachmentState.dstColorBlendFactor = dstColorFactor;
+    blendAttachmentState.srcAlphaBlendFactor = srcAlphaFactor;
+    blendAttachmentState.dstAlphaBlendFactor = dstAlphaFactor;
     return *this;
 }

@@ -29,6 +29,9 @@ namespace vk
 
         auto withDepthTest(bool write, bool test) -> PipelineConfig&;
 
+        auto withBlend(bool enabled, VkBlendFactor srcColorFactor, VkBlendFactor dstColorFactor,
+            VkBlendFactor srcAlphaFactor, VkBlendFactor dstAlphaFactor) -> PipelineConfig&;
+
         auto withTopology(VkPrimitiveTopology topology) -> PipelineConfig&
         {
             this->topology = topology;
@@ -42,6 +45,7 @@ namespace vk
         VkShaderModule fragmentShader;
         VkPipelineRasterizationStateCreateInfo rasterStateInfo;
         VkPipelineDepthStencilStateCreateInfo depthStencilStateInfo;
+        VkPipelineColorBlendAttachmentState blendAttachmentState;
 
         std::vector<VkVertexInputAttributeDescription> vertexAttrs;
         std::vector<VkVertexInputBindingDescription> vertexBindings;
