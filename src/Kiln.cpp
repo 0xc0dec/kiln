@@ -1,5 +1,6 @@
 // TODO Refactor ImageData/Font using pointers avoiding pimpl
 // TODO Font geometry and rendering
+// TODO Use shaderc (see Granite project on Github)
 
 /*
     Copyright (c) Aleksey Fedotov
