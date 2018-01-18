@@ -646,7 +646,7 @@ int main()
     {
         window.beginUpdate(input);
 
-        auto dt = window.getTimeDelta();
+	    const auto dt = window.getTimeDelta();
 
         applySpectator(cam.getTransform(), input, dt, 1, 5);
         scene.update(cam);
