@@ -25,7 +25,7 @@ public:
 
     ImageData(ImageData &&other) = default;
     ImageData(const ImageData &other) = delete;
-    virtual ~ImageData() {}
+	virtual ~ImageData() = default;
 
     auto operator=(const ImageData &other) -> ImageData& = delete;
     auto operator=(ImageData &&other) -> ImageData& = default;
@@ -48,7 +48,7 @@ public:
     virtual auto getFormat() const -> Format { return impl->getFormat(); }
 
 protected:
-    ImageData() {}
+	ImageData() = default;
 
 private:
     uptr<ImageData> impl = nullptr;

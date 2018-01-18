@@ -21,7 +21,7 @@ public:
     auto operator=(const Window &other) -> Window& = delete;
     auto operator=(Window &&other) -> Window& = delete;
 
-    auto getPlatformHandle() -> std::vector<uint8_t>;
+    auto getPlatformHandle() const -> std::vector<uint8_t>;
 
     void beginUpdate(Input &input);
     void endUpdate();

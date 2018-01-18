@@ -27,7 +27,7 @@ Window::~Window()
     SDL_Quit();
 }
 
-auto Window::getPlatformHandle() -> std::vector<uint8_t>
+auto Window::getPlatformHandle() const -> std::vector<uint8_t>
 {
 #ifdef KL_WINDOWS
     SDL_SysWMinfo wmInfo;
@@ -38,7 +38,7 @@ auto Window::getPlatformHandle() -> std::vector<uint8_t>
     {
         HWND hWnd;
         HINSTANCE hInst;
-    } handle;
+    } handle{};
 
     handle.hWnd = wmInfo.info.win.window;
     handle.hInst = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(handle.hWnd, GWLP_HINSTANCE));
@@ -65,13 +65,13 @@ void Window::beginUpdate(Input &input)
     {
         input.processEvent(evt);
 
-        if (evt.type == SDL_QUIT ||
-            evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_CLOSE)
+		const auto closeWindowEvent = evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_CLOSE;
+        if (evt.type == SDL_QUIT || closeWindowEvent)
             _closeRequested = true;
     }
 
-    auto ticks = SDL_GetTicks();
-    auto deltaTicks = ticks - lastTicks;
+    const auto ticks = SDL_GetTicks();
+	const auto deltaTicks = ticks - lastTicks;
     if (deltaTicks > 0)
     {
         dt = deltaTicks / 1000.0f;

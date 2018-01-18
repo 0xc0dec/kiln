@@ -10,7 +10,7 @@
 
 void applySpectator(Transform &transform, Input &input, float dt, float mouseSensitivity, float movementSpeed)
 {
-    auto mouseMotion = input.getMouseMotion();
+	const auto mouseMotion = input.getMouseMotion();
 
     if (input.isMouseButtonDown(SDL_BUTTON_RIGHT, true))
         input.setCursorCaptured(true);
@@ -24,7 +24,7 @@ void applySpectator(Transform &transform, Input &input, float dt, float mouseSen
 
         if (mouseMotion.y != 0)
         {
-            auto angleToUp = glm::angle(glm::normalize(transform.getLocalForward()), glm::vec3(0, 1, 0));
+	        const auto angleToUp = glm::angle(glm::normalize(transform.getLocalForward()), glm::vec3(0, 1, 0));
             auto delta = mouseSensitivity * dt * mouseMotion.y;
             if (delta > 0)
             {

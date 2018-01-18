@@ -9,10 +9,10 @@
 #include <glm/gtc/matrix_transform.inl>
 #include <algorithm>
 
-static const uint32_t DirtyBitLocal = 1;
-static const uint32_t DirtyBitWorld = 1 << 1;
-static const uint32_t DirtyBitInvTransposedWorld = 1 << 2;
-static const uint32_t DirtyBitAll = DirtyBitLocal | DirtyBitWorld | DirtyBitInvTransposedWorld;
+static const uint32_t dirtyBitLocal = 1;
+static const uint32_t dirtyBitWorld = 1 << 1;
+static const uint32_t dirtyBitInvTransposedWorld = 1 << 2;
+static const uint32_t dirtyBitAll = dirtyBitLocal | dirtyBitWorld | dirtyBitInvTransposedWorld;
 
 auto Transform::setParent(Transform *parent) -> Transform&
 {
@@ -26,7 +26,7 @@ auto Transform::setParent(Transform *parent) -> Transform&
         this->parent = parent;
         if (parent)
             parent->children.push_back(this);
-        setDirtyWithChildren(DirtyBitWorld | DirtyBitInvTransposedWorld);
+        setDirtyWithChildren(dirtyBitWorld | dirtyBitInvTransposedWorld);
     }
 
     return *this;
@@ -45,12 +45,12 @@ auto Transform::clearChildren() -> Transform&
 
 auto Transform::getMatrix() const -> glm::mat4
 {
-    if (dirtyFlags & DirtyBitLocal)
+    if (dirtyFlags & dirtyBitLocal)
     {
         matrix = glm::translate(glm::mat4(1.0f), localPosition) *
                  glm::mat4_cast(localRotation) *
                  glm::scale(glm::mat4(1.0f), localScale);
-        dirtyFlags &= ~DirtyBitLocal;
+        dirtyFlags &= ~dirtyBitLocal;
     }
 
     return matrix;
@@ -58,13 +58,13 @@ auto Transform::getMatrix() const -> glm::mat4
 
 auto Transform::getWorldMatrix() const -> glm::mat4
 {
-    if (dirtyFlags & DirtyBitWorld)
+    if (dirtyFlags & dirtyBitWorld)
     {
         if (parent)
             worldMatrix = parent->getWorldMatrix() * getMatrix();
         else
             worldMatrix = getMatrix();
-        dirtyFlags &= ~DirtyBitWorld;
+        dirtyFlags &= ~dirtyBitWorld;
     }
 
     return worldMatrix;
@@ -72,11 +72,11 @@ auto Transform::getWorldMatrix() const -> glm::mat4
 
 auto Transform::getInvTransposedWorldMatrix() const -> glm::mat4
 {
-    if (dirtyFlags & DirtyBitInvTransposedWorld)
+    if (dirtyFlags & dirtyBitInvTransposedWorld)
     {
         invTransposedWorldMatrix = getWorldMatrix();
         invTransposedWorldMatrix = glm::transpose(glm::inverse(invTransposedWorldMatrix));
-        dirtyFlags &= ~DirtyBitInvTransposedWorld;
+        dirtyFlags &= ~dirtyBitInvTransposedWorld;
     }
 
     return invTransposedWorldMatrix;
@@ -100,7 +100,7 @@ auto Transform::getInvTransposedWorldViewMatrix(const Camera &camera) const -> g
 auto Transform::translateLocal(const glm::vec3 &translation) -> Transform&
 {
     localPosition += translation;
-    setDirtyWithChildren(DirtyBitAll);
+    setDirtyWithChildren(dirtyBitAll);
     return *this;
 }
 
@@ -126,14 +126,14 @@ auto Transform::rotate(const glm::quat &rotation, TransformSpace space) -> Trans
             break;
     }
 
-    setDirtyWithChildren(DirtyBitAll);
+    setDirtyWithChildren(dirtyBitAll);
 
     return *this;
 }
 
 auto Transform::rotate(const glm::vec3 &axis, float angle, TransformSpace space) -> Transform&
 {
-    auto rotation = glm::angleAxis(angle, axis);
+	const auto rotation = glm::angleAxis(angle, axis);
     rotate(rotation, space);
     return *this;
 }
@@ -143,14 +143,14 @@ auto Transform::scaleLocal(const glm::vec3 &scale) -> Transform&
     localScale.x *= scale.x;
     localScale.y *= scale.y;
     localScale.z *= scale.z;
-    setDirtyWithChildren(DirtyBitAll);
+    setDirtyWithChildren(dirtyBitAll);
     return *this;
 }
 
 auto Transform::setLocalScale(const glm::vec3 &scale) -> Transform&
 {
     localScale = scale;
-    setDirtyWithChildren(DirtyBitAll);
+    setDirtyWithChildren(dirtyBitAll);
     return *this;
 }
 
@@ -166,7 +166,7 @@ auto Transform::lookAt(const glm::vec3 &target, const glm::vec3 &up) -> Transfor
         localUp = m * localUp;
     }
 
-    auto lookAtMatrix = glm::inverse(glm::lookAt(localPosition, glm::vec3(localTarget), glm::vec3(localUp)));
+	const auto lookAtMatrix = glm::inverse(glm::lookAt(localPosition, glm::vec3(localTarget), glm::vec3(localUp)));
     setLocalRotation(glm::quat_cast(lookAtMatrix));
 
     return *this;
@@ -185,21 +185,21 @@ auto Transform::transformDirection(const glm::vec3 &direction) const -> glm::vec
 auto Transform::setLocalRotation(const glm::quat &rotation) -> Transform&
 {
     localRotation = rotation;
-    setDirtyWithChildren(DirtyBitAll);
+    setDirtyWithChildren(dirtyBitAll);
     return *this;
 }
 
 auto Transform::setLocalRotation(const glm::vec3 &axis, float angle) -> Transform&
 {
     localRotation = glm::angleAxis(angle, axis);
-    setDirtyWithChildren(DirtyBitAll);
+    setDirtyWithChildren(dirtyBitAll);
     return *this;
 }
 
 auto Transform::setLocalPosition(const glm::vec3 &position) -> Transform&
 {
     localPosition = position;
-    setDirtyWithChildren(DirtyBitAll);
+    setDirtyWithChildren(dirtyBitAll);
     return *this;
 }
 

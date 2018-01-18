@@ -22,14 +22,14 @@ public:
         pixels.resize(atlasWidth * atlasHeight);
 
         stbtt_pack_context context;
-        auto ret = stbtt_PackBegin(&context, pixels.data(), atlasWidth, atlasHeight, 0, 1, nullptr);
+	    const auto ret = stbtt_PackBegin(&context, pixels.data(), atlasWidth, atlasHeight, 0, 1, nullptr);
         KL_PANIC_IF(!ret);
 
         stbtt_PackSetOversampling(&context, oversampleX, oversampleY);
         stbtt_PackFontRange(&context, const_cast<unsigned char *>(data.data()), 0, size, firstChar, charCount, charInfo.get());
         stbtt_PackEnd(&context);
 
-        auto imageData = ImageData::createSimple(atlasWidth, atlasHeight, ImageData::Format::R8_UNORM, pixels);        
+	    const auto imageData = ImageData::createSimple(atlasWidth, atlasHeight, ImageData::Format::R8_UNORM, pixels);        
 
         atlas = vk::Image(device, atlasWidth, atlasHeight, 1, 1, VK_FORMAT_R8_UNORM,
             0,
@@ -42,14 +42,14 @@ public:
     auto getGlyphInfo(uint32_t character, float offsetX, float offsetY) -> GlyphInfo override
     {
         stbtt_aligned_quad quad;
-        auto atlasSize = atlas.getSize();
+        const auto atlasSize = atlas.getSize();
 
         stbtt_GetPackedQuad(charInfo.get(), static_cast<uint32_t>(atlasSize.x), static_cast<uint32_t>(atlasSize.y),
             character - firstChar, &offsetX, &offsetY, &quad, 1);
-        auto xmin = quad.x0;
-        auto xmax = quad.x1;
-        auto ymin = -quad.y1;
-        auto ymax = -quad.y0;
+        const auto xmin = quad.x0;
+        const auto xmax = quad.x1;
+        const auto ymin = -quad.y1;
+        const auto ymax = -quad.y0;
 
         GlyphInfo result;
         result.offsetX = offsetX;
