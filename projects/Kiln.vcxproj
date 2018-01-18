@@ -136,8 +136,8 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(ProjectDir)..\build\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)..\build\$(Configuration)\temp\Kiln\</IntDir>
-    <LibraryPath>$(ProjectDir)..\build\$(Configuration)\;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(ProjectDir)..\vendor\tinyobjloader\1.0.6\;$(ProjectDir)..\vendor\stb_truetype\1.11\;$(ProjectDir)..\vendor\stb_image\2.15\;$(ProjectDir)..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\vendor\glm\0.9.8.4\;$(ProjectDir)..\vendor\gli\0.8.2.0\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\build\$(Configuration)\;$(ProjectDir)..\vendor\vulkan\lib\;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)..\vendor\tinyobjloader\1.0.6\;$(ProjectDir)..\vendor\stb_truetype\1.11\;$(ProjectDir)..\vendor\stb_image\2.15\;$(ProjectDir)..\vendor\SDL\2.0.4\include\;$(ProjectDir)..\vendor\glm\0.9.8.4\;$(ProjectDir)..\vendor\gli\0.8.2.0\;$(ProjectDir)..\vendor\vulkan\include\;$(IncludePath)</IncludePath>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
     <CustomBuildAfterTargets>
     </CustomBuildAfterTargets>
@@ -222,7 +222,7 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Vendor.lib</AdditionalDependencies>
+      <AdditionalDependencies>Vendor.lib;vulkan-1.lib</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>

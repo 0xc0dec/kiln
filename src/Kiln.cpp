@@ -15,16 +15,16 @@
 #include "ImageData.h"
 #include "MeshData.h"
 #include "Font.h"
-#include "vulkan/Vulkan.h"
-#include "vulkan/VulkanDevice.h"
-#include "vulkan/VulkanRenderPass.h"
-#include "vulkan/VulkanSwapchain.h"
-#include "vulkan/VulkanDescriptorPool.h"
-#include "vulkan/VulkanBuffer.h"
-#include "vulkan/VulkanPipeline.h"
-#include "vulkan/VulkanDescriptorSetLayoutBuilder.h"
-#include "vulkan/VulkanImage.h"
-#include "vulkan/VulkanDescriptorSetUpdater.h"
+#include "Vulkan/Vulkan.h"
+#include "Vulkan/VulkanDevice.h"
+#include "Vulkan/VulkanRenderPass.h"
+#include "Vulkan/VulkanSwapchain.h"
+#include "Vulkan/VulkanDescriptorPool.h"
+#include "Vulkan/VulkanBuffer.h"
+#include "Vulkan/VulkanPipeline.h"
+#include "Vulkan/VulkanDescriptorSetLayoutBuilder.h"
+#include "Vulkan/VulkanImage.h"
+#include "Vulkan/VulkanDescriptorSetUpdater.h"
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.inl>
 #include <glm/gtc/matrix_transform.inl>
@@ -139,7 +139,7 @@ public:
     auto getRenderPass() -> vk::RenderPass& { return renderPass; }
     auto getSemaphore() -> vk::Resource<VkSemaphore>& { return semaphore; }
     auto getCommandBuffer() -> vk::Resource<VkCommandBuffer>& { return commandBuffer; }
-    auto getFrameBuffer() -> VkFramebuffer { return frameBuffer; }
+    auto getFrameBuffer() const -> VkFramebuffer { return frameBuffer; }
 
 private:
     vk::Image colorAttachment;
@@ -188,7 +188,7 @@ public:
 
         descSet = scene.getDescPool().allocateSet(descSetLayout);
 
-        auto textureData = ImageData::load2D("../../assets/textures/Cobblestone.png");
+	    const auto textureData = ImageData::load2D("../../assets/textures/Cobblestone.png");
         texture = vk::Image::create2D(device, textureData);
 
         vk::DescriptorSetUpdater(device)
@@ -228,8 +228,8 @@ public:
     {
         auto vsSrc = fs::readBytes("../../assets/shaders/PostProcess.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/shaders/PostProcess.frag.spv");
-        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
-        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
+	    const auto vs = createShader(device, vsSrc.data(), vsSrc.size());
+        const auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
         vertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * quadVertexData.size(),
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, quadVertexData.data());
@@ -282,8 +282,8 @@ public:
     {
         auto vsSrc = fs::readBytes("../../assets/shaders/Skybox.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/shaders/Skybox.frag.spv");
-        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
-        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
+        const auto vs = createShader(device, vsSrc.data(), vsSrc.size());
+        const auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
         glm::mat4 modelMatrix{};
         modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
@@ -310,7 +310,7 @@ public:
 
         descSet = scene.getDescPool().allocateSet(descSetLayout);
 
-        auto data = ImageData::loadCube("../../assets/textures/Cubemap_space.ktx");
+        const auto data = ImageData::loadCube("../../assets/textures/Cubemap_space.ktx");
         texture = vk::Image::createCube(device, data);
 
         vk::DescriptorSetUpdater(device)
@@ -348,7 +348,7 @@ public:
     {
         Transform t;
         t.setLocalPosition({3, 0, 3});
-        glm::mat4 modelMatrix = t.getWorldMatrix();
+	    auto modelMatrix = t.getWorldMatrix();
         modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
         modelMatrixBuffer.update(&modelMatrix);
 
@@ -366,8 +366,8 @@ public:
 
         auto vsSrc = fs::readBytes("../../assets/shaders/Axis.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/shaders/Axis.frag.spv");
-        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
-        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
+        const auto vs = createShader(device, vsSrc.data(), vsSrc.size());
+        const auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
         xAxisVertexBuffer = vk::Buffer::createDeviceLocal(device, sizeof(float) * xAxisVertexData.size(),
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, xAxisVertexData.data());
@@ -459,7 +459,7 @@ public:
     Label(const vk::Device &device, const std::string &text, VkRenderPass renderPass, Scene &scene):
         globalDescSet(scene.getDescSet())
     {
-        auto fontData = fs::readBytes("../../assets/Aller.ttf");
+        const auto fontData = fs::readBytes("../../assets/Aller.ttf");
         font = Font::createTrueType(device, fontData, 100, 2048, 2048, ' ', '~' - ' ', 2, 2);
 
         std::vector<float> vertexData;
@@ -469,7 +469,7 @@ public:
         float offsetX = 0, offsetY = 0;
         for (auto c : text)
         {
-            auto glyphInfo = font.getGlyphInfo(c, offsetX, offsetY);
+            const auto glyphInfo = font.getGlyphInfo(c, offsetX, offsetY);
             offsetX = glyphInfo.offsetX;
             offsetY = glyphInfo.offsetY;
 
@@ -509,13 +509,13 @@ public:
 
         auto vsSrc = fs::readBytes("../../assets/shaders/Font.vert.spv");
         auto fsSrc = fs::readBytes("../../assets/shaders/Font.frag.spv");
-        auto vs = createShader(device, vsSrc.data(), vsSrc.size());
-        auto fs = createShader(device, fsSrc.data(), fsSrc.size());
+        const auto vs = createShader(device, vsSrc.data(), vsSrc.size());
+        const auto fs = createShader(device, fsSrc.data(), fsSrc.size());
 
         Transform t;
         t.setLocalScale({0.05f, 0.05f, 0.05f});
         t.setLocalPosition({0, 0, 4});
-        glm::mat4 modelMatrix = t.getWorldMatrix();
+	    auto modelMatrix = t.getWorldMatrix();
         modelMatrixBuffer = vk::Buffer::createUniformHostVisible(device, sizeof(glm::mat4));
         modelMatrixBuffer.update(&modelMatrix);
 
@@ -530,7 +530,7 @@ public:
             .withBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        auto vf = VertexFormat({3, 2});
+        const auto vf = VertexFormat({3, 2});
 
         pipeline = vk::Pipeline(device, renderPass, vk::PipelineConfig(vs, fs)
             .withDescriptorSetLayout(scene.getDescSetLayout())
@@ -577,20 +577,20 @@ private:
 
 int main()
 {
-    const uint32_t CanvasWidth = 1366;
-    const uint32_t CanvasHeight = 768;
+    const uint32_t canvasWidth = 1366;
+    const uint32_t canvasHeight = 768;
 
-    Window window{CanvasWidth, CanvasHeight, "Demo"};
+    Window window{canvasWidth, canvasHeight, "Demo"};
     auto device = vk::Device::create(window.getPlatformHandle());
-    auto swapchain = vk::Swapchain(device, CanvasWidth, CanvasHeight, false);
+    auto swapchain = vk::Swapchain(device, canvasWidth, canvasHeight, false);
 
     Camera cam;
-    cam.setPerspective(glm::radians(45.0f), CanvasWidth / (CanvasHeight * 1.0f), 0.01f, 100);
+    cam.setPerspective(glm::radians(45.0f), canvasWidth / (canvasHeight * 1.0f), 0.01f, 100);
     cam.getTransform().setLocalPosition({10, -5, 10});
     cam.getTransform().lookAt({0, 0, 0}, {0, 1, 0});
 
     Scene scene{device};
-    Offscreen offscreen{device, CanvasWidth, CanvasHeight};
+    Offscreen offscreen{device, canvasWidth, canvasHeight};
     Mesh mesh{device, offscreen.getRenderPass(), scene};
     PostProcessor postProcessor{device, offscreen, scene};
     Skybox skybox{device, offscreen, scene};
@@ -600,12 +600,12 @@ int main()
     // Record command buffers
 
     {
-        VkCommandBuffer buf = offscreen.getCommandBuffer();
+	    const VkCommandBuffer buf = offscreen.getCommandBuffer();
         vk::beginCommandBuffer(buf, false);
 
-        offscreen.getRenderPass().begin(buf, offscreen.getFrameBuffer(), CanvasWidth, CanvasHeight);
+        offscreen.getRenderPass().begin(buf, offscreen.getFrameBuffer(), canvasWidth, canvasHeight);
 
-        auto vp = VkViewport{0, 0, CanvasWidth, CanvasHeight, 0, 1};
+        auto vp = VkViewport{0, 0, canvasWidth, canvasHeight, 0, 1};
 
         vkCmdSetViewport(buf, 0, 1, &vp);
 
@@ -624,9 +624,9 @@ int main()
 
     swapchain.recordCommandBuffers([&](VkFramebuffer fb, VkCommandBuffer buf)
     {
-        swapchain.getRenderPass().begin(buf, fb, CanvasWidth, CanvasHeight);
+        swapchain.getRenderPass().begin(buf, fb, canvasWidth, canvasHeight);
 
-        auto vp = VkViewport{0, 0, static_cast<float>(CanvasWidth), static_cast<float>(CanvasHeight), 0, 1};
+        auto vp = VkViewport{0, 0, static_cast<float>(canvasWidth), static_cast<float>(canvasHeight), 0, 1};
 
         vkCmdSetViewport(buf, 0, 1, &vp);
 

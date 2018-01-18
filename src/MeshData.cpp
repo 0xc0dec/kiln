@@ -11,6 +11,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 #include <unordered_map>
+#include <utility>
 
 struct Vertex
 {
@@ -113,11 +114,11 @@ auto MeshData::load(const std::string &path) -> MeshData
     MeshData data;
     fromTinyObj(shapes, attrib, data.vertexData, data.indexData, data.format);
 
-    return std::move(data);
+    return data;
 }
 
-VertexFormat::VertexFormat(const std::vector<uint32_t> &attributes):
-    attributes(attributes)
+VertexFormat::VertexFormat(std::vector<uint32_t> attributes):
+    attributes(std::move(attributes))
 {
 }
 

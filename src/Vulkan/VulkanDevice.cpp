@@ -191,8 +191,10 @@ auto vk::Device::create(const std::vector<uint8_t> &platformHandle) -> Device
 
     Device device{};
     device.instance = std::move(instance);
+#ifdef KL_DEBUG
+	device.debugCallback = createDebugCallback(device.instance, debugCallbackFunc);
+#endif
     device.surface = std::move(surface);
-    device.debugCallback = createDebugCallback(device.instance, debugCallbackFunc);
     device.physicalDevice = ::getPhysicalDevice(device.instance);
     vkGetPhysicalDeviceProperties(device.physicalDevice, &device.physicalProperties);
     vkGetPhysicalDeviceFeatures(device.physicalDevice, &device.physicalFeatures);
@@ -203,7 +205,7 @@ auto vk::Device::create(const std::vector<uint8_t> &platformHandle) -> Device
     device.colorSpace = std::get<1>(surfaceFormats);
     device.depthFormat = ::getDepthFormat(device.physicalDevice);
 
-    auto queueIndex = getQueueIndex(device.physicalDevice, device.surface);
+	const auto queueIndex = getQueueIndex(device.physicalDevice, device.surface);
     device.device = createDevice(device.physicalDevice, queueIndex);
     vkGetDeviceQueue(device, queueIndex, 0, &device.queue);
 

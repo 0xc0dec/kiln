@@ -11,8 +11,8 @@
 class VertexFormat
 {
 public:
-    VertexFormat() {}
-    explicit VertexFormat(const std::vector<uint32_t> &attributes);
+	VertexFormat() = default;
+    explicit VertexFormat(std::vector<uint32_t> attributes);
 
     auto getSize() const -> uint32_t;
     auto getAttributeCount() const { return attributes.size(); }
@@ -26,13 +26,14 @@ private:
 class MeshData
 {
 public:
-    MeshData(const MeshData &other) = delete;
-    MeshData(MeshData &&other) = default;
-
-    auto operator=(const MeshData &other) -> MeshData& = delete;
-    auto operator=(MeshData &&other) -> MeshData& = default;
-
     static auto load(const std::string &path) -> MeshData;
+
+	MeshData(const MeshData &other) = delete;
+	MeshData(MeshData &&other) = default;
+	~MeshData() = default;
+
+	auto operator=(const MeshData &other)->MeshData& = delete;
+	auto operator=(MeshData &&other)->MeshData& = default;
 
     auto getFormat() const { return format; }
     auto getVertexData() const -> const std::vector<float>& { return vertexData; }
@@ -43,5 +44,5 @@ private:
     std::vector<float> vertexData;
     std::vector<uint32_t> indexData;
 
-    MeshData() {}
+	MeshData() = default;
 };
